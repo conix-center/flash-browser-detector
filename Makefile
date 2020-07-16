@@ -7,18 +7,22 @@ CFLAGS = -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -fPIC -O
 CXXFLAGS = -g -Wall -O3
 LDFLAGS = -lpthread -lm
 
-TARGETS := apriltag_demo opencv_demo
+TARGETS := apriltag_demo apriltag_quads opencv_demo
 
 # do not compile pywarp and some tag families that take a long time to compile
 APRILTAG_SRCS := $(shell ls apriltag/*.c apriltag/common/*.c | grep -v -e apriltag_pywrap.c -e tagCircle49h12.c -e tagCustom48h12.c -e tagStandard52h13.c)
 APRILTAG_OBJS := $(APRILTAG_SRCS:%.c=%.o)
 
 .PHONY: all
-all: apriltag_demo opencv_demo
+all: apriltag_demo apriltag_quads opencv_demo
 
 apriltag_demo: apriltag_demo.o libapriltag.o
 	@echo "   [$@]"
-	$(CC) -o $@ $^ $(LDFLAGS) 
+	@$(CC) -o $@ $^ $(LDFLAGS) 
+
+apriltag_quads: apriltag_quads.o lightanchor_detector.o libapriltag.o
+	@echo "   [$@]"
+	@$(CC) -o $@ $^ $(LDFLAGS) 
 
 opencv_demo: opencv_demo.o libapriltag.o
 	@echo "   [$@]"
@@ -34,9 +38,9 @@ opencv_demo: opencv_demo.o libapriltag.o
 
 libapriltag.o: $(APRILTAG_OBJS)
 	@echo "   [$@]"
-	$(CC) -shared -o $@ $(APRILTAG_OBJS)
+	@$(CC) -shared -o $@ $(APRILTAG_OBJS)
 
 .PHONY: clean
 clean:
-	@rm -rf *.o apriltag/*.o $(TARGETS)
+	@rm -rf *.o $(TARGETS)
 
