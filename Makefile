@@ -3,9 +3,9 @@ CXX = g++
 AR = ar
 
 CPPFLAGS = -Iapriltag/
-CFLAGS = -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -fPIC -O3
+CFLAGS = -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -O3
 CXXFLAGS = -g -Wall -O3
-LDFLAGS = -lpthread -lm
+LDFLAGS = -lpthread -lm 
 
 TARGETS := apriltag_demo apriltag_quads opencv_demo
 
@@ -16,15 +16,15 @@ APRILTAG_OBJS := $(APRILTAG_SRCS:%.c=%.o)
 .PHONY: all
 all: apriltag_demo apriltag_quads opencv_demo
 
-apriltag_demo: apriltag_demo.o libapriltag.o
+apriltag_demo: apriltag_demo.o $(APRILTAG_OBJS)
 	@echo "   [$@]"
 	@$(CC) -o $@ $^ $(LDFLAGS) 
 
-apriltag_quads: apriltag_quads.o lightanchor_detector.o libapriltag.o
+apriltag_quads: apriltag_quads.o lightanchor_detector.o $(APRILTAG_OBJS) 
 	@echo "   [$@]"
 	@$(CC) -o $@ $^ $(LDFLAGS) 
 
-opencv_demo: opencv_demo.o libapriltag.o
+opencv_demo: opencv_demo.o $(APRILTAG_OBJS) 
 	@echo "   [$@]"
 	@$(CXX) -o $@ $^ $(LDFLAGS) `pkg-config --libs opencv`
 
@@ -36,9 +36,9 @@ opencv_demo: opencv_demo.o libapriltag.o
 	@echo "   $@"
 	@$(CXX) -o $@ -c $< $(CXXFLAGS) $(CPPFLAGS)
 
-libapriltag.o: $(APRILTAG_OBJS)
-	@echo "   [$@]"
-	@$(CC) -shared -o $@ $(APRILTAG_OBJS)
+#libapriltag.o: $(APRILTAG_OBJS)
+#	@echo "   [$@]"
+#	@$(CC) -o $@ $(APRILTAG_OBJS)
 
 .PHONY: clean
 clean:
