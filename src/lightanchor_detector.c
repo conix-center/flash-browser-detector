@@ -3,10 +3,10 @@
  *  @brief Implementation of the lightanchor detector library
  *  @see lightanchor_detector.h for documentation
  *
- * Copyright (C) Wiselab CMU. 
+ * Copyright (C) Wiselab CMU.
  * @date July, 2020
- * 
- * @todo Actually implement the LED detector 
+ *
+ * @todo Actually implement the LED detector
  */
 #include <math.h>
 #include "apriltag.h"
