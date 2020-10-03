@@ -62,4 +62,4 @@ $(BIN_DIR) $(OBJ_DIR):
 	@mkdir -p $@
 
 clean:
-	@rm -rf $(BIN_DIR) $(OBJ_DIR)
+	@rm -rf $(BIN_DIR) $(OBJ_DIR) *.pnm *.ps
