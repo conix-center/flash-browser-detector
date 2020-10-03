@@ -10,7 +10,9 @@ endif( NOT CMAKE_BUILD_TYPE )
 set( CMAKE_CXX_FLAGS_RELEASE )
 add_compile_options( -g -Wall -O3 )
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "../bin" )
+set( BIN ../bin )
+file( MAKE_DIRECTORY ${BIN} )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN} )
 
 # include apriltag library in build
 include_directories( apriltag )
