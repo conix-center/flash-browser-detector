@@ -38,6 +38,14 @@ if ( OpenCV_FOUND )
     # compile opencv_demo example
     add_executable( opencv_demo opencv_demo.cpp )
     target_link_libraries( opencv_demo ${APRILTAG_SRCS} ${OpenCV_LIBS} )
+
+    # compile webcam_quads example
+    add_executable( webcam_quads webcam_quads.cpp ${GLITTER_SRCS})
+    target_link_libraries( webcam_quads ${APRILTAG_SRCS} ${OpenCV_LIBS} )
+
+    # compile squares example
+    add_executable( squares squares.cpp )
+    target_link_libraries( squares ${OpenCV_LIBS} )
 else()
     message( "OpenCV not found. Examples that use OpenCV will not be compiled!" )
 endif()

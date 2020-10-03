@@ -22,7 +22,7 @@ APRILTAG_OBJS 		:= $(APRILTAG_SRCS:%.c=%.o)
 GLITTER_SRCS 		:= $(wildcard $(GLITTER_DIR)/*.c)
 GLITTER_OBJS 		:= $(GLITTER_SRCS:$(GLITTER_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-TARGETS 			:= $(BIN_DIR)/apriltag_demo $(BIN_DIR)/apriltag_quads $(BIN_DIR)/opencv_demo
+TARGETS 			:= $(BIN_DIR)/apriltag_demo $(BIN_DIR)/apriltag_quads $(BIN_DIR)/opencv_demo $(BIN_DIR)/webcam_quads
 
 .PHONY: all clean
 
@@ -39,6 +39,11 @@ $(BIN_DIR)/apriltag_quads: $(OBJ_DIR)/apriltag_quads.o $(GLITTER_OBJS) $(APRILTA
 	@$(CC) -o $@ $^ $(LDFLAGS)
 
 $(BIN_DIR)/opencv_demo: $(OBJ_DIR)/opencv_demo.o $(APRILTAG_OBJS)
+	@echo "======================="
+	@echo "    Linking target [$@]"
+	@$(CXX) -o $@ $^ $(LDFLAGS) $(OPENCV_LDFLAGS)
+
+$(BIN_DIR)/webcam_quads: $(OBJ_DIR)/webcam_quads.o $(GLITTER_OBJS) $(APRILTAG_OBJS)
 	@echo "======================="
 	@echo "    Linking target [$@]"
 	@$(CXX) -o $@ $^ $(LDFLAGS) $(OPENCV_LDFLAGS)
