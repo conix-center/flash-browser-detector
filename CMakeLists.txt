@@ -23,21 +23,21 @@ include_directories( glitter )
 file( GLOB GLITTER_SRCS glitter/*.c )
 
 # compile apriltag_demo example
-add_executable(apriltag_demo apriltag_demo.c)
-target_link_libraries(apriltag_demo ${APRILTAG_SRCS} )
+add_executable( apriltag_demo apriltag_demo.c )
+target_link_libraries( apriltag_demo ${APRILTAG_SRCS} )
 
 # compile apriltag_quads example
-add_executable(apriltag_quads apriltag_quads.c ${GLITTER_SRCS})
-target_link_libraries(apriltag_quads ${APRILTAG_SRCS} )
+add_executable( apriltag_quads apriltag_quads.c ${GLITTER_SRCS} )
+target_link_libraries( apriltag_quads ${APRILTAG_SRCS} )
 
 # find OpenCV, if exists
-find_package(OpenCV QUIET)
-if (OpenCV_FOUND)
-    include_directories(${OpenCV_INCLUDE_DIRS})
+find_package( OpenCV QUIET )
+if ( OpenCV_FOUND )
+    include_directories( ${OpenCV_INCLUDE_DIRS} )
 
     # compile opencv_demo example
-    add_executable(opencv_demo opencv_demo.cpp)
-    target_link_libraries(opencv_demo ${APRILTAG_SRCS} ${OpenCV_LIBS} )
+    add_executable( opencv_demo opencv_demo.cpp )
+    target_link_libraries( opencv_demo ${APRILTAG_SRCS} ${OpenCV_LIBS} )
 else()
-    message("OpenCV not found. Examples that use OpenCV will not be compiled!")
+    message( "OpenCV not found. Examples that use OpenCV will not be compiled!" )
 endif()

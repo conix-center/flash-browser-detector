@@ -7,15 +7,19 @@ This repository should lead to a more lightweight implementation, able to run in
 
 # Quick Setup
 
-1. Make sure you have **opencv** installed if you want to compile the opencv example.
+1. Make sure you have **opencv** installed if you want to compile the opencv example. **cmake** recommended but not needed.
 2. Clone this repo (with ```--recurse-submodules```).
-3. Compile:
+3. Compile with make:
 ```bash
 make
 ```
+or, with cmake:
+```
+./build.sh
+```
 4. Execute **apriltag_demo**, **apriltag_quads** providing the input image (```-d``` flag for debug output), e.g.:
 ```bash
-./apriltag_quads -d quad_test.jpg
+./bin/apriltag_quads -d quad_test.jpg
 ```
 * apritag_quads will generate a ```quad_output.ps``` file with the outlines of the quads detected.
 

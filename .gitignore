@@ -1,5 +1,6 @@
 bin
 build
+obj
 *.ps
 *.pnm
 .DS_Store
