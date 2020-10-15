@@ -12,6 +12,7 @@
 #include "apriltag.h"
 #include "common/zarray.h"
 #include "common/g2d.h"
+#include "common/time_util.h"
 #include "lightanchor_detector.h"
 
 static inline void homography_project(const matd_t *H, double x, double y, double *ox, double *oy)
@@ -22,6 +23,31 @@ static inline void homography_project(const matd_t *H, double x, double y, doubl
 
     *ox = xx / zz;
     *oy = yy / zz;
+}
+
+lightanchor_detector_t *lightanchor_detector_create(char code)
+{
+    lightanchor_detector_t *ld = (lightanchor_detector_t*) calloc(1, sizeof(lightanchor_detector_t));
+
+    ld->blink_freq = 15;
+
+    ld->hamming = 0;
+
+    ld->candidates = zarray_create(sizeof(lightanchor_t));
+    ld->detections = zarray_create(sizeof(lightanchor_t));
+
+    for (int i = 0; i < 8; i++) {
+        code = (code << 1) | ((code >> 7) & 0x1);
+        ld->codes[i] = code;
+    }
+
+    return ld;
+}
+
+void lightanchor_detector_destroy(lightanchor_detector_t *ld)
+{
+    zarray_destroy(ld->candidates);
+    free(ld);
 }
 
 /** @copydoc detect_quads */
@@ -163,52 +189,107 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     return quads_valid;
 }
 
-static lightanchor_t *create_lightanchor(struct quad *quad)
-{
-    lightanchor_t *lightanchor = calloc(1, sizeof(lightanchor_t));
-    lightanchor->p[0][0] = quad->p[0][0];
-    lightanchor->p[0][1] = quad->p[0][1];
-    lightanchor->p[1][0] = quad->p[1][0];
-    lightanchor->p[1][1] = quad->p[1][1];
-    lightanchor->p[2][0] = quad->p[2][0];
-    lightanchor->p[2][1] = quad->p[2][1];
-    lightanchor->p[3][0] = quad->p[3][0];
-    lightanchor->p[3][1] = quad->p[3][1];
-    if (quad->H) {
-        lightanchor->H = matd_copy(quad->H);
-        homography_project(lightanchor->H, 0, 0, &lightanchor->c[0], &lightanchor->c[1]);
-        if (g2d_distance(lightanchor->c, lightanchor->p[0]) < 5 ||
-            g2d_distance(lightanchor->c, lightanchor->p[1]) < 5 ||
-            g2d_distance(lightanchor->c, lightanchor->p[2]) < 5 ||
-            g2d_distance(lightanchor->c, lightanchor->p[3]) < 5)
-            {
-                goto invalid;
+static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_tags, int32_t im_w, int32_t im_h) {
+    assert(candidate_tags != NULL);
+
+    const int64_t max_dist = sqrtf(im_w*im_w+im_h*im_h);
+    const int thres_dist = im_w / 100;
+
+    zarray_t *valid = zarray_create(sizeof(lightanchor_t));
+    if (zarray_size(ld->candidates) == 0) {
+        for (int i = 0; i < zarray_size(candidate_tags); i++) {
+            lightanchor_t *candidate;
+            zarray_get_volatile(candidate_tags, i, &candidate);
+
+            zarray_add(valid, lightanchor_copy(candidate));
+        }
+    }
+    else {
+        for (int i = 0; i < zarray_size(candidate_tags); i++) {
+            lightanchor_t *candidate;
+            zarray_get_volatile(candidate_tags, i, &candidate);
+
+            int match_idx;
+            double min_dist = max_dist;
+            // search for closest global tag
+            for (int j = 0; j < zarray_size(ld->candidates); j++) {
+                lightanchor_t *global_tag;
+                zarray_get_volatile(ld->candidates, j, &global_tag);
+
+                double dist;
+                if ((dist = g2d_distance(candidate->c, global_tag->c)) < min_dist) {
+                    min_dist = dist;
+                    match_idx = j;
+                }
             }
-        else {
-            return lightanchor;
+
+            if (min_dist < (double)thres_dist) {
+                // candidate_prev ==> candidate_curr
+                lightanchor_t *candidate_prev, *candidate_curr = lightanchor_copy(candidate);
+                zarray_get_volatile(ld->candidates, match_idx, &candidate_prev);
+
+                int64_t now = utime_now();
+                if ((float)(now - candidate_prev->utime_last_update) >= 1000000.0/(ld->blink_freq)) {
+                    candidate_curr->utime_last_update = now;
+                    candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > 127);
+                }
+                else {
+                    candidate_curr->code = candidate_prev->code;
+                    candidate_curr->utime_last_update = candidate_prev->utime_last_update;
+                }
+
+                zarray_add(valid, candidate_curr);
+
+                for (int i = 0; i < 8; i++) {
+                    if (ld->hamming == 0 && ld->codes[i] == candidate_curr->code) {
+                        zarray_add(ld->detections, candidate_curr);
+                        break;
+                    }
+                    else {
+                        uint8_t b = ld->codes[i] ^ candidate_curr->code;
+                        uint8_t h_dist = 0;
+                        while (b) {
+                            h_dist++;
+                            b &= (b-1);
+                        }
+                        if (h_dist <= ld->hamming) {
+                            printf("%d %x %x\n", h_dist, (int)ld->codes[i] & 0xff, (int)candidate_curr->code & 0xff);
+                            zarray_add(ld->detections, candidate_curr);
+                            break;
+                        }
+                    }
+                }
+
+                // if (candidate_curr->code == ld->codes[0])
+                //     zarray_add(ld->detections, candidate_curr);
+            }
         }
     }
 
-invalid:
-        return NULL;
+    lightanchors_destroy(ld->candidates);
+    ld->candidates = valid;
 }
 
 /** @copydoc decode_tags */
-zarray_t *decode_tags(apriltag_detector_t *td, zarray_t *quads, image_u8_t *quad_im)
+zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im)
 {
-    zarray_t *lightanchors = zarray_create(sizeof(lightanchor_t));
+    zarray_t *candidate_tags = zarray_create(sizeof(lightanchor_t));
 
     for (int i = 0; i < zarray_size(quads); i++)
     {
         struct quad *quad;
         zarray_get_volatile(quads, i, &quad);
 
-        lightanchor_t *lightanchor = create_lightanchor(quad);
-        if (lightanchor != NULL)
-            zarray_add(lightanchors, lightanchor);
+        lightanchor_t *lightanchor;
+        if ((lightanchor = lightanchor_create(quad, im)) != NULL)
+            zarray_add(candidate_tags, lightanchor_copy(lightanchor));
     }
 
-    return lightanchors;
+    update_candidates(ld, candidate_tags, im->width, im->height);
+
+    lightanchors_destroy(candidate_tags);
+
+    return ld->detections;
 }
 
 /** @copydoc quads_destroy */
@@ -226,7 +307,59 @@ int quads_destroy(zarray_t *quads)
     return i;
 }
 
-/** @copydoc lightanchor_destroy */
+lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im)
+{
+    lightanchor_t *l = calloc(1, sizeof(lightanchor_t));
+    l->p[0][0] = quad->p[0][0];
+    l->p[0][1] = quad->p[0][1];
+    l->p[1][0] = quad->p[1][0];
+    l->p[1][1] = quad->p[1][1];
+    l->p[2][0] = quad->p[2][0];
+    l->p[2][1] = quad->p[2][1];
+    l->p[3][0] = quad->p[3][0];
+    l->p[3][1] = quad->p[3][1];
+
+    l->utime_last_update = utime_now();
+
+    if (quad->H) {
+        l->H = matd_copy(quad->H);
+        homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
+        // if the center is within 5px of any of the quad points ==> invalid
+        if (g2d_distance(l->c, l->p[0]) < 5 ||
+            g2d_distance(l->c, l->p[1]) < 5 ||
+            g2d_distance(l->c, l->p[2]) < 5 ||
+            g2d_distance(l->c, l->p[3]) < 5)
+            {
+                goto invalid;
+            }
+        else {
+            uint32_t avg = 0;
+            int cx = l->c[0], cy = l->c[1];
+            avg += im->buf[cy * im->stride + cx];
+            avg += im->buf[cy * im->stride + cx + 1];
+            avg += im->buf[cy * im->stride + cx - 1];
+            avg += im->buf[(cy+1) * im->stride + cx];
+            avg += im->buf[(cy-1) * im->stride + cx];
+            l->brightness = (uint8_t)(avg / 5);
+            return l;
+        }
+    }
+
+invalid:
+        return NULL;
+}
+
+/** @copydoc lightanchor_copy */
+lightanchor_t *lightanchor_copy(lightanchor_t *lightanchor)
+{
+    lightanchor_t *l = calloc(1, sizeof(lightanchor_t));
+    memcpy(l, lightanchor, sizeof(lightanchor_t));
+    if (lightanchor->H)
+        l->H = matd_copy(lightanchor->H);
+    return l;
+}
+
+/** @copydoc lightanchors_destroy */
 int lightanchors_destroy(zarray_t *lightanchors)
 {
     int i = 0;

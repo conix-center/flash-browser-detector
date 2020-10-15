@@ -90,6 +90,8 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    lightanchor_detector_t *ld = lightanchor_detector_create(0xaf);
+
     apriltag_detector_t *td = apriltag_detector_create();
     apriltag_detector_add_family_bits(td, tf, getopt_get_int(getopt, "hamming"));
     td->quad_decimate = getopt_get_double(getopt, "decimate");
@@ -170,7 +172,8 @@ int main(int argc, char *argv[])
         }
 
         zarray_t *quads = detect_quads(td, im);
-        zarray_t *lightanchors = decode_tags(td, quads, im);
+
+        zarray_t *lightanchors = decode_tags(ld, quads, im);
 
         if (!quiet)
             printf("Found %d lightanchors.\n", zarray_size(lightanchors));
@@ -221,14 +224,14 @@ int main(int argc, char *argv[])
         fclose(f);
 
         image_u8_destroy(im);
-
-        lightanchors_destroy(lightanchors);
     }
 
     printf("\n");
 
     // don't deallocate contents of inputs; those are the argv
     apriltag_detector_destroy(td);
+
+    lightanchor_detector_destroy(ld);
 
     tag36h11_destroy(tf);
 

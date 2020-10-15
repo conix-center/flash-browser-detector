@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
     getopt_add_bool(getopt, 'q', "quiet", 0, "Reduce output");
     getopt_add_string(getopt, 'f', "family", "tag36h11", "Tag family to use");
     getopt_add_int(getopt, 't', "threads", "1", "Use this many CPU threads");
+    getopt_add_int(getopt, 'a', "hamming", "1", "Detect tags with up to this many bit errors.");
     getopt_add_double(getopt, 'x', "decimate", "2.0", "Decimate input image by this factor");
     getopt_add_double(getopt, 'b', "blur", "0.0", "Apply low-pass blur to input; negative sharpens");
     getopt_add_bool(getopt, '0', "refine-edges", 1, "Spend more time trying to align edges of tags");
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize camera
-    VideoCapture cap("./tag.mp4");
+    VideoCapture cap(0);
     if (!cap.isOpened()) {
         cerr << "Couldn't open video capture device" << endl;
         return -1;
@@ -63,6 +64,9 @@ int main(int argc, char *argv[])
     td->debug = getopt_get_bool(getopt, "debug");
     td->refine_edges = getopt_get_bool(getopt, "refine-edges");
 
+    lightanchor_detector_t *ld = lightanchor_detector_create(0xaf);
+    ld->hamming = getopt_get_int(getopt, "hamming");
+
     Mat frame, gray;
     while (true) {
         cap >> frame;
@@ -70,7 +74,6 @@ int main(int argc, char *argv[])
             break;
 
         cvtColor(frame, gray, COLOR_BGR2GRAY);
-        // threshold(gray, gray, 127, 255, CV_THRESH_BINARY);
 
         // Make an image_u8_t header for the Mat data
         image_u8_t im = {
@@ -81,8 +84,9 @@ int main(int argc, char *argv[])
         };
 
         zarray_t *quads = detect_quads(td, &im);
-        zarray_t *lightanchors = decode_tags(td, quads, &im);
-        cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
+
+        zarray_t *lightanchors = decode_tags(ld, quads, &im);
+        // cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
 
         // Draw quad outlines
         for (int i = 0; i < zarray_size(lightanchors); i++) {
@@ -91,21 +95,28 @@ int main(int argc, char *argv[])
 
             line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
                     Point(lightanchor->p[1][0], lightanchor->p[1][1]),
-                    Scalar(0xff, 0, 0), 2);
+                    Scalar(0xff, 0, 0), 1);
             line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
                     Point(lightanchor->p[3][0], lightanchor->p[3][1]),
-                    Scalar(0xff, 0, 0), 2);
+                    Scalar(0xff, 0, 0), 1);
             line(frame, Point(lightanchor->p[1][0], lightanchor->p[1][1]),
                     Point(lightanchor->p[2][0], lightanchor->p[2][1]),
-                    Scalar(0xff, 0, 0), 2);
+                    Scalar(0xff, 0, 0), 1);
             line(frame, Point(lightanchor->p[2][0], lightanchor->p[2][1]),
                     Point(lightanchor->p[3][0], lightanchor->p[3][1]),
-                    Scalar(0xff, 0, 0), 2);
+                    Scalar(0xff, 0, 0), 1);
             circle(frame, Point(lightanchor->c[0], lightanchor->c[1]), 1,
                    Scalar(0, 0, 0xff), 2);
+            stringstream brightness;
+            brightness << "0x" << hex << +(int)(lightanchor->code & 0xff);
+            putText(frame, brightness.str(), Point(lightanchor->c[0], lightanchor->c[1]),
+                    FONT_HERSHEY_DUPLEX, 0.5,
+                    Scalar(0, 0, 0xff), 1);
+
+            // usleep(100000);
         }
 
-        lightanchors_destroy(lightanchors);
+        // lightanchors_destroy(lightanchors);
 
         imshow("Lightanchor Detections", frame);
 
@@ -114,6 +125,8 @@ int main(int argc, char *argv[])
     }
 
     apriltag_detector_destroy(td);
+
+    lightanchor_detector_destroy(ld);
 
     tag36h11_destroy(tf);
 

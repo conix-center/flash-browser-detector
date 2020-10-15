@@ -13,26 +13,44 @@
 #include "apriltag.h"
 #include "common/zarray.h"
 
-/* declare functions in apriltag.c that we need as extern */
+/* declare functions that we need as extern */
 extern zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im);
 extern int quad_update_homographies(struct quad *quad);
 extern struct quad *quad_copy(struct quad *quad);
 extern double g2d_distance(const double a[2], const double b[2]);
 
-zarray_t *decode_tags(apriltag_detector_t *td, zarray_t *quads, image_u8_t *quad_im);
-int lightanchors_destroy(zarray_t *lightanchors);
+typedef struct lightanchor_detector lightanchor_detector_t;
+struct lightanchor_detector
+{
+    uint8_t blink_freq;
+    uint8_t hamming;
+    zarray_t *candidates;
+    zarray_t *detections;
+    char codes[8];
+};
 
 typedef struct lightanchor lightanchor_t;
 struct lightanchor
 {
-    char id;
-    char brightness;
+    char code;
+
+    uint8_t brightness;
 
     matd_t *H;
+
+    int64_t utime_last_update;
 
     double c[2];
     double p[4][2];
 };
+
+lightanchor_detector_t *lightanchor_detector_create(char code);
+lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im);
+void lightanchor_detector_destroy(lightanchor_detector_t *ld);
+
+zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
+lightanchor_t *lightanchor_copy(lightanchor_t *lightanchor);
+int lightanchors_destroy(zarray_t *lightanchors);
 
 /**
  * Use apriltag library to detect quads from an image and
