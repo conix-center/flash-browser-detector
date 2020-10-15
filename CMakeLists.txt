@@ -30,6 +30,10 @@ target_link_libraries( apriltag_demo ${APRILTAG_SRCS} )
 add_executable( apriltag_quads apriltag_quads.c ${GLITTER_SRCS} )
 target_link_libraries( apriltag_quads ${APRILTAG_SRCS} )
 
+# compile lightanchor_demo example
+add_executable( lightanchor_demo lightanchor_demo.c ${GLITTER_SRCS} )
+target_link_libraries( lightanchor_demo ${APRILTAG_SRCS} )
+
 # find OpenCV, if exists
 find_package( OpenCV QUIET )
 if ( OpenCV_FOUND )
@@ -43,9 +47,9 @@ if ( OpenCV_FOUND )
     add_executable( webcam_quads webcam_quads.cpp ${GLITTER_SRCS})
     target_link_libraries( webcam_quads ${APRILTAG_SRCS} ${OpenCV_LIBS} )
 
-    # compile squares example
-    add_executable( squares squares.cpp )
-    target_link_libraries( squares ${OpenCV_LIBS} )
+    # compile webcam_lightanchors example
+    add_executable( webcam_lightanchors webcam_lightanchors.cpp ${GLITTER_SRCS})
+    target_link_libraries( webcam_lightanchors ${APRILTAG_SRCS} ${OpenCV_LIBS} )
 else()
     message( "OpenCV not found. Examples that use OpenCV will not be compiled!" )
 endif()

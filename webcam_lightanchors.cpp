@@ -81,30 +81,33 @@ int main(int argc, char *argv[])
         };
 
         zarray_t *quads = detect_quads(td, &im);
-        cout << zarray_size(quads) << " quads detected" << endl;
+        zarray_t *lightanchors = decode_tags(td, quads, &im);
+        cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
 
         // Draw quad outlines
-        for (int i = 0; i < zarray_size(quads); i++) {
-            struct quad *quad;
-            zarray_get_volatile(quads, i, &quad);
+        for (int i = 0; i < zarray_size(lightanchors); i++) {
+            lightanchor_t *lightanchor;
+            zarray_get_volatile(lightanchors, i, &lightanchor);
 
-            line(frame, Point(quad->p[0][0], quad->p[0][1]),
-                    Point(quad->p[1][0], quad->p[1][1]),
+            line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
+                    Point(lightanchor->p[1][0], lightanchor->p[1][1]),
                     Scalar(0xff, 0, 0), 2);
-            line(frame, Point(quad->p[0][0], quad->p[0][1]),
-                    Point(quad->p[3][0], quad->p[3][1]),
+            line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
+                    Point(lightanchor->p[3][0], lightanchor->p[3][1]),
                     Scalar(0xff, 0, 0), 2);
-            line(frame, Point(quad->p[1][0], quad->p[1][1]),
-                    Point(quad->p[2][0], quad->p[2][1]),
+            line(frame, Point(lightanchor->p[1][0], lightanchor->p[1][1]),
+                    Point(lightanchor->p[2][0], lightanchor->p[2][1]),
                     Scalar(0xff, 0, 0), 2);
-            line(frame, Point(quad->p[2][0], quad->p[2][1]),
-                    Point(quad->p[3][0], quad->p[3][1]),
+            line(frame, Point(lightanchor->p[2][0], lightanchor->p[2][1]),
+                    Point(lightanchor->p[3][0], lightanchor->p[3][1]),
                     Scalar(0xff, 0, 0), 2);
+            circle(frame, Point(lightanchor->c[0], lightanchor->c[1]), 1,
+                   Scalar(0, 0, 0xff), 2);
         }
 
-        quads_destroy(quads);
+        lightanchors_destroy(lightanchors);
 
-        imshow("Quad Detections", frame);
+        imshow("Lightanchor Detections", frame);
 
         if (waitKey(30) >= 0)
             break;
