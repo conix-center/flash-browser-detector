@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
     getopt_add_bool(getopt, 'q', "quiet", 0, "Reduce output");
     getopt_add_string(getopt, 'f', "family", "tag36h11", "Tag family to use");
     getopt_add_int(getopt, 't', "threads", "1", "Use this many CPU threads");
-    getopt_add_int(getopt, 'a', "hamming", "1", "Detect tags with up to this many bit errors.");
     getopt_add_double(getopt, 'x', "decimate", "2.0", "Decimate input image by this factor");
     getopt_add_double(getopt, 'b', "blur", "0.0", "Apply low-pass blur to input; negative sharpens");
     getopt_add_bool(getopt, '0', "refine-edges", 1, "Spend more time trying to align edges of tags");
@@ -40,7 +39,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize camera
-    VideoCapture cap(0);
+    VideoCapture cap("./tag.mp4");
     if (!cap.isOpened()) {
         cerr << "Couldn't open video capture device" << endl;
         return -1;
@@ -65,7 +64,6 @@ int main(int argc, char *argv[])
     td->refine_edges = getopt_get_bool(getopt, "refine-edges");
 
     lightanchor_detector_t *ld = lightanchor_detector_create(0xaf);
-    ld->hamming = getopt_get_int(getopt, "hamming");
 
     Mat frame, gray;
     while (true) {
@@ -112,9 +110,9 @@ int main(int argc, char *argv[])
             putText(frame, brightness.str(), Point(lightanchor->c[0], lightanchor->c[1]),
                     FONT_HERSHEY_DUPLEX, 0.5,
                     Scalar(0, 0, 0xff), 1);
-
-            // usleep(100000);
         }
+
+        // usleep(100000);
 
         // lightanchors_destroy(lightanchors);
 

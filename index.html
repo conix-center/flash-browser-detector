@@ -60,8 +60,7 @@
         window.onmouseup = window.ontouchend = function() {
             if (!started) {
                 let idx = 0;
-                blink =
-                setInterval(function() {
+                blink = setInterval(function() {
                     // console.log(dec2bin(code & (1 << (len-idx-1))));
                     if (code & (1 << (len-idx-1))) {
                         tag.style.background = "white"

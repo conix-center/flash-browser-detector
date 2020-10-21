@@ -31,12 +31,11 @@ lightanchor_detector_t *lightanchor_detector_create(char code)
 
     ld->blink_freq = 15;
 
-    ld->hamming = 0;
-
     ld->candidates = zarray_create(sizeof(lightanchor_t));
     ld->detections = zarray_create(sizeof(lightanchor_t));
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         code = (code << 1) | ((code >> 7) & 0x1);
         ld->codes[i] = code;
     }
@@ -192,12 +191,15 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
 static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_tags, int32_t im_w, int32_t im_h) {
     assert(candidate_tags != NULL);
 
+    zarray_clear(ld->detections);
+
     const int64_t max_dist = sqrtf(im_w*im_w+im_h*im_h);
     const int thres_dist = im_w / 100;
 
     zarray_t *valid = zarray_create(sizeof(lightanchor_t));
     if (zarray_size(ld->candidates) == 0) {
-        for (int i = 0; i < zarray_size(candidate_tags); i++) {
+        for (int i = 0; i < zarray_size(candidate_tags); i++)
+        {
             lightanchor_t *candidate;
             zarray_get_volatile(candidate_tags, i, &candidate);
 
@@ -205,14 +207,16 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
         }
     }
     else {
-        for (int i = 0; i < zarray_size(candidate_tags); i++) {
+        for (int i = 0; i < zarray_size(candidate_tags); i++)
+        {
             lightanchor_t *candidate;
             zarray_get_volatile(candidate_tags, i, &candidate);
 
             int match_idx;
             double min_dist = max_dist;
             // search for closest global tag
-            for (int j = 0; j < zarray_size(ld->candidates); j++) {
+            for (int j = 0; j < zarray_size(ld->candidates); j++)
+            {
                 lightanchor_t *global_tag;
                 zarray_get_volatile(ld->candidates, j, &global_tag);
 
@@ -228,46 +232,59 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
                 lightanchor_t *candidate_prev, *candidate_curr = lightanchor_copy(candidate);
                 zarray_get_volatile(ld->candidates, match_idx, &candidate_prev);
 
-                int64_t now = utime_now();
-                if ((float)(now - candidate_prev->utime_last_update) >= 1000000.0/(ld->blink_freq)) {
-                    candidate_curr->utime_last_update = now;
-                    candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > 127);
-                }
-                else {
-                    candidate_curr->code = candidate_prev->code;
-                    candidate_curr->utime_last_update = candidate_prev->utime_last_update;
-                }
+                candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > 225);
 
                 zarray_add(valid, candidate_curr);
 
-                for (int i = 0; i < 8; i++) {
-                    if (ld->hamming == 0 && ld->codes[i] == candidate_curr->code) {
+                for (int j = 0; j < 8; j++)
+                {
+                    uint8_t code = ld->codes[j];
+                    uint16_t match_code = 0;
+                    for (int k = 0; k < 8; k++)
+                    {
+                        match_code |= ((code & 1) << 1 | (code & 1)) << (14 - 2*k);
+                        code >>= 1;
+                    }
+
+                    uint16_t match = match_code;
+
+                    // printf(""BYTE_TO_BINARY_PATTERN"",
+                    //         BYTE_TO_BINARY(ld->codes[j]));
+                    // printf(" - "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+                    //         BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                    // printf(" - "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+                    //         BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
+
+                    uint16_t b = candidate_curr->code;
+                    uint16_t c = 0;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        uint16_t mask = 0b11 << 2*i;
+                        if (((match_code ^ b) & 0b11) != 0b11) {
+                            c |= (match & mask);
+                        }
+                        else {
+                            c |= (~match & mask);
+                        }
+                        b >>= 2;
+                        match_code >>= 2;
+                    }
+
+                    // printf(" - "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+                    //         BYTE_TO_BINARY(c>>8), BYTE_TO_BINARY(c));
+                    // printf(" - %u\n", c == match);
+                    if (c == match) {
                         zarray_add(ld->detections, candidate_curr);
                         break;
                     }
-                    else {
-                        uint8_t b = ld->codes[i] ^ candidate_curr->code;
-                        uint8_t h_dist = 0;
-                        while (b) {
-                            h_dist++;
-                            b &= (b-1);
-                        }
-                        if (h_dist <= ld->hamming) {
-                            printf("%d %x %x\n", h_dist, (int)ld->codes[i] & 0xff, (int)candidate_curr->code & 0xff);
-                            zarray_add(ld->detections, candidate_curr);
-                            break;
-                        }
-                    }
                 }
-
-                // if (candidate_curr->code == ld->codes[0])
-                //     zarray_add(ld->detections, candidate_curr);
             }
         }
     }
 
     lightanchors_destroy(ld->candidates);
     ld->candidates = valid;
+    printf("%u", zarray_size(ld->detections));
 }
 
 /** @copydoc decode_tags */
