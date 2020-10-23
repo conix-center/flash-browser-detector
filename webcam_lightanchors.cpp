@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize camera
-    VideoCapture cap("./tag.mp4");
+    VideoCapture cap("./tag-0xa7.mp4");
     if (!cap.isOpened()) {
         cerr << "Couldn't open video capture device" << endl;
         return -1;
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     td->debug = getopt_get_bool(getopt, "debug");
     td->refine_edges = getopt_get_bool(getopt, "refine-edges");
 
-    lightanchor_detector_t *ld = lightanchor_detector_create(0xaf);
+    lightanchor_detector_t *ld = lightanchor_detector_create(0xa7);
 
     Mat frame, gray;
     while (true) {

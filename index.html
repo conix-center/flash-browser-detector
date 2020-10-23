@@ -9,10 +9,10 @@
         body {
             display: flex;
             justify-content: center;
-            background: #555;
+            background: #333;
         }
         #tag {
-            background: #333;
+            background: #666;
             width: 85vmin;
             height: 85vmin;
             border: 5vmin;
@@ -66,13 +66,14 @@
                         tag.style.background = "white"
                     }
                     else {
-                        tag.style.background = "#333"
+                        tag.style.background = "#666"
                     }
                     idx = (idx+1) % len;
                 }, (1/freq) * 1000);
             }
             else {
                 clearInterval(blink);
+                tag.style.background = "#666"
             }
             started = !started;
         }

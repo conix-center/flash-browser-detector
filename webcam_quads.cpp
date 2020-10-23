@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize camera
-    VideoCapture cap("./tag.mp4");
+    VideoCapture cap(0);
     if (!cap.isOpened()) {
         cerr << "Couldn't open video capture device" << endl;
         return -1;
