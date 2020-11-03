@@ -14,14 +14,7 @@
 #include "common/g2d.h"
 #include "common/time_util.h"
 #include "lightanchor_detector.h"
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
+#include "bit_match.h"
 
 static inline void homography_project(const matd_t *H, double x, double y, double *ox, double *oy)
 {
@@ -38,20 +31,22 @@ lightanchor_detector_t *lightanchor_detector_create(char code)
     lightanchor_detector_t *ld = (lightanchor_detector_t*) calloc(1, sizeof(lightanchor_detector_t));
 
     ld->blink_freq = 15; // Hz
-    ld->utime_last_update = utime_now();
 
     ld->candidates = zarray_create(sizeof(lightanchor_t));
     ld->detections = zarray_create(sizeof(lightanchor_t));
 
     for (int i = 0; i < 8; i++)
     {
-        uint16_t code2 = (code << 1) | ((code >> 7) & 0x1);
-        for (int j = 0; j < 8; j++)
-        {
-            ld->codes[i] |= ((code2 & 1) << 1 | (code2 & 1)) << 2*j;
-            code2 >>= 1;
-        }
+        ld->codes[i] = double_bits(code);
+        code = (code << 1) | ((code >> 7) & 0x1);
     }
+
+#if 0
+    for (int i = 0; i < 8; i++) {
+        printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
+                BYTE_TO_BINARY(ld->codes[i]>>8), BYTE_TO_BINARY(ld->codes[i]));
+    }
+#endif
 
     return ld;
 }
@@ -247,84 +242,24 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
 
                 candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > 225);
                 candidate_curr->idxs = candidate_prev->idxs << 1;
+                candidate_curr->utime_last_update = candidate_prev->utime_last_update;
                 candidate_curr->next_code = candidate_prev->next_code;
 
                 int64_t now = utime_now();
-                printf("%6lld > ", now - ld->utime_last_update);
-                if ((float)(now - ld->utime_last_update) >= 1000000.0/(ld->blink_freq)) {
-                    ld->utime_last_update = now;
+                // printf("%6lld: ", now - candidate_curr->utime_last_update);
+                if ((float)(now - candidate_curr->utime_last_update) >= 1000000.0/(ld->blink_freq)) {
+                    candidate_curr->utime_last_update = now;
                     candidate_curr->idxs |= 1;
                 }
-
-                if (candidate_curr->next_code) {
-                    uint16_t match_code = candidate_curr->next_code;
-                    uint16_t match = match_code;
-
-                    printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                            BYTE_TO_BINARY(match>>8), BYTE_TO_BINARY(match));
-                    printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                            BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
-                    printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                            BYTE_TO_BINARY(candidate_curr->idxs>>8), BYTE_TO_BINARY(candidate_curr->idxs));
-
-                    uint16_t b = candidate_curr->code;
-                    uint16_t c = 0;
-                    for (int i = 0; i < 8; i++)
-                    {
-                        uint16_t mask = 0b11 << 2*i;
-                        if (((match_code ^ b) & 0b11) != 0b11) {
-                            c |= (match & mask);
-                        }
-                        else {
-                            c |= (~match & mask);
-                        }
-                        b >>= 2;
-                        match_code >>= 2;
-                    }
-                    printf(" | %u\n", c == match);
-
-                    if (c == match) {
-                        candidate_curr->next_code = (candidate_curr->next_code << 1) | ((candidate_curr->next_code >> 15) & 0x1);
-                        zarray_add(ld->detections, candidate_curr);
-                    }
-                    else {
-                        candidate_curr->next_code = 0;
-                    }
+#if 0
+                if (!match_dtw(ld, candidate_curr)) {
+                    zarray_add(ld->detections, candidate_curr);
                 }
-                else {
-                    for (int j = 0; j < 8; j++)
-                    {
-                        uint16_t match_code = ld->codes[j];
-                        uint16_t match = match_code;
-
-                        uint16_t b = candidate_curr->code;
-                        uint16_t c = 0;
-                        for (int i = 0; i < 8; i++)
-                        {
-                            uint16_t mask = 0b11 << 2*i;
-                            if (((match_code ^ b) & 0b11) != 0b11) {
-                                c |= (match & mask);
-                            }
-                            else {
-                                c |= (~match & mask);
-                            }
-                            b >>= 2;
-                            match_code >>= 2;
-                        }
-
-                        if (c == match) {
-                            printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                                    BYTE_TO_BINARY(match>>8), BYTE_TO_BINARY(match));
-                            printf(" - "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                                    BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
-                            printf(" - "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                                    BYTE_TO_BINARY(candidate_curr->idxs>>8), BYTE_TO_BINARY(candidate_curr->idxs));
-                            candidate_curr->next_code = (match << 1) | ((match >> 15) & 0x1);
-                            zarray_add(ld->detections, candidate_curr);
-                            break;
-                        }
-                    }
+#else
+                if (candidate_curr->idxs & (0b111 << 12) && !match_bf(ld, candidate_curr)) {
+                    zarray_add(ld->detections, candidate_curr);
                 }
+#endif
                 zarray_add(valid, candidate_curr);
             }
         }
@@ -349,11 +284,11 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
             zarray_add(candidate_tags, lightanchor_copy(lightanchor));
     }
 
-    int max = 0, min = 255;
-    for (int i = 0; i < im->width*im->height; i++) {
-        if (im->buf[i] > max) max = im->buf[i];
-        if (im->buf[i] < min) min = im->buf[i];
-    }
+    // int max = 0, min = 255;
+    // for (int i = 0; i < im->width*im->height; i++) {
+    //     if (im->buf[i] > max) max = im->buf[i];
+    //     if (im->buf[i] < min) min = im->buf[i];
+    // }
     // printf("%u\n", (min + max)/2);
 
     update_candidates(ld, candidate_tags, im->width, im->height);
@@ -392,6 +327,7 @@ lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im)
 
     l->idxs = 0;
     l->next_code = 0;
+    l->utime_last_update = utime_now();
 
     if (quad->H) {
         l->H = matd_copy(quad->H);

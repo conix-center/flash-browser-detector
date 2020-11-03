@@ -13,17 +13,6 @@
 #include "apriltag.h"
 #include "common/zarray.h"
 
-#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-#define BYTE_TO_BINARY(byte)   \
-    (byte & 0x80 ? '1' : '0'), \
-    (byte & 0x40 ? '1' : '0'), \
-    (byte & 0x20 ? '1' : '0'), \
-    (byte & 0x10 ? '1' : '0'), \
-    (byte & 0x08 ? '1' : '0'), \
-    (byte & 0x04 ? '1' : '0'), \
-    (byte & 0x02 ? '1' : '0'), \
-    (byte & 0x01 ? '1' : '0')
-
 /* declare functions that we need as extern */
 extern zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im);
 extern int quad_update_homographies(struct quad *quad);
@@ -37,7 +26,6 @@ struct lightanchor_detector
     zarray_t *candidates;
     zarray_t *detections;
     uint16_t codes[8];
-    int64_t utime_last_update;
 };
 
 typedef struct lightanchor lightanchor_t;
@@ -50,6 +38,7 @@ struct lightanchor
     matd_t *H;
     double c[2];
     double p[4][2];
+    int64_t utime_last_update;
 };
 
 lightanchor_detector_t *lightanchor_detector_create(char code);
