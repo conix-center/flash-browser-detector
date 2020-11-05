@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.s": "cortex-debug.disassembly",
+        "ranges": "cpp",
+        "iostream": "cpp"
+    }
+}

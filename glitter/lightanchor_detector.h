@@ -32,13 +32,11 @@ typedef struct lightanchor lightanchor_t;
 struct lightanchor
 {
     uint8_t brightness;
-    uint16_t code;
+    struct ll *brightnesses;
     uint16_t next_code;
-    uint16_t idxs;
     matd_t *H;
     double c[2];
     double p[4][2];
-    int64_t utime_last_update;
 };
 
 lightanchor_detector_t *lightanchor_detector_create(char code);

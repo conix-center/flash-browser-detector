@@ -12,7 +12,7 @@
 #include "apriltag.h"
 #include "common/zarray.h"
 #include "common/g2d.h"
-#include "common/time_util.h"
+#include "linked_list.h"
 #include "lightanchor_detector.h"
 #include "bit_match.h"
 
@@ -240,26 +240,14 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
                 lightanchor_t *candidate_prev, *candidate_curr = lightanchor_copy(candidate);
                 zarray_get_volatile(ld->candidates, match_idx, &candidate_prev);
 
-                candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > 225);
-                candidate_curr->idxs = candidate_prev->idxs << 1;
-                candidate_curr->utime_last_update = candidate_prev->utime_last_update;
+                candidate_curr->brightnesses = candidate_prev->brightnesses;
+                ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
                 candidate_curr->next_code = candidate_prev->next_code;
 
-                int64_t now = utime_now();
-                // printf("%6lld: ", now - candidate_curr->utime_last_update);
-                if ((float)(now - candidate_curr->utime_last_update) >= 1000000.0/(ld->blink_freq)) {
-                    candidate_curr->utime_last_update = now;
-                    candidate_curr->idxs |= 1;
-                }
-#if 0
-                if (!match_dtw(ld, candidate_curr)) {
+                if (match(ld, candidate_curr)) {
                     zarray_add(ld->detections, candidate_curr);
                 }
-#else
-                if (candidate_curr->idxs & (0b111 << 12) && !match_bf(ld, candidate_curr)) {
-                    zarray_add(ld->detections, candidate_curr);
-                }
-#endif
+
                 zarray_add(valid, candidate_curr);
             }
         }
@@ -325,18 +313,17 @@ lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im)
     l->p[3][0] = quad->p[3][0];
     l->p[3][1] = quad->p[3][1];
 
-    l->idxs = 0;
     l->next_code = 0;
-    l->utime_last_update = utime_now();
+    l->brightnesses = ll_create(16);
 
     if (quad->H) {
         l->H = matd_copy(quad->H);
         homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
-        // if the center is within 5px of any of the quad points ==> too small ==> invalid
-        if (g2d_distance(l->c, l->p[0]) < 5 ||
-            g2d_distance(l->c, l->p[1]) < 5 ||
-            g2d_distance(l->c, l->p[2]) < 5 ||
-            g2d_distance(l->c, l->p[3]) < 5)
+        // if the center is within 10px of any of the quad points ==> too small ==> invalid
+        if (g2d_distance(l->c, l->p[0]) < 10 ||
+            g2d_distance(l->c, l->p[1]) < 10 ||
+            g2d_distance(l->c, l->p[2]) < 10 ||
+            g2d_distance(l->c, l->p[3]) < 10)
             {
                 goto invalid;
             }

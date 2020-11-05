@@ -1,4 +1,5 @@
 #include "bit_match.h"
+#include "linked_list.h"
 
 #ifndef min
 #define min(a,b)        (((a) < (b)) ? (a) : (b))
@@ -7,6 +8,9 @@
 #ifndef max
 #define max(a,b)        (((a) > (b)) ? (a) : (b))
 #endif
+
+#define EVEN_MASK       0xaaaa
+#define ODD_MASK        0x5555
 
 // #define DEBUG
 
@@ -65,114 +69,128 @@ static uint8_t dwt(uint16_t a, uint16_t b)
         }
     }
 
-    return dtw_matrix[16][16];
+    return !dtw_matrix[16][16];
 }
 
 int match_dtw(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 {
-    if (candidate_curr->next_code) {
-        uint16_t match_code = candidate_curr->next_code;
+    uint16_t code = 0;
+    uint8_t thres = ll_mid(candidate_curr->brightnesses), i = 15;
 
+    struct ll_node *node = candidate_curr->brightnesses->head;
+    for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+        code |= ((node->data > thres) << i--);
+    }
+
+    uint16_t match_code;
+    if (candidate_curr->next_code) {
 #ifdef DEBUG
         printf(" match "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
             BYTE_TO_BINARY(candidate_curr->next_code>>8), BYTE_TO_BINARY(candidate_curr->next_code));
-        printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
         printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                BYTE_TO_BINARY(candidate_curr->idxs>>8), BYTE_TO_BINARY(candidate_curr->idxs));
+                BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
 #endif
-
-        if (dwt(candidate_curr->code, match_code) == 0) {
+        match_code = candidate_curr->next_code;
+        if (dwt(code, match_code)) {
             candidate_curr->next_code = cyclic_lsr(candidate_curr->next_code, 16);
-            return 0;
+            return 1;
         }
         else {
             candidate_curr->next_code = 0;
-            return -1;
+            return 0;
         }
     }
     else {
         for (int i = 0; i < 8; i++)
         {
-            uint16_t match_code = ld->codes[i];
-            if (dwt(candidate_curr->code, match_code) == 0) {
+            match_code = ld->codes[i];
+            if (dwt(code, match_code)) {
                 candidate_curr->next_code = cyclic_lsr(match_code, 16);
-
 #ifdef DEBUG
                 printf(" find  "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
                     BYTE_TO_BINARY(ld->codes[i]>>8), BYTE_TO_BINARY(ld->codes[i]));
-                printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                        BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
                 printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                        BYTE_TO_BINARY(candidate_curr->idxs>>8), BYTE_TO_BINARY(candidate_curr->idxs));
+                        BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
 #endif
-
-                return 0;
+                return 1;
             }
         }
-        return -1;
+        return 0;
     }
 }
 
 static int match_even_odd(uint16_t a, uint16_t b) {
-    uint8_t a_even = 0, a_odd = 0;
-    uint8_t b_even = 0, b_odd = 0;
-    int j = 0;
-    for (int i = 0; i < 16; i+=2) {
-        a_even |= ((a >> i) & 0x1) << j;
-        a_odd  |= ((a >> (i+1)) & 0x1) << j;
-        b_even |= ((b >> i) & 0x1) << j;
-        b_odd  |= ((b >> (i+1)) & 0x1) << j;
-        j++;
-    }
-
+    uint16_t a_even = a & EVEN_MASK, a_odd = a & ODD_MASK;
+    uint16_t b_even = b & EVEN_MASK, b_odd = b & ODD_MASK;
     return (a_even == b_even) || (a_odd == b_odd);
 }
 
-int match_bf(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
+int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 {
-    if (candidate_curr->next_code) {
-        int res = match_even_odd(candidate_curr->code, candidate_curr->next_code);
+    uint16_t code = 0;
+    uint8_t thres = ll_mid(candidate_curr->brightnesses), max = ll_max(candidate_curr->brightnesses), i = 15;
 
+    struct ll_node *node = candidate_curr->brightnesses->head;
+    if (max > 170) {
+        for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+            code |= ((node->data > thres) << i--);
+        }
+    }
+
+    // printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+    //         BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
+    // node = candidate_curr->brightnesses->head;
+    // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+    //     printf(" %3d", node->data);
+    // }
+    // printf("\n");
+
+    uint16_t match_code;
+    if (candidate_curr->next_code) {
 #ifdef DEBUG
         printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
                 BYTE_TO_BINARY(candidate_curr->next_code>>8), BYTE_TO_BINARY(candidate_curr->next_code));
-        printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
-        printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                BYTE_TO_BINARY(candidate_curr->idxs>>8), BYTE_TO_BINARY(candidate_curr->idxs));
-#endif
+        printf(" =?= "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
+                BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
 
-        if (res) {
+        // struct ll_node *node = candidate_curr->brightnesses->head;
+        // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+        //     printf(" %3d", node->data);
+        // }
+        // printf("\n");
+#endif
+        match_code = candidate_curr->next_code;
+        if (match_even_odd(code, match_code)) {
             candidate_curr->next_code = cyclic_lsr(candidate_curr->next_code, 16);
-            return 0;
+            return 1;
         }
         else {
+            printf("=== LOST ===\n");
+            // printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+            //     BYTE_TO_BINARY(candidate_curr->next_code>>8), BYTE_TO_BINARY(candidate_curr->next_code));
+            // printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
+            //         BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
             candidate_curr->next_code = 0;
-            return -1;
+            return 0;
         }
     }
     else {
         for (int i = 0; i < 8; i++)
         {
-            uint16_t match_code = ld->codes[i];
-            int res = match_even_odd(candidate_curr->code, match_code);
-
 #ifdef DEBUG
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
                 BYTE_TO_BINARY(ld->codes[i]>>8), BYTE_TO_BINARY(ld->codes[i]));
-            printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                    BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
-            printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                    BYTE_TO_BINARY(candidate_curr->idxs>>8), BYTE_TO_BINARY(candidate_curr->idxs));
+            printf(" =?= "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
+                    BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
 #endif
+            match_code = ld->codes[i];
+            if (match_even_odd(code, match_code)) {
+                printf("=== MATCH ===\n");
+                candidate_curr->next_code = cyclic_lsr(match_code, 16);
 
-            if (res) {
-                printf("match\n");
-                candidate_curr->next_code = cyclic_lsr(ld->codes[i], 16);
-                return 0;
+                return 1;
             }
         }
-        return -1;
+        return 0;
     }
 }
