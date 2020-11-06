@@ -1,5 +1,6 @@
 bin
 build
+wasm/build
 obj
 *.ps
 *.pnm

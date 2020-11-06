@@ -5,6 +5,12 @@ then
     rm -rf build wasm/build
 fi
 
+if [ "$1" == "--clean" ]
+then
+    rm -rf build wasm/build
+    exit 1
+fi
+
 if [ ! -d "./build" ]
 then
     mkdir build
