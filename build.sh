@@ -18,18 +18,25 @@ else
 fi
 
 cd ..
-cd wasm
 
-if [ ! -d "./build" ]
+if [ -d "./emsdk" ]
 then
-    mkdir build
-    cd build
+    source ./emsdk/emsdk_env.sh
+    cd wasm
 
-    emcmake cmake ..
-    emcmake make
+    if [ ! -d "./build" ]
+    then
+        mkdir build
+        cd build
+
+        emcmake cmake ..
+        emcmake make
+    else
+        cd build
+        emcmake make
+    fi
+
+    cp glitter_wasm.* ../../bin
 else
-    cd build
-    emcmake make
+    echo "Please download emsdk: git clone https://github.com/emscripten-core/emsdk.git"
 fi
-
-cp glitter_wasm.* ../../bin

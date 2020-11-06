@@ -15,10 +15,10 @@ include_directories( ../apriltag )
 file( GLOB_RECURSE APRILTAG_SRCS ../apriltag/*.c )
 
 # remove pywrap and unnecessary tag families
-list(REMOVE_ITEM APRILTAG_SRCS "${CMAKE_SOURCE_DIR}/../apriltag/apriltag_pywrap.c")
-list(REMOVE_ITEM APRILTAG_SRCS "${CMAKE_SOURCE_DIR}/../apriltag/tagCircle49h12.c")
-list(REMOVE_ITEM APRILTAG_SRCS "${CMAKE_SOURCE_DIR}/../apriltag/tagCustom48h12.c")
-list(REMOVE_ITEM APRILTAG_SRCS "${CMAKE_SOURCE_DIR}/../apriltag/tagStandard52h13.c")
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/../apriltag/apriltag_pywrap.c)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/../apriltag/tagCircle49h12.c)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/../apriltag/tagCustom48h12.c)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/../apriltag/tagStandard52h13.c)
 
 # include glitter library in build
 include_directories( ../glitter )
