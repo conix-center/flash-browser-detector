@@ -7,13 +7,9 @@ This repository should lead to a more lightweight implementation, able to run in
 
 # Quick Setup
 
-1. Make sure you have **opencv** installed if you want to compile the opencv example. **cmake** recommended but not needed.
+1. Make sure you have **opencv** installed if you want to compile the opencv example. **cmake** is required.
 2. Clone this repo (with ```--recurse-submodules```).
-3. Compile with make:
-```bash
-make
-```
-or, with cmake:
+3. Compile with cmake:
 ```
 ./build.sh
 ```
@@ -23,4 +19,4 @@ or, with cmake:
 ```
 * apritag_quads will generate a ```quad_output.ps``` file with the outlines of the quads detected.
 
-5. The **opencv_demo** grabs images directly from your webcam.
+5. The **opencv_demo** and **webcam_*** grabs images directly from your webcam.

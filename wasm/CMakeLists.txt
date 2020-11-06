@@ -25,4 +25,4 @@ include_directories( ../glitter )
 file( GLOB GLITTER_SRCS ../glitter/*.c )
 
 add_executable( glitter_wasm glitter_wasm.c ${APRILTAG_SRCS} ${GLITTER_SRCS} )
-set_target_properties( glitter_wasm PROPERTIES LINK_FLAGS "-s EXPORT_NAME='GlitterWASM' -s LLD_REPORT_UNDEFINED -s MODULARIZE=1 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['ccall', 'cwrap']' -s WASM=1" )
+set_target_properties( glitter_wasm PROPERTIES LINK_FLAGS "-s EXPORT_NAME='GlitterWASM' -s NODERAWFS=0 -s MODULARIZE=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['ccall', 'cwrap', 'getValue', 'setValue']' -s WASM=1" )

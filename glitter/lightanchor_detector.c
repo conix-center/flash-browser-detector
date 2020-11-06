@@ -73,9 +73,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
         td->wp = workerpool_create(td->nthreads);
     }
 
-    // timeprofile_clear(td->tp);
-    // timeprofile_stamp(td->tp, "init");
-
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
     // and blurring parameters.
@@ -83,8 +80,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     if (td->quad_decimate > 1)
     {
         quad_im = image_u8_decimate(im_orig, td->quad_decimate);
-
-        // timeprofile_stamp(td->tp, "decimate");
     }
 
     if (td->quad_sigma != 0)
@@ -138,11 +133,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
             }
         }
     }
-
-    // timeprofile_stamp(td->tp, "blur/sharp");
-
-    if (td->debug)
-        image_u8_write_pnm(quad_im, "debug_preprocess.pnm");
 
     zarray_t *quads = apriltag_quad_thresh(td, quad_im);
 

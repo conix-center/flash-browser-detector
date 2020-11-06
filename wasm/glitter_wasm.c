@@ -30,12 +30,14 @@ int init() {
     apriltag_detector_add_family(td, tf);
 
     td->quad_decimate = 2.0;
-    td->quad_sigma = 1.0;
+    td->quad_sigma = 0;
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
 
     ld = lightanchor_detector_create(0xaf);
+
+    printf("Ready!\n");
 
     return 0;
 }
@@ -52,21 +54,27 @@ double *track(uint8_t frame[], size_t cols, size_t rows) {
     };
 
     zarray_t *quads = detect_quads(td, &im);
-    zarray_t *lightanchors = decode_tags(ld, quads, &im);
+    // zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
-    output = malloc(6*zarray_size(lightanchors)*sizeof(double)); // 4 quad pts + 2 center
+    const int size = (1+10*zarray_size(quads))*sizeof(double); // len + 4 quad pts + 2 center
+    output = calloc(1, size);
+    output[0] = zarray_size(quads);
 
-    for (int i = 0; i < zarray_size(lightanchors); i++) {
-        lightanchor_t *lightanchor;
-        zarray_get_volatile(lightanchors, i, &lightanchor);
+    for (int i = 0; i < zarray_size(quads); i++) {
+        struct quad *q;
+        zarray_get_volatile(quads, i, &q);
 
-        output[6*i]   = lightanchor->p[0][0];
-        output[6*i+1] = lightanchor->p[0][1];
-        output[6*i+2] = lightanchor->p[1][0];
-        output[6*i+3] = lightanchor->p[1][1];
+        output[10*i+1+0] = q->p[0][0];
+        output[10*i+1+1] = q->p[0][1];
+        output[10*i+1+2] = q->p[1][0];
+        output[10*i+1+3] = q->p[1][1];
+        output[10*i+1+4] = q->p[2][0];
+        output[10*i+1+5] = q->p[2][1];
+        output[10*i+1+6] = q->p[3][0];
+        output[10*i+1+7] = q->p[3][1];
 
-        output[6*i+4] = lightanchor->c[0];
-        output[6*i+5] = lightanchor->c[1];
+        output[10*i+1+8] = -1;
+        output[10*i+1+9] = -1;
     }
 
     return output;

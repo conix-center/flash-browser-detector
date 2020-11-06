@@ -2,12 +2,12 @@
 
 if [ "$1" == "--force" ]
 then
-    rm -rf build wasm/build
+    rm -rf bin html/bin build wasm/build
 fi
 
 if [ "$1" == "--clean" ]
 then
-    rm -rf build wasm/build
+    rm -rf bin html/bin build wasm/build
     exit 1
 fi
 
@@ -42,7 +42,12 @@ then
         emcmake make
     fi
 
-    cp glitter_wasm.* ../../bin
+    if [ ! -d "../../html/bin" ]
+    then
+        mkdir ../../html/bin
+    fi
+
+    cp glitter_wasm.* ../../html/bin
 else
     echo "Please download emsdk: git clone https://github.com/emscripten-core/emsdk.git"
 fi
