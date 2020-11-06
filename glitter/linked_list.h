@@ -9,13 +9,13 @@ struct ll_node {
 struct ll {
     struct ll_node *head;
     struct ll_node *tail;
-    uint8_t max_size;
+    uint8_t capacity;
     uint8_t size;
 };
 
-static inline struct ll *ll_create(uint8_t max_size) {
+static inline struct ll *ll_create(uint8_t capacity) {
     struct ll *res = calloc(1, sizeof(struct ll));
-    res->max_size = max_size;
+    res->capacity = capacity;
     return res;
 }
 
@@ -27,7 +27,7 @@ static inline void ll_add(struct ll *list, uint8_t data) {
         list->tail = list->head;
         list->size++;
     }
-    else if (list->size <= list->max_size) {
+    else if (list->size <= list->capacity) {
         list->tail->next = node;
         list->tail = node;
         list->size++;

@@ -44,6 +44,10 @@ int main(int argc, char *argv[])
         cerr << "Couldn't open video capture device" << endl;
         return -1;
     }
+    // cap.set(CV_CAP_PROP_FPS, 30);
+    cap.set(CV_CAP_PROP_FOURCC, CV_FOURCC('M', 'J', 'P', 'G'));
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
     // Initialize tag detector with options
     apriltag_family_t *tf = NULL;

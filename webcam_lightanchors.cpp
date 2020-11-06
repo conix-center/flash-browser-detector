@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
 
     double fps = cap.get(CAP_PROP_FPS);
-    cout << "FPS w/ CAP_PROP_FPS : " << fps << endl;
+    cout << "FPS using CAP_PROP_FPS: " << fps << endl;
 
     // Initialize tag detector with options
     apriltag_family_t *tf = NULL;
@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
     int frames = 0;
 
     time_t start, end;
-
     time(&start);
 
     Mat frame, gray;
@@ -87,50 +86,46 @@ int main(int argc, char *argv[])
 
         frames++;
 
-        // cvtColor(frame, gray, COLOR_BGR2GRAY);
+        cvtColor(frame, gray, COLOR_BGR2GRAY);
 
         // // Make an image_u8_t header for the Mat data
-        // image_u8_t im = {
-        //     .width = gray.cols,
-        //     .height = gray.rows,
-        //     .stride = gray.cols,
-        //     .buf = gray.data
-        // };
+        image_u8_t im = {
+            .width = gray.cols,
+            .height = gray.rows,
+            .stride = gray.cols,
+            .buf = gray.data
+        };
 
-        // zarray_t *quads = detect_quads(td, &im);
+        zarray_t *quads = detect_quads(td, &im);
 
-        // zarray_t *lightanchors = decode_tags(ld, quads, &im);
-        // // cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
+        zarray_t *lightanchors = decode_tags(ld, quads, &im);
+        // cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
 
-        // // Draw quad outlines
-        // for (int i = 0; i < zarray_size(lightanchors); i++) {
-        //     lightanchor_t *lightanchor;
-        //     zarray_get_volatile(lightanchors, i, &lightanchor);
+        // Draw quad outlines
+        for (int i = 0; i < zarray_size(lightanchors); i++) {
+            lightanchor_t *lightanchor;
+            zarray_get_volatile(lightanchors, i, &lightanchor);
 
-        //     line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
-        //             Point(lightanchor->p[1][0], lightanchor->p[1][1]),
-        //             Scalar(0xff, 0, 0), 1);
-        //     line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
-        //             Point(lightanchor->p[3][0], lightanchor->p[3][1]),
-        //             Scalar(0xff, 0, 0), 1);
-        //     line(frame, Point(lightanchor->p[1][0], lightanchor->p[1][1]),
-        //             Point(lightanchor->p[2][0], lightanchor->p[2][1]),
-        //             Scalar(0xff, 0, 0), 1);
-        //     line(frame, Point(lightanchor->p[2][0], lightanchor->p[2][1]),
-        //             Point(lightanchor->p[3][0], lightanchor->p[3][1]),
-        //             Scalar(0xff, 0, 0), 1);
-        //     circle(frame, Point(lightanchor->c[0], lightanchor->c[1]), 1,
-        //            Scalar(0, 0, 0xff), 2);
-        //     stringstream brightness;
-        //     brightness << "0x" << hex << +(int)(lightanchor->next_code & 0xffff);
-        //     putText(frame, brightness.str(), Point(lightanchor->c[0], lightanchor->c[1]),
-        //             FONT_HERSHEY_DUPLEX, 0.5,
-        //             Scalar(0, 0, 0xff), 1);
-        // }
-
-        // usleep(100000);
-
-        // lightanchors_destroy(lightanchors);
+            line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
+                    Point(lightanchor->p[1][0], lightanchor->p[1][1]),
+                    Scalar(0xff, 0, 0), 1);
+            line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
+                    Point(lightanchor->p[3][0], lightanchor->p[3][1]),
+                    Scalar(0xff, 0, 0), 1);
+            line(frame, Point(lightanchor->p[1][0], lightanchor->p[1][1]),
+                    Point(lightanchor->p[2][0], lightanchor->p[2][1]),
+                    Scalar(0xff, 0, 0), 1);
+            line(frame, Point(lightanchor->p[2][0], lightanchor->p[2][1]),
+                    Point(lightanchor->p[3][0], lightanchor->p[3][1]),
+                    Scalar(0xff, 0, 0), 1);
+            circle(frame, Point(lightanchor->c[0], lightanchor->c[1]), 1,
+                   Scalar(0, 0, 0xff), 2);
+            stringstream brightness;
+            brightness << "0x" << hex << +(int)(lightanchor->valid & 0xffff);
+            putText(frame, brightness.str(), Point(lightanchor->c[0], lightanchor->c[1]),
+                    FONT_HERSHEY_DUPLEX, 0.5,
+                    Scalar(0, 0, 0xff), 1);
+        }
 
         imshow("Lightanchor Detections", frame);
 

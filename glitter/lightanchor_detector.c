@@ -202,7 +202,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
     zarray_clear(ld->detections);
 
     const int64_t max_dist = sqrtf(im_w*im_w+im_h*im_h);
-    const int thres_dist = im_w / 100;
+    const int thres_dist = im_w / 50;
 
     zarray_t *valid = zarray_create(sizeof(lightanchor_t));
     if (zarray_size(ld->candidates) == 0) {
@@ -220,7 +220,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
             lightanchor_t *candidate;
             zarray_get_volatile(candidate_tags, i, &candidate);
 
-            int match_idx;
+            int match_idx = 0;
             double min_dist = max_dist;
             // search for closest global tag
             for (int j = 0; j < zarray_size(ld->candidates); j++)
@@ -240,9 +240,11 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
                 lightanchor_t *candidate_prev, *candidate_curr = lightanchor_copy(candidate);
                 zarray_get_volatile(ld->candidates, match_idx, &candidate_prev);
 
+                candidate_curr->valid = candidate_prev->valid;
                 candidate_curr->brightnesses = candidate_prev->brightnesses;
                 ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
                 candidate_curr->next_code = candidate_prev->next_code;
+                candidate_curr->counter = candidate_prev->counter;
 
                 if (match(ld, candidate_curr)) {
                     zarray_add(ld->detections, candidate_curr);

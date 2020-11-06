@@ -16,7 +16,13 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN} )
 
 # include apriltag library in build
 include_directories( apriltag )
-file( GLOB_RECURSE APRILTAG_SRCS apriltag/*.o )
+file( GLOB_RECURSE APRILTAG_OBJS apriltag/*.o )
+
+# remove pywrap and unnecessary tag families
+list(REMOVE_ITEM APRILTAG_OBJS "${CMAKE_SOURCE_DIR}/apriltag/apriltag_pywrap.o")
+list(REMOVE_ITEM APRILTAG_OBJS "${CMAKE_SOURCE_DIR}/apriltag/tagCircle49h12.o")
+list(REMOVE_ITEM APRILTAG_OBJS "${CMAKE_SOURCE_DIR}/apriltag/tagCustom48h12.o")
+list(REMOVE_ITEM APRILTAG_OBJS "${CMAKE_SOURCE_DIR}/apriltag/tagStandard52h13.o")
 
 # include glitter library in build
 include_directories( glitter )
@@ -24,15 +30,15 @@ file( GLOB GLITTER_SRCS glitter/*.c )
 
 # compile apriltag_demo example
 add_executable( apriltag_demo apriltag_demo.c )
-target_link_libraries( apriltag_demo ${APRILTAG_SRCS} )
+target_link_libraries( apriltag_demo ${APRILTAG_OBJS} )
 
 # compile apriltag_quads example
 add_executable( apriltag_quads apriltag_quads.c ${GLITTER_SRCS} )
-target_link_libraries( apriltag_quads ${APRILTAG_SRCS} )
+target_link_libraries( apriltag_quads ${APRILTAG_OBJS} )
 
 # compile lightanchor_demo example
 add_executable( lightanchor_demo lightanchor_demo.c ${GLITTER_SRCS} )
-target_link_libraries( lightanchor_demo ${APRILTAG_SRCS} )
+target_link_libraries( lightanchor_demo ${APRILTAG_OBJS} )
 
 # find OpenCV, if exists
 find_package( OpenCV QUIET )
@@ -41,15 +47,15 @@ if ( OpenCV_FOUND )
 
     # compile opencv_demo example
     add_executable( opencv_demo opencv_demo.cpp )
-    target_link_libraries( opencv_demo ${APRILTAG_SRCS} ${OpenCV_LIBS} )
+    target_link_libraries( opencv_demo ${APRILTAG_OBJS} ${OpenCV_LIBS} )
 
     # compile webcam_quads example
     add_executable( webcam_quads webcam_quads.cpp ${GLITTER_SRCS})
-    target_link_libraries( webcam_quads ${APRILTAG_SRCS} ${OpenCV_LIBS} )
+    target_link_libraries( webcam_quads ${APRILTAG_OBJS} ${OpenCV_LIBS} )
 
     # compile webcam_lightanchors example
     add_executable( webcam_lightanchors webcam_lightanchors.cpp ${GLITTER_SRCS})
-    target_link_libraries( webcam_lightanchors ${APRILTAG_SRCS} ${OpenCV_LIBS} )
+    target_link_libraries( webcam_lightanchors ${APRILTAG_OBJS} ${OpenCV_LIBS} )
 else()
     message( "OpenCV not found. Examples that use OpenCV will not be compiled!" )
 endif()

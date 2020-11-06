@@ -127,67 +127,64 @@ static int match_even_odd(uint16_t a, uint16_t b) {
 
 int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 {
-    uint16_t code = 0;
     uint8_t thres = ll_mid(candidate_curr->brightnesses), max = ll_max(candidate_curr->brightnesses), i = 15;
 
     struct ll_node *node = candidate_curr->brightnesses->head;
-    if (max > 170) {
+    if (max > 200) {
         for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-            code |= ((node->data > thres) << i--);
+            candidate_curr->code |= ((node->data > thres) << i--);
         }
     }
 
-    // printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-    //         BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
-    // node = candidate_curr->brightnesses->head;
-    // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-    //     printf(" %3d", node->data);
-    // }
-    // printf("\n");
+#ifdef DEBUG
+    // printf("%d ", candidate_curr->counter);
+    printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+            BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
+    node = candidate_curr->brightnesses->head;
+    for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+        printf(" %3d", node->data);
+    }
+    printf("\n");
+#endif
 
     uint16_t match_code;
-    if (candidate_curr->next_code) {
+    if (candidate_curr->valid) {
+        // return 1;
 #ifdef DEBUG
-        printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
+        printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
                 BYTE_TO_BINARY(candidate_curr->next_code>>8), BYTE_TO_BINARY(candidate_curr->next_code));
-        printf(" =?= "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
-
-        // struct ll_node *node = candidate_curr->brightnesses->head;
-        // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-        //     printf(" %3d", node->data);
-        // }
-        // printf("\n");
 #endif
         match_code = candidate_curr->next_code;
-        if (match_even_odd(code, match_code)) {
-            candidate_curr->next_code = cyclic_lsr(candidate_curr->next_code, 16);
+        if (match_even_odd(candidate_curr->code, match_code)) {
+            candidate_curr->next_code = cyclic_lsr(match_code, 16);
             return 1;
         }
         else {
-            printf("=== LOST ===\n");
+#ifdef DEBUG
+            printf("==== LOST ====\n");
             // printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
             //     BYTE_TO_BINARY(candidate_curr->next_code>>8), BYTE_TO_BINARY(candidate_curr->next_code));
             // printf(" > "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
             //         BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
+#endif
             candidate_curr->next_code = 0;
+            candidate_curr->valid = 0;
             return 0;
         }
     }
     else {
         for (int i = 0; i < 8; i++)
         {
-#ifdef DEBUG
-            printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
-                BYTE_TO_BINARY(ld->codes[i]>>8), BYTE_TO_BINARY(ld->codes[i]));
-            printf(" =?= "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                    BYTE_TO_BINARY(code>>8), BYTE_TO_BINARY(code));
-#endif
             match_code = ld->codes[i];
-            if (match_even_odd(code, match_code)) {
-                printf("=== MATCH ===\n");
-                candidate_curr->next_code = cyclic_lsr(match_code, 16);
-
+            if (match_even_odd(candidate_curr->code, match_code)) {
+                candidate_curr->next_code = match_code;
+                candidate_curr->valid = 1;
+#ifdef DEBUG
+                printf("==== MATCH ====\n");
+                printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
+                        BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                printf("===============\n");
+#endif
                 return 1;
             }
         }
