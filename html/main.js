@@ -1,5 +1,11 @@
 let width = Math.min(window.innerWidth, window.innerHeight);
 
+const code = 0xaf;
+
+const targetFps = 30;
+const fpsInterval = 1000 / targetFps;
+
+let start_t, prev_t;
 let frames = 0;
 
 function initStats() {
@@ -83,14 +89,14 @@ function getFrameGrayscale() {
 
     for (var i = 0, j = 0; i < imageDataPixels.length; i += 4, j++) {
         let r = imageDataPixels[i];
-        let g = imageDataPixels[i + 1];
-        let b = imageDataPixels[i + 2];
+        let g = imageDataPixels[i+1];
+        let b = imageDataPixels[i+2];
         let grayscale = (0.30 * r) + (0.59 * g) + (0.11 * b);
         grayscalePixels[j] = grayscale;
 
         imageDataPixels[i] = grayscale;
-        imageDataPixels[i + 1] = grayscale;
-        imageDataPixels[i + 2] = grayscale;
+        imageDataPixels[i+1] = grayscale;
+        imageDataPixels[i+2] = grayscale;
     }
 
     videoCanvCtx.putImageData(imageData, 0, 0);
@@ -112,7 +118,7 @@ function drawQuad(quad) {
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = "blue";
-    overlayCtx.lineWidth = 2;
+    overlayCtx.lineWidth = 5;
 
     overlayCtx.moveTo(quad.p00, quad.p01);
     overlayCtx.lineTo(quad.p10, quad.p11);
@@ -134,28 +140,31 @@ function drawQuads(quads) {
 }
 
 function processVideo() {
-    window.stats.begin();
+    const now = Date.now();
+    const dt = now - prev_t;
 
-    const frame = getFrameGrayscale();
+    if (dt > fpsInterval) {
+        prev_t = now - (dt % fpsInterval);
 
-    if (frames % 2 == 0) {
+        window.stats.begin();
+
+        const frame = getFrameGrayscale();
         let quads = window.glitterDetector.track(frame, window.width, window.height);
         drawQuads(quads);
-    }
-    frames++;
-    // drawQuad(quads[0]);
 
-    window.stats.end();
+        window.stats.end();
+    }
 
     requestAnimationFrame(processVideo);
 }
 
 window.onload = function() {
-    window.glitterDetector = new GLITTER_Detector(_ => {
+    window.glitterDetector = new GLITTER_Detector(code, () => {
         initStats();
         setupVideo(true, true, () => {
-            let res = window.glitterDetector.init();
-            if (res) requestAnimationFrame(processVideo);
+            start_t = Date.now()
+            prev_t = start_t;
+            requestAnimationFrame(processVideo);
         });
     });
 }

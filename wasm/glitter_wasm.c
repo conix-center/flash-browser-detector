@@ -23,19 +23,19 @@ apriltag_detector_t *td = NULL;
 lightanchor_detector_t *ld = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-int init() {
+int init(uint8_t code) {
     tf = tag36h11_create();
 
     td = apriltag_detector_create();
     apriltag_detector_add_family(td, tf);
 
     td->quad_decimate = 2.0;
-    td->quad_sigma = 0;
+    td->quad_sigma = 1.0;
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
 
-    ld = lightanchor_detector_create(0xaf);
+    ld = lightanchor_detector_create(code);
 
     printf("Ready!\n");
 
@@ -54,27 +54,27 @@ double *track(uint8_t frame[], size_t cols, size_t rows) {
     };
 
     zarray_t *quads = detect_quads(td, &im);
-    // zarray_t *lightanchors = decode_tags(ld, quads, &im);
+    zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
     const int size = (1+10*zarray_size(quads))*sizeof(double); // len + 4 quad pts + 2 center
     output = calloc(1, size);
-    output[0] = zarray_size(quads);
+    output[0] = zarray_size(lightanchors);
 
-    for (int i = 0; i < zarray_size(quads); i++) {
-        struct quad *q;
-        zarray_get_volatile(quads, i, &q);
+    for (int i = 0; i < zarray_size(lightanchors); i++) {
+        struct lightanchor *la;
+        zarray_get_volatile(lightanchors, i, &la);
 
-        output[10*i+1+0] = q->p[0][0];
-        output[10*i+1+1] = q->p[0][1];
-        output[10*i+1+2] = q->p[1][0];
-        output[10*i+1+3] = q->p[1][1];
-        output[10*i+1+4] = q->p[2][0];
-        output[10*i+1+5] = q->p[2][1];
-        output[10*i+1+6] = q->p[3][0];
-        output[10*i+1+7] = q->p[3][1];
+        output[10*i+1+0] = la->p[0][0];
+        output[10*i+1+1] = la->p[0][1];
+        output[10*i+1+2] = la->p[1][0];
+        output[10*i+1+3] = la->p[1][1];
+        output[10*i+1+4] = la->p[2][0];
+        output[10*i+1+5] = la->p[2][1];
+        output[10*i+1+6] = la->p[3][0];
+        output[10*i+1+7] = la->p[3][1];
 
-        output[10*i+1+8] = -1;
-        output[10*i+1+9] = -1;
+        output[10*i+1+8] = la->c[0];
+        output[10*i+1+9] = la->c[1];
     }
 
     return output;

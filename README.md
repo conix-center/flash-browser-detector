@@ -1,9 +1,9 @@
 # Glitter Detector
 
-For now, just a starter skeleton, based on [apriltag](https://github.com/AprilRobotics/apriltag) examples.
-
 The glitter detector should detect a modulated LEDs to anchor AR content as described [here](http://users.ece.cmu.edu/~agr/resources/publications/ipsn_20_glitter.pdf).
 This repository should lead to a more lightweight implementation, able to run in a browser, using WebAssembly.
+
+Based on [apriltag](https://github.com/AprilRobotics/apriltag).
 
 # Quick Setup
 

@@ -135,21 +135,22 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             candidate_curr->code |= ((node->data > thres) << i--);
         }
     }
+    // printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
+    //         BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
 
 #ifdef DEBUG
     // printf("%d ", candidate_curr->counter);
     printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"",
             BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
-    node = candidate_curr->brightnesses->head;
-    for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-        printf(" %3d", node->data);
-    }
+    // node = candidate_curr->brightnesses->head;
+    // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+    //     printf(" %3d", node->data);
+    // }
     printf("\n");
 #endif
 
     uint16_t match_code;
     if (candidate_curr->valid) {
-        // return 1;
 #ifdef DEBUG
         printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
                 BYTE_TO_BINARY(candidate_curr->next_code>>8), BYTE_TO_BINARY(candidate_curr->next_code));

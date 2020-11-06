@@ -1,9 +1,11 @@
 class GLITTER_Detector {
-    constructor(callback) {
+    constructor(code, callback) {
         let _this = this;
         this.ready = false;
         this.shouldTrack = false;
         this.validPoints = false;
+        this.code = code;
+
         GlitterWASM().then(function (Module) {
             console.log("GLITTER WASM module loaded.");
             _this.onWasmInit(Module);
@@ -13,28 +15,22 @@ class GLITTER_Detector {
 
     onWasmInit(Module) {
         this._Module = Module;
-    }
-
-    init() {
-        let res = this._Module.ccall( "init", "number", null, null );
-        return res == 0;
+        this._init = Module.cwrap("init", "number", ["number"]);
+        this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+        this.ready = (this._init(this.code) == 0);
     }
 
     track(im_arr, width, height) {
+        let quads = [];
+        if (!this.ready) return quads;
+
         const im_ptr = this._Module._malloc(im_arr.length);
         this._Module.HEAPU8.set(im_arr, im_ptr);
 
-        const ptr = this._Module.ccall(
-            "track",
-            "number",
-            ["number", "number", "number"],
-            [im_ptr, width, height]
-        );
+        const ptr = this._track(im_ptr, width, height);
         const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
-        let quads = [];
-
-        const numQuads = this._Module.HEAPF64[ptrF64];
+        const numQuads = this._Module.getValue(ptr, "double");
         // console.log("numQuads = ", numQuads);
 
         for (var i = 0; i < numQuads; i++) {
