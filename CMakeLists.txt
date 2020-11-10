@@ -16,31 +16,35 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN} )
 
 # include apriltag library in build
 include_directories( apriltag )
-file( GLOB_RECURSE APRILTAG_OBJS apriltag/*.o )
+file( GLOB_RECURSE APRILTAG_SRCS apriltag/*.c )
 
 # remove pywrap and unnecessary tag families
-list(REMOVE_ITEM APRILTAG_OBJS ${CMAKE_SOURCE_DIR}/apriltag/apriltag_pywrap.o)
-list(REMOVE_ITEM APRILTAG_OBJS ${CMAKE_SOURCE_DIR}/apriltag/tagCircle49h12.o)
-list(REMOVE_ITEM APRILTAG_OBJS ${CMAKE_SOURCE_DIR}/apriltag/tagCustom48h12.o)
-list(REMOVE_ITEM APRILTAG_OBJS ${CMAKE_SOURCE_DIR}/apriltag/tagStandard52h13.o)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/apriltag/apriltag_pywrap.c)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/apriltag/tagCircle49h12.c)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/apriltag/tagCustom48h12.c)
+list(REMOVE_ITEM APRILTAG_SRCS ${CMAKE_SOURCE_DIR}/apriltag/tagStandard52h13.c)
+
+add_library( apriltag STATIC ${APRILTAG_SRCS} )
 
 # include glitter library in build
 include_directories( glitter )
 file( GLOB GLITTER_SRCS glitter/*.c )
 
+add_library( glitter STATIC ${GLITTER_SRCS} )
+
 set( EXAMPLES_DIR examples )
 
 # compile apriltag_demo example
 add_executable( apriltag_demo ${EXAMPLES_DIR}/apriltag_demo.c )
-target_link_libraries( apriltag_demo ${APRILTAG_OBJS} )
+target_link_libraries( apriltag_demo apriltag )
 
 # compile apriltag_quads example
-add_executable( apriltag_quads ${EXAMPLES_DIR}/apriltag_quads.c ${GLITTER_SRCS} )
-target_link_libraries( apriltag_quads ${APRILTAG_OBJS} )
+add_executable( apriltag_quads ${EXAMPLES_DIR}/apriltag_quads.c )
+target_link_libraries( apriltag_quads apriltag glitter )
 
 # compile lightanchor_demo example
-add_executable( lightanchor_demo ${EXAMPLES_DIR}/lightanchor_demo.c ${GLITTER_SRCS} )
-target_link_libraries( lightanchor_demo ${APRILTAG_OBJS} )
+add_executable( lightanchor_demo ${EXAMPLES_DIR}/lightanchor_demo.c )
+target_link_libraries( lightanchor_demo apriltag glitter )
 
 # find OpenCV, if exists
 find_package( OpenCV QUIET )
@@ -49,15 +53,15 @@ if ( OpenCV_FOUND )
 
     # compile opencv_demo example
     add_executable( opencv_demo ${EXAMPLES_DIR}/opencv_demo.cpp )
-    target_link_libraries( opencv_demo ${APRILTAG_OBJS} ${OpenCV_LIBS} )
+    target_link_libraries( opencv_demo ${OpenCV_LIBS} apriltag )
 
     # compile webcam_quads example
-    add_executable( webcam_quads ${EXAMPLES_DIR}/webcam_quads.cpp ${GLITTER_SRCS})
-    target_link_libraries( webcam_quads ${APRILTAG_OBJS} ${OpenCV_LIBS} )
+    add_executable( webcam_quads ${EXAMPLES_DIR}/webcam_quads.cpp)
+    target_link_libraries( webcam_quads ${OpenCV_LIBS} apriltag glitter )
 
     # compile webcam_lightanchors example
-    add_executable( webcam_lightanchors ${EXAMPLES_DIR}/webcam_lightanchors.cpp ${GLITTER_SRCS})
-    target_link_libraries( webcam_lightanchors ${APRILTAG_OBJS} ${OpenCV_LIBS} )
+    add_executable( webcam_lightanchors ${EXAMPLES_DIR}/webcam_lightanchors.cpp)
+    target_link_libraries( webcam_lightanchors ${OpenCV_LIBS} apriltag glitter )
 else()
     message( "OpenCV not found. Examples that use OpenCV will not be compiled!" )
 endif()
