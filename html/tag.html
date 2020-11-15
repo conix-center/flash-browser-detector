@@ -61,8 +61,8 @@
             return res;
         }
 
-        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 20;
-        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0b10101010;
+        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 15;
+        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
         const len = 8;
 
         let started = false;

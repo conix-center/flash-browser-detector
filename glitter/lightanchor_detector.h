@@ -14,6 +14,7 @@
 #include "common/zarray.h"
 
 /* declare functions that we need as extern */
+extern double value_for_pixel(image_u8_t *im, double px, double py);
 extern zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im);
 extern int quad_update_homographies(struct quad *quad);
 extern struct quad *quad_copy(struct quad *quad);

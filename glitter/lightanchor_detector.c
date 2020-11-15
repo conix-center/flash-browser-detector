@@ -13,6 +13,7 @@
 #include "common/zarray.h"
 #include "common/homography.h"
 #include "common/g2d.h"
+#include "common/math_util.h"
 #include "linked_list.h"
 #include "lightanchor_detector.h"
 #include "bit_match.h"
@@ -20,29 +21,62 @@
 #define HIGH_THRES      200
 
 static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
-    int avg = 0, i = 0;
-    const int cx = l->c[0], cy = l->c[1];
-    const int px0 = l->p[0][0], py0 = l->p[0][1], px1 = l->p[1][0], py1 = l->p[1][1];
-    const int px2 = l->p[2][0], py2 = l->p[2][1], px3 = l->p[3][0], py3 = l->p[3][1];
+    int avg = 0, n = 0;
 
-    // n x n square in center
-    const int n = 6;
-    for (int j = -n/2; j < n/2+1; j++) {
-        for (int k = -n/2; k < n/2+1; k++) {
-            avg += im->buf[(cy+j) * im->stride + (cx+k)]; i++;
+    // const int cx = l->c[0], cy = l->c[1];
+    const double px0d = l->p[0][0], py0d = l->p[0][1], px1d = l->p[1][0], py1d = l->p[1][1];
+    const double px2d = l->p[2][0], py2d = l->p[2][1], px3d = l->p[3][0], py3d = l->p[3][1];
+    const int px0 = ceil(px0d - 0.5), py0 = ceil(py0d - 0.5), px1 = ceil(px1d - 0.5), py1 = ceil(py1d - 0.5);
+    const int px2 = ceil(px2d - 0.5), py2 = ceil(py2d - 0.5), px3 = ceil(px3d - 0.5), py3 = ceil(py3d - 0.5);
+
+    int max_x = 0;
+    max_x = imax(px0, max_x);
+    max_x = imax(px1, max_x);
+    max_x = imax(px2, max_x);
+    max_x = imax(px3, max_x);
+
+    int min_x = 255;
+    min_x = imin(px0, min_x);
+    min_x = imin(px1, min_x);
+    min_x = imin(px2, min_x);
+    min_x = imin(px3, min_x);
+
+    int max_y = 0;
+    max_y = imax(py0, max_y);
+    max_y = imax(py1, max_y);
+    max_y = imax(py2, max_y);
+    max_y = imax(py3, max_y);
+
+    int min_y = 255;
+    min_y = imin(py0, min_y);
+    min_y = imin(py1, min_y);
+    min_y = imin(py2, min_y);
+    min_y = imin(py3, min_y);
+
+    zarray_t *poly = g2d_polygon_create_data(l->p, 4);
+
+    double p[2] = {-1,-1};
+    for (int ix = min_x; ix <= max_x; ix++) {
+        for (int iy = min_y; iy <= max_y; iy++) {
+            p[0] = (double)ix;
+            p[1] = (double)iy;
+            if (g2d_polygon_contains_point(poly, p)) {
+                avg += value_for_pixel(im, ix, iy); n++;
+            }
         }
     }
 
-    // corners
-    avg += im->buf[py0 * im->stride + px0]; i++;
-    avg += im->buf[py1 * im->stride + px1]; i++;
-    avg += im->buf[py2 * im->stride + px2]; i++;
-    avg += im->buf[py3 * im->stride + px3]; i++;
-
-    return (uint8_t)(avg / i);
+    uint8_t res;
+    if (n != 0) {
+        res = (uint8_t)(avg / n);
+    }
+    else {
+        res = 255;
+    }
+    return res;
 }
 
-lightanchor_detector_t *lightanchor_detector_create(char code)
+lightanchor_detector_t *lightanchor_detector_create(char code)\
 {
     lightanchor_detector_t *ld = (lightanchor_detector_t*) calloc(1, sizeof(lightanchor_detector_t));
 
@@ -200,6 +234,8 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
     const int64_t max_dist = sqrtf(im_w*im_w+im_h*im_h);
     const int thres_dist = im_w / 50;
 
+    int cnt = 0;
+
     zarray_t *valid = zarray_create(sizeof(lightanchor_t));
     if (zarray_size(ld->candidates) == 0) {
         for (int i = 0; i < zarray_size(candidate_tags); i++)
@@ -232,6 +268,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
             }
 
             if (min_dist < (double)thres_dist) {
+                cnt++;
                 // candidate_prev ==> candidate_curr
                 lightanchor_t *candidate_prev, *candidate_curr = lightanchor_copy(candidate);
                 zarray_get_volatile(ld->candidates, match_idx, &candidate_prev);
@@ -242,6 +279,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
 
                 candidate_curr->brightnesses = candidate_prev->brightnesses;
                 candidate_curr->brightness = get_brightness(candidate_curr, im);
+
                 ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
 
                 uint8_t thres = ll_mid(candidate_curr->brightnesses);
@@ -257,6 +295,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
                 // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
                 //     printf(" %3d", node->data);
                 // }
+                // puts("");
 
                 if (match(ld, candidate_curr)) {
                     zarray_add(ld->detections, candidate_curr);

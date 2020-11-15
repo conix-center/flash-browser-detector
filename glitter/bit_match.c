@@ -1,20 +1,13 @@
 #include "bit_match.h"
 #include "linked_list.h"
-
-#ifndef min
-#define min(a,b)        (((a) < (b)) ? (a) : (b))
-#endif
-
-#ifndef max
-#define max(a,b)        (((a) > (b)) ? (a) : (b))
-#endif
+#include "common/math_util.h"
 
 #define EVEN_MASK       0xaaaa
 #define ODD_MASK        0x5555
 
-// #define DEBUG
+#define DEBUG
 
-size_t cyclic_lsr(size_t bits, size_t size)
+static inline size_t cyclic_lsr(size_t bits, size_t size)
 {
     return (bits << 1) | ((bits >> (size - 1)) & 0x1);
 }
@@ -134,16 +127,16 @@ static uint8_t dwt(uint16_t a, uint16_t b)
     dtw_matrix[0][0] = 0;
 
     for (int i = 0; i < 17; i++) {
-        for (int j = max(1,i-w); j < min(16,i+w)+1; j++) {
+        for (int j = imax(1,i-w); j < imin(16,i+w)+1; j++) {
             dtw_matrix[i][j] = 0;
         }
     }
 
     for (int i = 1; i < 17; i++) {
-        for (int j = max(1,i-w); j < min(16,i+w)+1; j++) {
+        for (int j = imax(1,i-w); j < imin(16,i+w)+1; j++) {
             uint8_t cost = !!(a & (1 << (15-(i-1)))) != !!(b & (1 << (15-(j-1))));
-            uint8_t last_min = min(dtw_matrix[i-1][j], dtw_matrix[i][j-1]);
-            last_min = min(last_min, dtw_matrix[i-1][j-1]);
+            uint8_t last_min = imin(dtw_matrix[i-1][j], dtw_matrix[i][j-1]);
+            last_min = imin(last_min, dtw_matrix[i-1][j-1]);
             dtw_matrix[i][j] = cost + last_min;
         }
     }
