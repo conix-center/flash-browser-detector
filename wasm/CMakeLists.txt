@@ -8,7 +8,7 @@ if( NOT CMAKE_BUILD_TYPE )
 endif( NOT CMAKE_BUILD_TYPE )
 
 set( CMAKE_CXX_FLAGS_RELEASE )
-add_compile_options( -O3 )
+add_compile_options( -Wall -O3 )
 
 # include apriltag library in build
 include_directories( ../apriltag )

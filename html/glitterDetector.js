@@ -1,3 +1,6 @@
+function dec2bin(dec){
+    return (dec >>> 0).toString(2);
+}
 class GLITTER_Detector {
     constructor(code, callback) {
         let _this = this;
@@ -47,6 +50,7 @@ class GLITTER_Detector {
                 c1  : this._Module.HEAPF64[ptrF64+10*i+1+9],
             };
             quads.push(q);
+            // console.log(dec2bin(q.code));
         }
 
         this._Module._free(ptr);

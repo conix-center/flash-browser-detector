@@ -25,7 +25,7 @@ struct lightanchor_detector
     uint8_t blink_freq;
     zarray_t *candidates;
     zarray_t *detections;
-    uint16_t codes[8];
+    uint16_t code;
 };
 
 typedef struct lightanchor lightanchor_t;

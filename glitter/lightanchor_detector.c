@@ -11,19 +11,35 @@
 #include <math.h>
 #include "apriltag.h"
 #include "common/zarray.h"
+#include "common/homography.h"
 #include "common/g2d.h"
 #include "linked_list.h"
 #include "lightanchor_detector.h"
 #include "bit_match.h"
 
-static inline void homography_project(const matd_t *H, double x, double y, double *ox, double *oy)
-{
-    double xx = MATD_EL(H, 0, 0)*x + MATD_EL(H, 0, 1)*y + MATD_EL(H, 0, 2);
-    double yy = MATD_EL(H, 1, 0)*x + MATD_EL(H, 1, 1)*y + MATD_EL(H, 1, 2);
-    double zz = MATD_EL(H, 2, 0)*x + MATD_EL(H, 2, 1)*y + MATD_EL(H, 2, 2);
+#define HIGH_THRES      200
 
-    *ox = xx / zz;
-    *oy = yy / zz;
+static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
+    int avg = 0, i = 0;
+    const int cx = l->c[0], cy = l->c[1];
+    const int px0 = l->p[0][0], py0 = l->p[0][1], px1 = l->p[1][0], py1 = l->p[1][1];
+    const int px2 = l->p[2][0], py2 = l->p[2][1], px3 = l->p[3][0], py3 = l->p[3][1];
+
+    // n x n square in center
+    const int n = 6;
+    for (int j = -n/2; j < n/2+1; j++) {
+        for (int k = -n/2; k < n/2+1; k++) {
+            avg += im->buf[(cy+j) * im->stride + (cx+k)]; i++;
+        }
+    }
+
+    // corners
+    avg += im->buf[py0 * im->stride + px0]; i++;
+    avg += im->buf[py1 * im->stride + px1]; i++;
+    avg += im->buf[py2 * im->stride + px2]; i++;
+    avg += im->buf[py3 * im->stride + px3]; i++;
+
+    return (uint8_t)(avg / i);
 }
 
 lightanchor_detector_t *lightanchor_detector_create(char code)
@@ -35,18 +51,7 @@ lightanchor_detector_t *lightanchor_detector_create(char code)
     ld->candidates = zarray_create(sizeof(lightanchor_t));
     ld->detections = zarray_create(sizeof(lightanchor_t));
 
-    for (int i = 0; i < 8; i++)
-    {
-        ld->codes[i] = double_bits(code);
-        code = (code << 1) | ((code >> 7) & 0x1);
-    }
-
-#if 0
-    for (int i = 0; i < 8; i++) {
-        printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                BYTE_TO_BINARY(ld->codes[i]>>8), BYTE_TO_BINARY(ld->codes[i]));
-    }
-#endif
+    ld->code = double_bits(code);
 
     return ld;
 }
@@ -186,11 +191,12 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     return quads_valid;
 }
 
-static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_tags, int32_t im_w, int32_t im_h) {
+static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_tags, image_u8_t *im) {
     assert(candidate_tags != NULL);
 
     zarray_clear(ld->detections);
 
+    const int im_w = im->width, im_h = im->height;
     const int64_t max_dist = sqrtf(im_w*im_w+im_h*im_h);
     const int thres_dist = im_w / 50;
 
@@ -231,10 +237,26 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *candidate_ta
                 zarray_get_volatile(ld->candidates, match_idx, &candidate_prev);
 
                 candidate_curr->valid = candidate_prev->valid;
-                candidate_curr->brightnesses = candidate_prev->brightnesses;
-                ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
                 candidate_curr->next_code = candidate_prev->next_code;
-                candidate_curr->counter = candidate_prev->counter;
+                candidate_curr->counter = candidate_prev->counter + 1;
+
+                candidate_curr->brightnesses = candidate_prev->brightnesses;
+                candidate_curr->brightness = get_brightness(candidate_curr, im);
+                ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
+
+                uint8_t thres = ll_mid(candidate_curr->brightnesses);
+                uint8_t max = ll_max(candidate_curr->brightnesses);
+                candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > thres && max > HIGH_THRES);
+                // struct ll_node *node = candidate_curr->brightnesses->head;
+                // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+                //     candidate_curr->code |= ((node->data > thres) << i--);
+                // }
+
+                // struct ll_node *node = candidate_curr->brightnesses->head;
+                // node = candidate_curr->brightnesses->head;
+                // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
+                //     printf(" %3d", node->data);
+                // }
 
                 if (match(ld, candidate_curr)) {
                     zarray_add(ld->detections, candidate_curr);
@@ -271,7 +293,7 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
     // }
     // printf("%u\n", (min + max)/2);
 
-    update_candidates(ld, candidate_tags, im->width, im->height);
+    update_candidates(ld, candidate_tags, im);
 
     lightanchors_destroy(candidate_tags);
 
@@ -312,27 +334,14 @@ lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im)
         l->H = matd_copy(quad->H);
         homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
         // if the center is within 10px of any of the quad points ==> too small ==> invalid
-        if (g2d_distance(l->c, l->p[0]) < 10 ||
-            g2d_distance(l->c, l->p[1]) < 10 ||
-            g2d_distance(l->c, l->p[2]) < 10 ||
-            g2d_distance(l->c, l->p[3]) < 10)
-            {
-                goto invalid;
-            }
-        else {
-            uint32_t avg = 0;
-            int cx = l->c[0], cy = l->c[1];
-            avg += im->buf[cy * im->stride + cx];
-            avg += im->buf[cy * im->stride + cx + 1];
-            avg += im->buf[cy * im->stride + cx - 1];
-            avg += im->buf[(cy+1) * im->stride + cx];
-            avg += im->buf[(cy-1) * im->stride + cx];
-            l->brightness = (uint8_t)(avg / 5);
+        if (g2d_distance(l->c, l->p[0]) > 10 &&
+            g2d_distance(l->c, l->p[1]) > 10 &&
+            g2d_distance(l->c, l->p[2]) > 10 &&
+            g2d_distance(l->c, l->p[3]) > 10) {
             return l;
         }
     }
 
-invalid:
     return NULL;
 }
 

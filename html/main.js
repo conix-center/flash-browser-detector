@@ -1,12 +1,18 @@
 let width = Math.min(window.innerWidth, window.innerHeight);
 
-const code = 0xaf;
+const code = 0b10101010;
 
-const targetFps = 30;
+const targetFps = 40;
 const fpsInterval = 1000 / targetFps;
 
 let start_t, prev_t;
 let frames = 0;
+
+function toggleTracking() {
+    window.glitterEnabled = !window.glitterEnabled;
+}
+window.addEventListener("touchstart", toggleTracking);
+window.addEventListener("mousedown", toggleTracking);
 
 function initStats() {
     window.stats = new Stats();
@@ -94,12 +100,12 @@ function getFrameGrayscale() {
         let grayscale = (0.30 * r) + (0.59 * g) + (0.11 * b);
         grayscalePixels[j] = grayscale;
 
-        imageDataPixels[i] = grayscale;
-        imageDataPixels[i+1] = grayscale;
-        imageDataPixels[i+2] = grayscale;
+        // imageDataPixels[i] = grayscale;
+        // imageDataPixels[i+1] = grayscale;
+        // imageDataPixels[i+2] = grayscale;
     }
 
-    videoCanvCtx.putImageData(imageData, 0, 0);
+    // videoCanvCtx.putImageData(imageData, 0, 0);
 
     return grayscalePixels;
 }
@@ -149,8 +155,11 @@ function processVideo() {
         window.stats.begin();
 
         const frame = getFrameGrayscale();
-        let quads = window.glitterDetector.track(frame, window.width, window.height);
-        drawQuads(quads);
+        if (window.glitterEnabled) {
+            let quads = window.glitterDetector.track(frame, window.width, window.height);
+            drawQuads(quads);
+            // console.log(quads.length)
+        }
 
         window.stats.end();
     }
