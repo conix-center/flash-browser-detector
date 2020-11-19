@@ -62,7 +62,8 @@
         }
 
         const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 15;
-        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
+        const period = (1/freq) * 1000;
+        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xa7;
         const len = 8;
 
         let started = false;
@@ -72,14 +73,22 @@
                 let idx = 0;
                 blink = setInterval(function() {
                     // console.log(dec2bin(code & (1 << (len-idx-1))));
-                    if (code & (1 << (len-idx-1))) {
+                    const bit = !!(code & (1 << (len-idx-1)));
+                    if (bit == 1) {
                         tag.style.background = "white"
+                        const nextIdx = (idx+1) % len;
+                        const nextBit = code & (1 << (len-idx-1));
+                        if (nextBit != bit) {
+                            setTimeout(() => {
+                                tag.style.background = "#666"
+                            }, period/2);
+                        }
                     }
                     else {
                         tag.style.background = "#666"
                     }
                     idx = (idx+1) % len;
-                }, (1/freq) * 1000);
+                }, period);
             }
             else {
                 clearInterval(blink);

@@ -35,7 +35,7 @@ static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     max_x = imax(px2, max_x);
     max_x = imax(px3, max_x);
 
-    int min_x = 255;
+    int min_x = im->width;
     min_x = imin(px0, min_x);
     min_x = imin(px1, min_x);
     min_x = imin(px2, min_x);
@@ -47,20 +47,22 @@ static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     max_y = imax(py2, max_y);
     max_y = imax(py3, max_y);
 
-    int min_y = 255;
+    int min_y = im->height;
     min_y = imin(py0, min_y);
     min_y = imin(py1, min_y);
     min_y = imin(py2, min_y);
     min_y = imin(py3, min_y);
 
-    zarray_t *poly = g2d_polygon_create_data(l->p, 4);
+    // printf("%d %d %d %d\n", min_x, max_x, min_y, max_y);
+
+    zarray_t *quad_poly = g2d_polygon_create_data(l->p, 4);
 
     double p[2] = {-1,-1};
     for (int ix = min_x; ix <= max_x; ix++) {
         for (int iy = min_y; iy <= max_y; iy++) {
             p[0] = (double)ix;
             p[1] = (double)iy;
-            if (g2d_polygon_contains_point(poly, p)) {
+            if (g2d_polygon_contains_point(quad_poly, p)) {
                 avg += value_for_pixel(im, ix, iy); n++;
             }
         }
@@ -73,6 +75,7 @@ static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     else {
         res = 255;
     }
+    zarray_destroy(quad_poly);
     return res;
 }
 

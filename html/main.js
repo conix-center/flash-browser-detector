@@ -1,6 +1,6 @@
 let width = Math.min(window.innerWidth, window.innerHeight);
 
-const code = 0xaf;
+const code = 0xa7;
 
 const targetFps = 30;
 const fpsInterval = 1000 / targetFps;
