@@ -77,7 +77,7 @@
                     if (bit == 1) {
                         tag.style.background = "white"
                         const nextIdx = (idx+1) % len;
-                        const nextBit = code & (1 << (len-idx-1));
+                        const nextBit = !!(code & (1 << (len-nextIdx-1)));
                         if (nextBit != bit) {
                             setTimeout(() => {
                                 tag.style.background = "#666"
