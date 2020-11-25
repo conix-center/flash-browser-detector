@@ -15,7 +15,7 @@
             background: #666;
             width: 85vmin;
             height: 85vmin;
-            border: 5vmin;
+            border: 10vmin;
             border-style: solid;
             border-color: black;
             margin: 10px;
@@ -51,38 +51,55 @@
             return (dec >>> 0).toString(2);
         }
 
-        function doubleBits(code) {
+        function preprocess(code) {
             let res = 0;
             for (let i = 0; i < 8; i++) {
-                console.log(code & (1<<i));
-                res |= (!!(code & (1<<i)) << (2*i));
-                res |= (!!(code & (1<<i)) << (2*i+1));
+                const currBit = !!(code & (1 << (8-i-1)));
+                const nextIdx = (i + 1) % 8;
+                const nextBit = !!(code & (1 << (8-nextIdx-1)));
+
+                res |= (currBit << (16-2*i-1));
+
+                if (currBit != nextBit) {
+                    if (currBit == 1) {
+                        res |= (0 << (16-2*i-2));
+                    }
+                    // else if (currBit == 0) {
+                    //     res |= (1 << (16-2*i-2));
+                    // }
+                }
+                else {
+                    res |= (currBit << (16-2*i-2));
+                }
             }
             return res;
         }
 
-        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 15;
-        const period = (1/freq) * 1000;
-        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xa7;
-        const len = 8;
+        const len = 16;
+        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+        const period = Math.floor(1000 / freq); // ms
+        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
+        code = preprocess(code);
 
         let started = false;
         let blink;
         window.onmouseup = window.ontouchend = function() {
+            let start_t = Date.now();
             if (!started) {
                 let idx = 0;
                 blink = setInterval(function() {
-                    // console.log(dec2bin(code & (1 << (len-idx-1))));
-                    const bit = !!(code & (1 << (len-idx-1)));
+                    const bit = Number(!!(code & (1 << (len-idx-1))));
+                    console.log(bit, Date.now() - start_t)
                     if (bit == 1) {
                         tag.style.background = "white"
-                        const nextIdx = (idx+1) % len;
-                        const nextBit = !!(code & (1 << (len-nextIdx-1)));
-                        if (nextBit != bit) {
-                            setTimeout(() => {
-                                tag.style.background = "#666"
-                            }, period/2);
-                        }
+                        // const nextIdx = (idx+1) % len;
+                        // const nextBit = !!(code & (1 << (len-nextIdx-1)));
+                        // if (nextBit != bit) {
+                        //     setTimeout(() => {
+                        //         console.log(0, Date.now() - start_t)
+                        //         tag.style.background = "#666"
+                        //     }, period/2);
+                        // }
                     }
                     else {
                         tag.style.background = "#666"

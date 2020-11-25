@@ -1,9 +1,9 @@
 let width = Math.min(window.innerWidth, window.innerHeight);
 
-const code = 0xa7;
+const code = 0xaf;
 
 const targetFps = 30;
-const fpsInterval = 1000 / targetFps;
+const fpsInterval = 1000 / targetFps; // ms
 
 let start_t, prev_t;
 let frames = 0;
@@ -100,12 +100,12 @@ function getFrameGrayscale() {
         let grayscale = (0.30 * r) + (0.59 * g) + (0.11 * b);
         grayscalePixels[j] = grayscale;
 
-        // imageDataPixels[i] = grayscale;
-        // imageDataPixels[i+1] = grayscale;
-        // imageDataPixels[i+2] = grayscale;
+        imageDataPixels[i] = grayscale;
+        imageDataPixels[i+1] = grayscale;
+        imageDataPixels[i+2] = grayscale;
     }
 
-    // videoCanvCtx.putImageData(imageData, 0, 0);
+    videoCanvCtx.putImageData(imageData, 0, 0);
 
     return grayscalePixels;
 }
@@ -146,10 +146,12 @@ function drawQuads(quads) {
 }
 
 function processVideo() {
+    requestAnimationFrame(processVideo);
+
     const now = Date.now();
     const dt = now - prev_t;
 
-    if (dt > fpsInterval) {
+    if (dt >= fpsInterval) {
         prev_t = now - (dt % fpsInterval);
 
         window.stats.begin();
@@ -160,11 +162,10 @@ function processVideo() {
             drawQuads(quads);
             // console.log(quads.length)
         }
+        // console.log(dt)
 
         window.stats.end();
     }
-
-    requestAnimationFrame(processVideo);
 }
 
 window.onload = function() {
