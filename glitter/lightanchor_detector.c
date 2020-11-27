@@ -18,7 +18,7 @@
 #include "lightanchor_detector.h"
 #include "bit_match.h"
 
-#define HIGH_THRES      200
+#define RANGE_THRES         85
 
 static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     int avg = 0, n = 0;
@@ -282,17 +282,16 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
 
                 ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
 
-                uint8_t thres = ll_mid(candidate_curr->brightnesses);
-                uint8_t max = ll_max(candidate_curr->brightnesses);
+                uint8_t max, min;
+                ll_stats(candidate_curr->brightnesses, &max, &min);
+                uint8_t thres = (max + min) / 2;
                 // candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > thres && max > HIGH_THRES);
                 struct ll_node *node = candidate_curr->brightnesses->head;
-                // printf("%3d %3d - ", thres, max);
+                // printf("%u, %u, %u\n", max, min, thres);
                 int code_idx = 15;
                 for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-                    // printf(" %3d", node->data);
-                    candidate_curr->code |= ((node->data > thres && max > HIGH_THRES) << code_idx--);
+                    candidate_curr->code |= ((node->data > thres && (max - min) > RANGE_THRES) << code_idx--);
                 }
-                // puts("");
 
                 // struct ll_node *node = candidate_curr->brightnesses->head;
                 // node = candidate_curr->brightnesses->head;

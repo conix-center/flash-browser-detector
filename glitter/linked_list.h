@@ -41,32 +41,14 @@ static inline void ll_add(struct ll *list, uint8_t data) {
     }
 }
 
-static inline uint8_t ll_max(struct ll *list) {
-    uint8_t max = 0;
+static inline void ll_stats(struct ll *list, uint8_t *max, uint8_t *min) {
+    *max = 0;
+    *min = 255;
     struct ll_node *node = list->head;
     for (; node != list->tail; node = node->next) {
-        max = node->data > max ? node->data : max;
+        *max = (node->data > *max) ? node->data : *max;
+        *min = (node->data < *min) ? node->data : *min;
     }
-    return max;
-}
-
-static inline uint8_t ll_min(struct ll *list) {
-    uint8_t min = 255;
-    struct ll_node *node = list->head;
-    for (; node != list->tail; node = node->next) {
-        min = node->data < min ? node->data : min;
-    }
-    return min;
-}
-
-static inline uint8_t ll_mid(struct ll *list) {
-    uint8_t max = 0, min = 255;
-    struct ll_node *node = list->head;
-    for (; node != list->tail; node = node->next) {
-        max = node->data > max ? node->data : max;
-        min = node->data < min ? node->data : min;
-    }
-    return (max + min) / 2;
 }
 
 #endif

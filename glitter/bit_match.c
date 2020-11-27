@@ -106,7 +106,7 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
     }
 }
 
-
+#if 0
 static uint8_t dwt(uint16_t a, uint16_t b)
 {
     // dynamic time warping with window of w
@@ -181,3 +181,4 @@ int match_dtw(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
         return 0;
     }
 }
+#endif
