@@ -1,0 +1,8 @@
+bin
+build
+wasm/build
+obj
+*.ps
+*.pnm
+.DS_Store
+.vscode

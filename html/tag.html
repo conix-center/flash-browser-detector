@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+
+    <title>GLITTER tag</title>
+
+    <style type="text/css">
+        body {
+            display: flex;
+            justify-content: center;
+            background: #333;
+        }
+        #tag {
+            background: #222;
+            width: 70vmin;
+            height: 70vmin;
+            border: 10vmin;
+            border-style: solid;
+            border-color: black;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="tag"></div>
+
+    <script type="text/javascript">
+        const tag = document.getElementById("tag");
+
+        function getUrlVars() {
+            const vars = {};
+            const parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
+                vars[key] = value;
+            });
+            return vars;
+        }
+
+        function getUrlParam(parameter, defaultValue) {
+            let urlParameter = defaultValue;
+            if (window.location.href.indexOf(parameter) > -1) {
+                urlParameter = getUrlVars()[parameter];
+            }
+            if (urlParameter === "") {
+                return defaultValue;
+            }
+            return urlParameter;
+        }
+
+        function dec2bin(dec) {
+            return (dec >>> 0).toString(2);
+        }
+
+        function preprocess(code) {
+            let res = 0;
+            for (let i = 0; i < 8; i++) {
+                const currBit = !!(code & (1 << (8-i-1)));
+                const nextIdx = (i + 1) % 8;
+                const nextBit = !!(code & (1 << (8-nextIdx-1)));
+
+                res |= (currBit << (16-2*i-1));
+
+                if (currBit != nextBit) {
+                    if (currBit == 1) {
+                        res |= (0 << (16-2*i-2));
+                    }
+                    // else if (currBit == 0) {
+                    //     res |= (1 << (16-2*i-2));
+                    // }
+                }
+                else {
+                    res |= (currBit << (16-2*i-2));
+                }
+            }
+            return res;
+        }
+
+        const len = 16;
+        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+        const period = Math.floor(1000 / freq); // ms
+        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
+        code = preprocess(code);
+
+        let started = false;
+        let blink;
+        window.onmouseup = window.ontouchend = function() {
+            let start_t = Date.now();
+            if (!started) {
+                let idx = 0;
+                blink = setInterval(function() {
+                    const bit = Number(!!(code & (1 << (len-idx-1))));
+                    console.log(bit, Date.now() - start_t)
+                    if (bit == 1) {
+                        tag.style.background = "white"
+                        // const nextIdx = (idx+1) % len;
+                        // const nextBit = !!(code & (1 << (len-nextIdx-1)));
+                        // if (nextBit != bit) {
+                        //     setTimeout(() => {
+                        //         console.log(0, Date.now() - start_t)
+                        //         tag.style.background = "#222"
+                        //     }, period/2);
+                        // }
+                    }
+                    else {
+                        tag.style.background = "#222"
+                    }
+                    idx = (idx+1) % len;
+                }, period);
+            }
+            else {
+                clearInterval(blink);
+                tag.style.background = "#222"
+            }
+            started = !started;
+        }
+    </script>
+</body>
+</html>
