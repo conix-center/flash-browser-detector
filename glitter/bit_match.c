@@ -5,7 +5,7 @@
 #define EVEN_MASK       0xaaaa
 #define ODD_MASK        0x5555
 
-#define DEBUG
+// #define DEBUG
 
 static inline size_t cyclic_lsr(size_t bits, size_t size)
 {
@@ -44,7 +44,6 @@ static int match_even_odd(uint16_t a, uint16_t b)
 int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 {
 #ifdef DEBUG
-    // printf("%d ", candidate_curr->counter);
     printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" ",
             BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
 #endif
@@ -90,7 +89,6 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
         if (match_even_odd(candidate_curr->code, match_code)) {
 #ifdef DEBUG
             printf("==== MATCH ====\n");
-            // printf("%d ", candidate_curr->counter);
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" == ",
                     BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",

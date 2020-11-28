@@ -97,9 +97,9 @@ function getFrameGrayscale() {
         let r = imageDataPixels[i];
         let g = imageDataPixels[i+1];
         let b = imageDataPixels[i+2];
-        let grayscale = (0.21 * r) + (0.72 * g) + (0.07 * b); // (0.30 * r) + (0.59 * g) + (0.11 * b);
-        grayscalePixels[j] = grayscale;
+        let grayscale = (0.30 * r) + (0.59 * g) + (0.11 * b);
 
+        grayscalePixels[j] = grayscale;
         imageDataPixels[i] = grayscale;
         imageDataPixels[i+1] = grayscale;
         imageDataPixels[i+2] = grayscale;
@@ -160,9 +160,7 @@ function processVideo() {
         if (window.glitterEnabled) {
             let quads = window.glitterDetector.track(frame, window.width, window.height);
             drawQuads(quads);
-            // console.log(quads.length)
         }
-        // console.log(dt)
 
         window.stats.end();
     }

@@ -23,7 +23,6 @@
 static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     int avg = 0, n = 0;
 
-    // const int cx = l->c[0], cy = l->c[1];
     const double px0d = l->p[0][0], py0d = l->p[0][1], px1d = l->p[1][0], py1d = l->p[1][1];
     const double px2d = l->p[2][0], py2d = l->p[2][1], px3d = l->p[3][0], py3d = l->p[3][1];
     const int px0 = ceil(px0d - 0.5), py0 = ceil(py0d - 0.5), px1 = ceil(px1d - 0.5), py1 = ceil(py1d - 0.5);
@@ -275,7 +274,6 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
 
                 candidate_curr->valid = candidate_prev->valid;
                 candidate_curr->next_code = candidate_prev->next_code;
-                candidate_curr->counter = candidate_prev->counter + 1;
 
                 candidate_curr->brightnesses = candidate_prev->brightnesses;
                 candidate_curr->brightness = get_brightness(candidate_curr, im);
@@ -285,20 +283,17 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                 uint8_t max, min;
                 ll_stats(candidate_curr->brightnesses, &max, &min);
                 uint8_t thres = (max + min) / 2;
-                // candidate_curr->code = (candidate_prev->code << 1) | (candidate_curr->brightness > thres && max > HIGH_THRES);
                 struct ll_node *node = candidate_curr->brightnesses->head;
-                // printf("%u, %u, %u\n", max, min, thres);
                 int code_idx = 15;
                 for (; node != candidate_curr->brightnesses->tail; node = node->next) {
                     candidate_curr->code |= ((node->data > thres && (max - min) > RANGE_THRES) << code_idx--);
                 }
 
-                // struct ll_node *node = candidate_curr->brightnesses->head;
                 // node = candidate_curr->brightnesses->head;
                 // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
                 //     printf(" %3d", node->data);
                 // }
-                // puts("");
+                // printf(" %u, %u, %u\n", max, min, thres);
 
                 if (match(ld, candidate_curr)) {
                     zarray_add(ld->detections, candidate_curr);

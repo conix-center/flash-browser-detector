@@ -37,7 +37,6 @@ struct lightanchor
     struct ll *brightnesses;
     uint16_t code;
     uint16_t next_code;
-    uint16_t counter;
     matd_t *H;
     double c[2];
     double p[4][2];
