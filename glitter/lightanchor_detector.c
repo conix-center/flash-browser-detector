@@ -18,7 +18,7 @@
 #include "lightanchor_detector.h"
 #include "bit_match.h"
 
-#define RANGE_THRES         85
+#define RANGE_THRES         50
 
 static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     int avg = 0, n = 0;
@@ -62,7 +62,8 @@ static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
             p[0] = (double)ix;
             p[1] = (double)iy;
             if (g2d_polygon_contains_point(quad_poly, p)) {
-                avg += value_for_pixel(im, ix, iy); n++;
+                avg += value_for_pixel(im, ix, iy);
+                n++;
             }
         }
     }

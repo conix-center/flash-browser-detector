@@ -5,7 +5,7 @@
 #define EVEN_MASK       0xaaaa
 #define ODD_MASK        0x5555
 
-// #define DEBUG
+#define DEBUG
 
 static inline size_t cyclic_lsr(size_t bits, size_t size)
 {
@@ -47,7 +47,6 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
     printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" ",
             BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
 #endif
-
     uint16_t match_code;
     if (candidate_curr->valid > 0) {
         match_code = candidate_curr->next_code;

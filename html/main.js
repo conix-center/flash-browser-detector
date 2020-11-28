@@ -100,6 +100,7 @@ function getFrameGrayscale() {
         let grayscale = (0.30 * r) + (0.59 * g) + (0.11 * b);
 
         grayscalePixels[j] = grayscale;
+
         imageDataPixels[i] = grayscale;
         imageDataPixels[i+1] = grayscale;
         imageDataPixels[i+2] = grayscale;
