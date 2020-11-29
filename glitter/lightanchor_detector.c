@@ -14,11 +14,11 @@
 #include "common/homography.h"
 #include "common/g2d.h"
 #include "common/math_util.h"
-#include "linked_list.h"
+#include "queue_buf.h"
 #include "lightanchor_detector.h"
 #include "bit_match.h"
 
-#define RANGE_THRES         50
+#define RANGE_THRES         85
 
 static inline uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     int avg = 0, n = 0;
@@ -274,33 +274,29 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                 zarray_get_volatile(local_tags, match_idx, &candidate_curr);
 
                 candidate_curr->valid = candidate_prev->valid;
+                candidate_curr->code = candidate_prev->code;
                 candidate_curr->next_code = candidate_prev->next_code;
 
-                candidate_curr->brightnesses = candidate_prev->brightnesses;
+                memcpy(&candidate_curr->brightnesses, &candidate_prev->brightnesses, sizeof(struct queue_buf));
                 candidate_curr->brightness = get_brightness(candidate_curr, im);
 
-                ll_add(candidate_curr->brightnesses, candidate_curr->brightness);
-
                 uint8_t max, min;
-                ll_stats(candidate_curr->brightnesses, &max, &min);
+                qb_add(&candidate_curr->brightnesses, candidate_curr->brightness);
+                qb_stats(&candidate_curr->brightnesses, &max, &min);
                 uint8_t thres = (max + min) / 2;
-                struct ll_node *node = candidate_curr->brightnesses->head;
-                int code_idx = 15;
-                for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-                    candidate_curr->code |= ((node->data > thres && (max - min) > RANGE_THRES) << code_idx--);
+                if ((max - min) > RANGE_THRES) {
+                    candidate_curr->code = (candidate_curr->code << 1) | (candidate_curr->brightness > thres);
+
+                    // for (int i = 0; i < BUF_SIZE; i++) {
+                    //     printf("%u ", candidate_curr->brightnesses.buf[i]);
+                    // }
+                    // printf("| %u, %u, %u\n", max, min, thres);
+
+                    if (match(ld, candidate_curr)) {
+                        zarray_add(ld->detections, candidate_curr);
+                    }
+                    zarray_add(valid, candidate_curr);
                 }
-
-                // node = candidate_curr->brightnesses->head;
-                // for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-                //     printf(" %3d", node->data);
-                // }
-                // printf(" %u, %u, %u\n", max, min, thres);
-
-                if (match(ld, candidate_curr)) {
-                    zarray_add(ld->detections, candidate_curr);
-                }
-
-                zarray_add(valid, candidate_curr);
             }
         }
     }
@@ -320,7 +316,7 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
         zarray_get_volatile(quads, i, &quad);
 
         lightanchor_t *lightanchor;
-        if ((lightanchor = lightanchor_create(quad, im)) != NULL)
+        if ((lightanchor = lightanchor_create(quad)) != NULL)
             zarray_add(local_tags, lightanchor_copy(lightanchor));
     }
 
@@ -353,7 +349,7 @@ int quads_destroy(zarray_t *quads)
     return i;
 }
 
-lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im)
+lightanchor_t *lightanchor_create(struct quad *quad)
 {
     lightanchor_t *l = calloc(1, sizeof(lightanchor_t));
     l->p[0][0] = quad->p[0][0];
@@ -366,7 +362,6 @@ lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im)
     l->p[3][1] = quad->p[3][1];
 
     l->next_code = 0;
-    l->brightnesses = ll_create(16);
 
     if (quad->H) {
         l->H = matd_copy(quad->H);

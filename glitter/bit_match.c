@@ -1,5 +1,5 @@
 #include "bit_match.h"
-#include "linked_list.h"
+#include "queue_buf.h"
 #include "common/math_util.h"
 
 #define EVEN_MASK       0xaaaa
@@ -67,9 +67,8 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
                     BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
 
-            struct ll_node *node = candidate_curr->brightnesses->head;
-            for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-                printf(" %3d", node->data);
+            for (int i = 0; i < BUF_SIZE; i++) {
+                printf("%u ", candidate_curr->brightnesses.buf[i]);
             }
             puts("");
             printf("===============\n");

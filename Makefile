@@ -91,8 +91,8 @@ $(OBJ_DIR)/%.o: $(EXAMPLES_DIR)/%.cpp | $(BIN_DIR) $(OBJ_DIR)
 $(HTML_BIN_DIR)/%.js: $(WASM_DIR)/%.c $(APRILTAG_SRCS) $(GLITTER_SRCS) | $(HTML_BIN_DIR) $(HTML_OBJ_DIR)
 	@echo "========================="
 	@echo "    Compiling WASM target [$<]"
-	@echo "    Be sure to run source ./emsdk/emsdk_env.sh"
-	@$(EMCC) -o $@ $^ $(INCLUDE) $(WASM_LD_FLAGS)
+	@echo "    Be sure to clone emsdk and run 'source ./emsdk/emsdk_env.sh'!"
+	@$(EMCC) -o $@ $^ $(INCLUDE) $(WASM_FLAGS) $(WASM_LD_FLAGS)
 
 $(BIN_DIR) $(OBJ_DIR) $(HTML_BIN_DIR):
 	@mkdir $@

@@ -30,7 +30,7 @@ int init(uint8_t code) {
     apriltag_detector_add_family(td, tf);
 
     td->quad_decimate = 2.0;
-    td->quad_sigma = 0.5;
+    td->quad_sigma = 0.0;
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
