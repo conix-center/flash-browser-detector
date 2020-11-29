@@ -49,6 +49,8 @@ static inline void ll_stats(struct ll *list, uint8_t *max, uint8_t *min) {
         *max = (node->data > *max) ? node->data : *max;
         *min = (node->data < *min) ? node->data : *min;
     }
+    *max = (*max != 0) ? *max : 255;
+    *min = (*min != 255) ? *min : 0;
 }
 
 #endif

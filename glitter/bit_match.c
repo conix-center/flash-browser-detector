@@ -1,11 +1,11 @@
 #include "bit_match.h"
-#include "linked_list.h"
+#include "queue_buf.h"
 #include "common/math_util.h"
 
 #define EVEN_MASK       0xaaaa
 #define ODD_MASK        0x5555
 
-// #define DEBUG
+#define DEBUG
 
 static inline size_t cyclic_lsr(size_t bits, size_t size)
 {
@@ -47,7 +47,6 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
     printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" ",
             BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
 #endif
-
     uint16_t match_code;
     if (candidate_curr->valid > 0) {
         match_code = candidate_curr->next_code;
@@ -68,9 +67,8 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
                     BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
 
-            struct ll_node *node = candidate_curr->brightnesses->head;
-            for (; node != candidate_curr->brightnesses->tail; node = node->next) {
-                printf(" %3d", node->data);
+            for (int i = 0; i < BUF_SIZE; i++) {
+                printf("%u ", candidate_curr->brightnesses.buf[i]);
             }
             puts("");
             printf("===============\n");

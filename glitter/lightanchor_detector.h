@@ -12,6 +12,7 @@
 #define _LIGHTANCHORS_DETECT_
 #include "apriltag.h"
 #include "common/zarray.h"
+#include "queue_buf.h"
 
 /* declare functions that we need as extern */
 extern double value_for_pixel(image_u8_t *im, double px, double py);
@@ -34,16 +35,16 @@ struct lightanchor
 {
     uint8_t valid;
     uint8_t brightness;
-    struct ll *brightnesses;
     uint16_t code;
     uint16_t next_code;
     matd_t *H;
     double c[2];
     double p[4][2];
+    struct queue_buf brightnesses;
 };
 
 lightanchor_detector_t *lightanchor_detector_create(char code);
-lightanchor_t *lightanchor_create(struct quad *quad, image_u8_t *im);
+lightanchor_t *lightanchor_create(struct quad *quad);
 void lightanchor_detector_destroy(lightanchor_detector_t *ld);
 
 zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
