@@ -1,11 +1,13 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 #include "common/math_util.h"
+#include "lightanchor.h"
+#include "lightanchor_detector.h"
+
+// #define DEBUG
 
 #define EVEN_MASK       0xaaaa
 #define ODD_MASK        0x5555
-
-#define DEBUG
 
 static inline size_t cyclic_lsr(size_t bits, size_t size)
 {

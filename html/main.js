@@ -85,12 +85,7 @@ function setupVideo(displayVid, displayOverlay, setupCallback) {
 
 function getFrameGrayscale() {
     const videoCanvCtx = window.videoCanv.getContext("2d");
-    videoCanvCtx.drawImage(
-        window.videoElem,
-        0, 0,
-        width,
-        height
-    );
+    videoCanvCtx.drawImage(window.videoElem, 0, 0, width, height);
 
     let imageData = videoCanvCtx.getImageData(0, 0, width, height);
     let imageDataPixels = imageData.data;
