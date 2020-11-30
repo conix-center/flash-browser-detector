@@ -1,4 +1,5 @@
-let width = Math.min(window.innerWidth, window.innerHeight);
+let width = window.innerWidth;
+let height = window.innerHeight;
 
 const code = 0xaf;
 
@@ -23,61 +24,63 @@ function initStats() {
 function setVideoStyle(elem) {
     elem.style.position = "absolute";
     elem.style.top = 0;
-    elem.style.left = 0;
 }
 
 function setupVideo(displayVid, displayOverlay, setupCallback) {
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("Browser does not support getUserMedia!");
+    }
+
     window.videoElem = document.createElement("video");
     window.videoElem.setAttribute("autoplay", "");
     window.videoElem.setAttribute("muted", "");
     window.videoElem.setAttribute("playsinline", "");
+    window.videoElem.setAttribute("webkit-playsinline", "");
+
+    let vidWidth = window.orientation ? width : height;
+    let vidHeight = window.orientation ? height : width;
 
     navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false
+        audio: false,
+        video: {
+            width: { ideal: vidWidth },
+            height: { ideal: vidHeight },
+            aspectRatio: { ideal: vidWidth / vidHeight },
+            facingMode: "environment",
+            frameRate: 30,
+        }
     })
     .then(stream => {
-        const videoSettings = stream.getVideoTracks()[0].getSettings();
         window.videoElem.srcObject = stream;
-        window.videoElem.play();
+        window.videoElem.onloadedmetadata = e => {
+            window.videoElem.play();
+        };
     })
-    .catch(function(err) {
-        console.log("ERROR: " + err);
+    .catch(err => {
+        console.warn("ERROR: " + err);
     });
 
     window.videoCanv = document.createElement("canvas");
     setVideoStyle(window.videoCanv);
     window.videoCanv.style.zIndex = -1;
     if (displayVid) {
+        window.videoCanv.width = width;
+        window.videoCanv.height = height;
         document.body.appendChild(window.videoCanv);
     }
 
     if (displayOverlay) {
         window.overlayCanv = document.createElement("canvas");
         setVideoStyle(window.overlayCanv);
+        window.overlayCanv.width = width;
+        window.overlayCanv.height = height;
         window.overlayCanv.style.zIndex = 0;
         document.body.appendChild(window.overlayCanv);
     }
 
-    window.videoElem.addEventListener("canplay", function(e) {
-        window.width = width;
-        window.height = window.videoElem.videoHeight / (window.videoElem.videoWidth / window.width);
-
-        window.videoElem.setAttribute("width", window.width);
-        window.videoElem.setAttribute("height", window.height);
-
-        window.videoCanv.width = window.width;
-        window.videoCanv.height = window.height;
-
-        if (displayOverlay) {
-            window.overlayCanv.width = window.width;
-            window.overlayCanv.height = window.height;
-        }
-
-        if (setupCallback != null) {
-            setupCallback();
-        }
-    }, false);
+    if (setupCallback != null) {
+        setupCallback();
+    }
 }
 
 function getFrameGrayscale() {
@@ -85,11 +88,11 @@ function getFrameGrayscale() {
     videoCanvCtx.drawImage(
         window.videoElem,
         0, 0,
-        window.width,
-        window.height
+        width,
+        height
     );
 
-    let imageData = videoCanvCtx.getImageData(0, 0, window.width, window.height);
+    let imageData = videoCanvCtx.getImageData(0, 0, width, height);
     let imageDataPixels = imageData.data;
     let grayscalePixels = new Uint8Array(videoCanvCtx.canvas.width * videoCanvCtx.canvas.height);
 
@@ -115,8 +118,8 @@ function clearOverlayCtx(overlayCtx) {
     if (!window.overlayCanv) return;
     overlayCtx.clearRect(
         0, 0,
-        window.width,
-        window.height
+        width,
+        height
     );
 }
 
@@ -159,7 +162,7 @@ function processVideo() {
 
         const frame = getFrameGrayscale();
         if (window.glitterEnabled) {
-            let quads = window.glitterDetector.track(frame, window.width, window.height);
+            let quads = window.glitterDetector.track(frame, width, height);
             drawQuads(quads);
         }
 

@@ -18,7 +18,7 @@ LD_FLAGS 			= -lpthread -lm
 
 WASM_MODULE_NAME 	= GlitterWASM
 WASM_FLAGS			= -Wall -O3
-WASM_LD_FLAGS 		= -s EXPORT_NAME='$(WASM_MODULE_NAME)' -s MODULARIZE=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['cwrap', 'getValue', 'setValue']' -s WASM=1
+WASM_LD_FLAGS 		= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"' -s MODULARIZE=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='["_malloc", "_free"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "setValue"]' -s WASM=1
 
 OPENCV_C_FLAGS		= `pkg-config --cflags opencv`
 OPENCV_LD_FLAGS		= `pkg-config --libs opencv`
