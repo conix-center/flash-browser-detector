@@ -8,6 +8,7 @@
  *
  * @todo Actually implement the LED detector
  */
+
 #include <math.h>
 #include "apriltag.h"
 #include "common/zarray.h"
@@ -259,13 +260,6 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
         if ((lightanchor = lightanchor_create(quad)) != NULL)
             zarray_add(local_tags, lightanchor_copy(lightanchor));
     }
-
-    // int max = 0, min = 255;
-    // for (int i = 0; i < im->width*im->height; i++) {
-    //     if (im->buf[i] > max) max = im->buf[i];
-    //     if (im->buf[i] < min) min = im->buf[i];
-    // }
-    // printf("%u\n", (min + max)/2);
 
     update_candidates(ld, local_tags, im);
 

@@ -11,10 +11,10 @@ let overlayCanvas = null;
 const targetFps = 30;
 const fpsInterval = 1000 / targetFps; // ms
 
-let start_t, prev_t;
+let startTime, prevTime;
 let imageData = null;
 
-let glitterDetector = null;
+let worker = null;
 
 function initStats() {
     stats = new Stats();
@@ -22,7 +22,7 @@ function initStats() {
     document.getElementById("stats").appendChild(stats.domElement);
 }
 
-function clearOverlayCtx(overlayCtx) {
+function clearOverlay(overlayCtx) {
     overlayCtx.clearRect( 0, 0, width, height );
 }
 
@@ -44,7 +44,7 @@ function drawQuad(quad) {
 
 function drawQuads(quads) {
     const overlayCtx = overlayCanvas.getContext("2d");
-    clearOverlayCtx(overlayCtx);
+    clearOverlay(overlayCtx);
 
     for (var i = 0; i < quads.length; i++) {
         drawQuad(quads[i]);
@@ -52,37 +52,61 @@ function drawQuads(quads) {
 }
 
 function tick() {
-
-    // const now = Date.now();
-    // const dt = now - prev_t;
-
-    // if (dt >= fpsInterval) {
-        // prev_t = now - (dt % fpsInterval);
-
     stats.begin();
 
-    imageData = grayscale.getFrame();
-    const videoCanvasCtx = videoCanvas.getContext("2d");
-    videoCanvasCtx.drawImage(
-        videoSource, 0, 0, width, height
-    );
-    const quads = glitterDetector.track(imageData, width, height);
-    drawQuads(quads);
+    const now = Date.now();
+    const dt = now - prevTime;
+
+    if (dt >= fpsInterval) {
+        prevTime = now - (dt % fpsInterval);
+        imageData = grayscale.getFrame();
+        const videoCanvasCtx = videoCanvas.getContext("2d");
+        videoCanvasCtx.drawImage(
+            videoSource, 0, 0, width, height
+        );
+    }
 
     stats.end();
-    // }
 
-    // requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
 }
 
 function onInit(source) {
     videoSource = source;
-    glitterDetector = new Glitter.GlitterDetector(code, () => {
-        start_t = Date.now()
-        prev_t = start_t;
-        // tick();
-        setInterval(tick, fpsInterval)
-    });
+
+    worker = new Worker("../js/glitter.worker.js");
+    worker.postMessage({ type: 'init', code: code, width: width, height: height });
+
+    worker.onmessage = function (e) {
+        var msg = e.data;
+        switch (msg.type) {
+            case "loaded": {
+                setInterval(process, fpsInterval);
+                break;
+            }
+            case "result": {
+                const result = msg.result;
+                drawQuads(result);
+                break;
+            }
+            case "not found": {
+                clearOverlay();
+            }
+            default: {
+                break;
+            }
+        }
+    }
+
+    startTime = Date.now()
+    prevTime = startTime;
+    tick();
+}
+
+function process() {
+    if (imageData) {
+        worker.postMessage({ type: 'process', imagedata: imageData });
+    }
 }
 
 window.onload = () => {

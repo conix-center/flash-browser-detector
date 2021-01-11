@@ -3,13 +3,15 @@ function dec2bin(dec){
 }
 
 export class GlitterDetector {
-    constructor(code, callback) {
-        let _this = this;
+    constructor(code, width, height, callback) {
         this.ready = false;
-        this.shouldTrack = false;
-        this.validPoints = false;
+
+        this._width = width;
+        this._height = height;
+
         this.code = code;
 
+        let _this = this;
         GlitterWASM().then(function (Module) {
             console.log("GLITTER WASM module loaded.");
             _this.onWasmInit(Module);
@@ -21,21 +23,22 @@ export class GlitterDetector {
         this._Module = Module;
         this._init = Module.cwrap("init", "number", ["number"]);
         this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+
         this.ready = (this._init(this.code) == 0);
+
+        this.imPtr = this._Module._malloc(this._width * this._height);
     }
 
-    track(im_arr, width, height) {
+    track(imArr) {
         let quads = [];
         if (!this.ready) return quads;
 
-        const im_ptr = this._Module._malloc(im_arr.length);
-        this._Module.HEAPU8.set(im_arr, im_ptr);
+        this._Module.HEAPU8.set(imArr, this.imPtr);
 
-        const ptr = this._track(im_ptr, width, height);
+        const ptr = this._track(this.imPtr, this._width, this._height);
         const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
         const numQuads = this._Module.getValue(ptr, "double");
-        // console.log("numQuads = ", numQuads);
 
         for (var i = 0; i < numQuads; i++) {
             var q = {
@@ -51,11 +54,9 @@ export class GlitterDetector {
                 c1  : this._Module.HEAPF64[ptrF64+10*i+1+9],
             };
             quads.push(q);
-            // console.log(dec2bin(q.code));
         }
 
         this._Module._free(ptr);
-        this._Module._free(im_ptr);
 
         return quads;
     }
