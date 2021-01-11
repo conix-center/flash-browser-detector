@@ -76,7 +76,7 @@
         }
 
         const len = 16;
-        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 20;
         const period = Math.floor(1000 / freq); // ms
         let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
         code = preprocess(code);

@@ -8,10 +8,9 @@ let videoSource = null;
 let videoCanvas = null;
 let overlayCanvas = null;
 
-const targetFps = 30;
+const targetFps = 20;
 const fpsInterval = 1000 / targetFps; // ms
 
-let startTime, prevTime;
 let imageData = null;
 
 let worker = null;
@@ -54,17 +53,11 @@ function drawQuads(quads) {
 function tick() {
     stats.begin();
 
-    const now = Date.now();
-    const dt = now - prevTime;
-
-    if (dt >= fpsInterval) {
-        prevTime = now - (dt % fpsInterval);
-        imageData = grayscale.getFrame();
-        const videoCanvasCtx = videoCanvas.getContext("2d");
-        videoCanvasCtx.drawImage(
-            videoSource, 0, 0, width, height
-        );
-    }
+    imageData = grayscale.getFrame();
+    const videoCanvasCtx = videoCanvas.getContext("2d");
+    videoCanvasCtx.drawImage(
+        videoSource, 0, 0, width, height
+    );
 
     stats.end();
 
@@ -98,8 +91,6 @@ function onInit(source) {
         }
     }
 
-    startTime = Date.now()
-    prevTime = startTime;
     tick();
 }
 
