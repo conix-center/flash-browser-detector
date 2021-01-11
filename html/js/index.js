@@ -8,7 +8,7 @@ let videoSource = null;
 let videoCanvas = null;
 let overlayCanvas = null;
 
-const targetFps = 30;
+const targetFps = 20;
 const fpsInterval = 1000 / targetFps; // ms
 
 let start_t, prev_t;

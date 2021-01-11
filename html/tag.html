@@ -9,16 +9,16 @@
         body {
             display: flex;
             justify-content: center;
-            background: #333;
+            background: white;
         }
         #tag {
-            background: #555;
-            width: 70vmin;
-            height: 70vmin;
-            border: 12vmin;
+            background: #222;
+            width: 60vmin;
+            height: 60vmin;
+            border: 13vmin;
             border-style: solid;
             border-color: black;
-            margin: 10px;
+            margin: 50px;
         }
     </style>
 </head>
@@ -64,9 +64,9 @@
                     if (currBit == 1) {
                         res |= (0 << (16-2*i-2));
                     }
-                    // else if (currBit == 0) {
-                    //     res |= (1 << (16-2*i-2));
-                    // }
+                    else if (currBit == 0) {
+                        res |= (1 << (16-2*i-2));
+                    }
                 }
                 else {
                     res |= (currBit << (16-2*i-2));
@@ -76,7 +76,7 @@
         }
 
         const len = 16;
-        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 20;
         const period = Math.floor(1000 / freq); // ms
         let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
         code = preprocess(code);
@@ -89,17 +89,8 @@
                 let idx = 0;
                 blink = setInterval(function() {
                     const bit = Number(!!(code & (1 << (len-idx-1))));
-                    // console.log(bit, Date.now() - start_t)
                     if (bit == 1) {
                         tag.style.background = "white"
-                        // const nextIdx = (idx+1) % len;
-                        // const nextBit = !!(code & (1 << (len-nextIdx-1)));
-                        // if (nextBit != bit) {
-                        //     setTimeout(() => {
-                        //         console.log(0, Date.now() - start_t)
-                        //         tag.style.background = "#222"
-                        //     }, period/2);
-                        // }
                     }
                     else {
                         tag.style.background = "#222"
@@ -109,7 +100,7 @@
             }
             else {
                 clearInterval(blink);
-                tag.style.background = "#555"
+                tag.style.background = "#222"
             }
             started = !started;
         }
