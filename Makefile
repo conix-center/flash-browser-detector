@@ -4,12 +4,12 @@ EMCC 				= emcc
 
 BIN_DIR 			= bin
 OBJ_DIR 			= obj
-HTML_BIN_DIR 		= html/$(BIN_DIR)
+JS_DIR 				= js
 
 GLITTER_DIR 		= glitter
 APRILTAG_DIR 		= apriltag
 EXAMPLES_DIR		= examples
-WASM_DIR 			= wasm
+EMSCRIPTEN_DIR 		= emscripten
 
 INCLUDE 			= -I$(APRILTAG_DIR)/ -I$(GLITTER_DIR)/
 C_FLAGS 			= -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -O3
@@ -34,8 +34,8 @@ EXAMPLES_SRCS		:= $(wildcard $(EXAMPLES_DIR)/*.c $(EXAMPLES_DIR)/*.cpp)
 EXAMPLES_OBJS		:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(OBJ_DIR)/%.o) $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 EXAMPLES_TARGETS	:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(BIN_DIR)/%) $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.cpp=$(BIN_DIR)/%)
 
-WASM_SRCS			:= $(wildcard $(WASM_DIR)/*.c)
-WASM_TARGETS		:= $(WASM_SRCS:$(WASM_DIR)/%.c=$(HTML_BIN_DIR)/%.js)
+WASM_SRCS			:= $(wildcard $(EMSCRIPTEN_DIR)/*.c)
+WASM_TARGETS		:= $(WASM_SRCS:$(EMSCRIPTEN_DIR)/%.c=$(JS_DIR)/%.js)
 
 .PHONY: all clean
 
@@ -93,14 +93,14 @@ $(OBJ_DIR)/%.o: $(EXAMPLES_DIR)/%.cpp | $(BIN_DIR) $(OBJ_DIR)
 	@echo "    Compiling target [$<]"
 	@$(CXX) -o $@ -c $< $(CXX_FLAGS) $(INCLUDE) $(OPENCV_C_FLAGS)
 
-$(HTML_BIN_DIR)/%.js: $(WASM_DIR)/%.c $(APRILTAG_SRCS) $(GLITTER_SRCS) | $(HTML_BIN_DIR) $(HTML_OBJ_DIR)
+$(JS_DIR)/%.js: $(EMSCRIPTEN_DIR)/%.c $(APRILTAG_SRCS) $(GLITTER_SRCS) | $(JS_DIR) $(HTML_OBJ_DIR)
 	@echo "=================================================="
 	@echo "    Compiling WASM target [$<]"
 	@echo "    Be sure to clone emsdk and run 'source ./emsdk/emsdk_env.sh'!"
 	@$(EMCC) -o $@ $^ $(INCLUDE) $(WASM_FLAGS) $(WASM_LD_FLAGS)
 
-$(BIN_DIR) $(OBJ_DIR) $(HTML_BIN_DIR):
+$(BIN_DIR) $(OBJ_DIR) $(JS_DIR):
 	@mkdir $@
 
 clean:
-	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(HTML_BIN_DIR) $(APRILTAG_DIR)/*.o $(APRILTAG_DIR)/common/*.o build *.pnm *.ps
+	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(APRILTAG_DIR)/*.o $(APRILTAG_DIR)/common/*.o *.pnm *.ps

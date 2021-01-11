@@ -1,8 +1,9 @@
-bin
-build
-wasm/build
-obj
+bin/
+build/
+wasm/build/
+obj/
 *.ps
 *.pnm
 .DS_Store
 .vscode
+node_modules/

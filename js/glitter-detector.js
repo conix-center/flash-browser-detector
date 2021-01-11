@@ -1,7 +1,8 @@
 function dec2bin(dec){
     return (dec >>> 0).toString(2);
 }
-class GLITTER_Detector {
+
+export class GlitterDetector {
     constructor(code, callback) {
         let _this = this;
         this.ready = false;

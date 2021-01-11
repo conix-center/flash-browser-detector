@@ -170,7 +170,7 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
 }
 
 static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, image_u8_t *im) {
-    // assert(local_tags != NULL);
+    assert(local_tags != NULL);
 
     zarray_clear(ld->detections);
 
@@ -183,12 +183,12 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
         {
             lightanchor_t *candidate;
             zarray_get_volatile(local_tags, i, &candidate);
-
             zarray_add(ld->candidates, lightanchor_copy(candidate));
         }
     }
     else {
         zarray_t *valid = zarray_create(sizeof(lightanchor_t));
+
         for (int i = 0; i < zarray_size(ld->candidates); i++)
         {
             lightanchor_t *global_tag;

@@ -12,10 +12,10 @@
             background: #333;
         }
         #tag {
-            background: #222;
+            background: #555;
             width: 70vmin;
             height: 70vmin;
-            border: 10vmin;
+            border: 12vmin;
             border-style: solid;
             border-color: black;
             margin: 10px;
@@ -89,7 +89,7 @@
                 let idx = 0;
                 blink = setInterval(function() {
                     const bit = Number(!!(code & (1 << (len-idx-1))));
-                    console.log(bit, Date.now() - start_t)
+                    // console.log(bit, Date.now() - start_t)
                     if (bit == 1) {
                         tag.style.background = "white"
                         // const nextIdx = (idx+1) % len;
@@ -109,7 +109,7 @@
             }
             else {
                 clearInterval(blink);
-                tag.style.background = "#222"
+                tag.style.background = "#555"
             }
             started = !started;
         }
