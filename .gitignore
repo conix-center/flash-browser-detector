@@ -1,9 +1,12 @@
+.DS_Store
+
+.vscode
+
 bin/
 build/
-wasm/build/
 obj/
+
 *.ps
 *.pnm
-.DS_Store
-.vscode
+
 node_modules/
