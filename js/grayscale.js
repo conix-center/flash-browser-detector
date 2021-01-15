@@ -1,86 +1,45 @@
-import Utils from './utils';
+import {Utils} from './utils';
+import {GLUtils} from './gl-utils';
 
-export default class GrayScaleMedia {
+export class GrayScaleMedia {
     constructor(source, width, height, canvas) {
-        this._source = source;
-        this._width = width;
-        this._height = height;
-        this._canvas = canvas ? canvas : document.createElement("canvas");
-        this._canvas.width = width;
-        this._canvas.height = height;
+        this.source = source;
 
-        this._flipImageProg = require("./shaders/flip-image.glsl");
-        this._grayscaleProg = require("./shaders/grayscale.glsl");
-        this.glReady = false;
-        this.initGL(this._flipImageProg, this._grayscaleProg);
-    }
+        this.width = width;
+        this.height = height;
 
-    initGL(vertShaderSource, fragShaderSource) {
-        this.gl = this._canvas.getContext("webgl");
+        this.canvas = canvas ? canvas : document.createElement("canvas");
+        this.canvas.width = width;
+        this.canvas.height = height;
 
-        this.gl.viewport(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
-        this.gl.clearColor(0.1, 0.1, 0.1, 1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.gl = GLUtils.createGL(this.canvas, this.width, this.height);
 
-        const vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
-        const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-
-        this.gl.shaderSource(vertShader, vertShaderSource);
-        this.gl.shaderSource(fragShader, fragShaderSource);
-
-        this.gl.compileShader(vertShader);
-        this.gl.compileShader(fragShader);
-
-        const program = this.gl.createProgram();
-        this.gl.attachShader(program, vertShader);
-        this.gl.attachShader(program, fragShader);
-
-        this.gl.linkProgram(program);
-
-        this.gl.useProgram(program);
-
-        const vertices = new Float32Array([
-            -1, -1,
-            -1,  1,
-             1,  1,
-            -1, -1,
-             1,  1,
-             1, -1,
-        ]);
-
-        const buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+        const flipProg = require("./shaders/flip-image.glsl");
+        const grayProg = require("./shaders/grayscale.glsl");
+        const program = GLUtils.createProgram(this.gl, flipProg, grayProg);
+        GLUtils.useProgram(this.gl, program);
 
         const positionLocation = this.gl.getAttribLocation(program, "position");
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
         this.gl.enableVertexAttribArray(positionLocation);
 
-        this.flipLocation = this.gl.getUniformLocation(program, "flipY");
+        const flipLocation = this.gl.getUniformLocation(program, "flipY");
+        this.gl.uniform1f(flipLocation, -1); // flip image
 
-        const texture = this.gl.createTexture();
-        this.gl.activeTexture(this.gl.TEXTURE0);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-
-        // if either dimension of image is not a power of 2
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+        this.texture = GLUtils.createTexture(this.gl, this.width, this.height);
+        GLUtils.bindTexture(this.gl, this.texture);
 
         this.glReady = true;
-        this.pixelBuf = new Uint8Array(this.gl.drawingBufferWidth * this.gl.drawingBufferHeight * 4);
-        this.grayBuf = new Uint8Array(this.gl.drawingBufferWidth * this.gl.drawingBufferHeight);
+        this.pixelBuf = new Uint8ClampedArray(this.width * this.height * 4);
+        this.grayBuf = new Uint8ClampedArray(this.width * this.height);
     }
 
-    getFrame() {
+    getPixels() {
         if (!this.glReady) return undefined;
 
-        this.gl.uniform1f(this.flipLocation, -1); // flip image
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this._source);
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-
-        this.gl.readPixels(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.pixelBuf);
+        GLUtils.updateElem(this.gl, this.source);
+        GLUtils.draw(this.gl);
+        GLUtils.readPixels(this.gl, this.width, this.height, this.pixelBuf);
 
         let j = 0;
         for (let i = 0; i < this.pixelBuf.length; i += 4) {
@@ -96,7 +55,7 @@ export default class GrayScaleMedia {
                 return reject();
 
             // Hack for mobile browsers: aspect ratio is flipped.
-            var aspect = this._width / this._height;
+            var aspect = this.width / this.height;
             if (Utils.isMobile()) {
                 aspect = 1 / aspect;
             }
@@ -104,17 +63,18 @@ export default class GrayScaleMedia {
             navigator.mediaDevices.getUserMedia({
                 audio: false,
                 video: {
-                    width: { ideal: this._width },
-                    height: { ideal: this._height },
+                    width: { ideal: this.width },
+                    height: { ideal: this.height },
                     aspectRatio: { ideal: aspect },
                     facingMode: "environment"
                 }
             })
             .then(stream => {
-                this._source.srcObject = stream;
-                this._source.onloadedmetadata = e => {
-                    this._source.play();
-                    resolve(this._source);
+                this.source.srcObject = stream;
+                this.source.onloadedmetadata = e => {
+                    this.source.play();
+                    GLUtils.bindElem(this.gl, this.source);
+                    resolve(this.source);
                 };
             })
             .catch(err => {

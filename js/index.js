@@ -1,5 +1,5 @@
-import GrayScaleMedia from "./grayscale"
-import GlitterDetector from "./glitter-detector"
+import {GrayScaleMedia} from "./grayscale"
+import {GlitterDetector} from "./glitter-detector"
 
 export {
     GrayScaleMedia, GlitterDetector

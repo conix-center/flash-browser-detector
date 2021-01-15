@@ -31,7 +31,7 @@ int init(uint8_t code) {
     apriltag_detector_add_family(td, tf);
 
     td->quad_decimate = 2.0;
-    td->quad_sigma = 0.0;
+    td->quad_sigma = 1.0;
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
@@ -45,7 +45,7 @@ int init(uint8_t code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-double *track(uint8_t frame[], size_t cols, size_t rows) {
+double *track(uint8_t frame[], int cols, int rows) {
     double *output;
 
     image_u8_t im = {

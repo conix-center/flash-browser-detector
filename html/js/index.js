@@ -8,7 +8,7 @@ let videoSource = null;
 let videoCanvas = null;
 let overlayCanvas = null;
 
-const targetFps = 20;
+const targetFps = 30;
 const fpsInterval = 1000 / targetFps; // ms
 
 let start_t, prev_t;
@@ -52,24 +52,28 @@ function drawQuads(quads) {
 }
 
 function tick() {
-
     // const now = Date.now();
     // const dt = now - prev_t;
 
     // if (dt >= fpsInterval) {
         // prev_t = now - (dt % fpsInterval);
 
-    stats.begin();
+    console.time("filter");
+    imageData = grayscale.getPixels();
+    console.timeEnd("filter");
 
-    imageData = grayscale.getFrame();
     const videoCanvasCtx = videoCanvas.getContext("2d");
     videoCanvasCtx.drawImage(
-        videoSource, 0, 0, width, height
-    );
+        videoSource, 0, 0, width, height);
+
+    console.time("quads");
     const quads = glitterDetector.track(imageData, width, height);
+    console.timeEnd("quads");
+
     drawQuads(quads);
 
-    stats.end();
+    stats.update();
+
     // }
 
     // requestAnimationFrame(tick);
