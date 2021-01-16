@@ -1,5 +1,6 @@
-import {GrayScaleMedia} from "./grayscale"
-import {GlitterModule} from "./glitter-module"
+import {GrayScaleMedia} from "./grayscale";
+import {GlitterModule} from "./glitter-module";
+import {DeviceIMU} from "./imu";
 
 export class GlitterDetector {
     constructor(code, targetFps, width, height, video) {
@@ -21,6 +22,9 @@ export class GlitterDetector {
             this.video.setAttribute("playsinline", "");
         }
 
+        this.glitterModule = null;
+        this.imu = null;
+
         this.grayScaleMedia = new GrayScaleMedia(this.video, this.width, this.height);
     }
 
@@ -29,6 +33,7 @@ export class GlitterDetector {
             setInterval(this.tick.bind(this), this.fpsInterval);
         }
 
+        this.imu = new DeviceIMU();
         this.glitterModule = new GlitterModule(this.code, startTick.bind(this));
         const initEvent = new CustomEvent("onGlitterInit", { detail: { source: source } });
         document.dispatchEvent(initEvent);
