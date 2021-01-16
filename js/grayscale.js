@@ -1,5 +1,5 @@
-import {Utils} from './utils';
-import {GLUtils} from './gl-utils';
+import {Utils} from './utils/utils';
+import {GLUtils} from './utils/gl-utils';
 
 export class GrayScaleMedia {
     constructor(source, width, height, canvas) {

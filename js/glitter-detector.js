@@ -1,57 +1,67 @@
+import {GrayScaleMedia} from "./grayscale"
+import {GlitterModule} from "./glitter-module"
+
 export class GlitterDetector {
-    constructor(code, callback) {
-        let _this = this;
-        this.ready = false;
-        this.shouldTrack = false;
-        this.validPoints = false;
+    constructor(code, targetFps, width, height, video) {
         this.code = code;
+        this.fpsInterval = 1000 / targetFps; // ms
 
-        GlitterWASM().then(function (Module) {
-            console.log("GLITTER WASM module loaded.");
-            _this.onWasmInit(Module);
-            if (callback) callback();
-        });
-    }
+        this.width = width;
+        this.height = height;
 
-    onWasmInit(Module) {
-        this._Module = Module;
-        this._init = Module.cwrap("init", "number", ["number"]);
-        this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
-        this.ready = (this._init(this.code) == 0);
-    }
+        this.imageData = null;
 
-    track(im_arr, width, height) {
-        let quads = [];
-        if (!this.ready) return quads;
-
-        const im_ptr = this._Module._malloc(im_arr.length);
-        this._Module.HEAPU8.set(im_arr, im_ptr);
-
-        const ptr = this._track(im_ptr, width, height);
-        const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
-
-        const numQuads = this._Module.getValue(ptr, "double");
-        // console.log("numQuads = ", numQuads);
-
-        for (var i = 0; i < numQuads; i++) {
-            var q = {
-                p00 : this._Module.HEAPF64[ptrF64+10*i+1+0],
-                p01 : this._Module.HEAPF64[ptrF64+10*i+1+1],
-                p10 : this._Module.HEAPF64[ptrF64+10*i+1+2],
-                p11 : this._Module.HEAPF64[ptrF64+10*i+1+3],
-                p20 : this._Module.HEAPF64[ptrF64+10*i+1+4],
-                p21 : this._Module.HEAPF64[ptrF64+10*i+1+5],
-                p30 : this._Module.HEAPF64[ptrF64+10*i+1+6],
-                p31 : this._Module.HEAPF64[ptrF64+10*i+1+7],
-                c0  : this._Module.HEAPF64[ptrF64+10*i+1+8],
-                c1  : this._Module.HEAPF64[ptrF64+10*i+1+9],
-            };
-            quads.push(q);
+        if (video) {
+            this.video = video;
+        }
+        else {
+            this.video = document.createElement("video");
+            this.video.setAttribute("autoplay", "");
+            this.video.setAttribute("muted", "");
+            this.video.setAttribute("playsinline", "");
         }
 
-        this._Module._free(ptr);
-        this._Module._free(im_ptr);
+        this.grayScaleMedia = new GrayScaleMedia(this.video, this.width, this.height);
+    }
 
-        return quads;
+    _onInit(source) {
+        function startTick() {
+            setInterval(this.tick.bind(this), this.fpsInterval);
+        }
+
+        this.glitterModule = new GlitterModule(this.code, startTick.bind(this));
+        const initEvent = new CustomEvent("onGlitterInit", { detail: { source: source } });
+        document.dispatchEvent(initEvent);
+    }
+
+    start() {
+        this.grayScaleMedia.requestStream()
+            .then(source => {
+                this._onInit(source);
+            })
+            .catch(err => {
+                console.warn("ERROR: " + err);
+            });
+    }
+
+    tick() {
+        const start = performance.now();
+
+        this.imageData = this.grayScaleMedia.getPixels();
+
+        const mid = performance.now();
+
+        const quads = this.glitterModule.track(this.imageData, this.width, this.height);
+
+        const end = performance.now();
+
+        if (end-start > this.fpsInterval) {
+            console.log("getPixels:", mid-start, "quads:", end-mid, "total:", end-start);
+        }
+
+        if (quads) {
+            const tagEvent = new CustomEvent("onGlitterTagsFound", { detail: { tags: quads } });
+            document.dispatchEvent(tagEvent);
+        }
     }
 }

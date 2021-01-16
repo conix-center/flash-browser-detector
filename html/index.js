@@ -2,29 +2,14 @@ let width = window.innerWidth;
 let height = window.innerHeight;
 
 const code = 0xaf;
+const targetFps = 30;
 
 let stats = null;
 let videoSource = null;
 let videoCanvas = null;
 let overlayCanvas = null;
 
-const targetFps = 30;
-const fpsInterval = 1000 / targetFps; // ms
-
-let startTime, prevTime;
-let imageData = null;
-
 let glitterDetector = null;
-
-function initStats() {
-    stats = new Stats();
-    stats.showPanel(0);
-    document.getElementById("stats").appendChild(stats.domElement);
-}
-
-function clearOverlayCtx(overlayCtx) {
-    overlayCtx.clearRect(0, 0, width, height);
-}
 
 function drawQuad(quad) {
     const overlayCtx = overlayCanvas.getContext("2d");
@@ -44,57 +29,34 @@ function drawQuad(quad) {
 
 function drawQuads(quads) {
     const overlayCtx = overlayCanvas.getContext("2d");
-    clearOverlayCtx(overlayCtx);
+    overlayCtx.clearRect(0, 0, width, height);
 
     for (var i = 0; i < quads.length; i++) {
         drawQuad(quads[i]);
     }
 }
 
-function tick() {
-    // const now = Date.now();
-    // const dt = now - prevTime;
+document.addEventListener("onGlitterInit", (e) => {
+    stats = new Stats();
+    stats.showPanel(0);
+    document.getElementById("stats").appendChild(stats.domElement);
+    videoSource = e.detail.source;
+});
 
-    // if (dt >= fpsInterval) {
-        // prevTime = now - (dt % fpsInterval);
-
+document.addEventListener("onGlitterTagsFound", (e) => {
     const videoCanvasCtx = videoCanvas.getContext("2d");
     videoCanvasCtx.drawImage(
         videoSource, 0, 0, width, height);
-
-    console.time("filter");
-    imageData = grayscale.getPixels();
-    console.timeEnd("filter");
-
-    console.time("quads");
-    const quads = glitterDetector.track(imageData, width, height);
-    console.timeEnd("quads");
-
-    drawQuads(quads);
-
+    drawQuads(e.detail.tags);
     stats.update();
+});
 
-    // }
-
-    // requestAnimationFrame(tick);
-}
-
-function onInit(source) {
-    videoSource = source;
-    glitterDetector = new Glitter.GlitterDetector(code, () => {
-        startTime = Date.now()
-        prevTime = startTime;
-        // tick();
-        setInterval(tick, fpsInterval)
-    });
+function setVideoStyle(elem) {
+    elem.style.position = "absolute";
+    elem.style.top = 0;
 }
 
 window.onload = () => {
-    function setVideoStyle(elem) {
-        elem.style.position = "absolute";
-        elem.style.top = 0;
-    }
-
     var video = document.createElement("video");
     video.setAttribute("autoplay", "");
     video.setAttribute("muted", "");
@@ -105,6 +67,7 @@ window.onload = () => {
     videoCanvas.id = "video-canvas";
     videoCanvas.width = width;
     videoCanvas.height = height;
+    videoCanvas.style.zIndex = 0;
     document.body.appendChild(videoCanvas);
 
     overlayCanvas = document.createElement("canvas");
@@ -115,13 +78,6 @@ window.onload = () => {
     overlayCanvas.style.zIndex = 1;
     document.body.appendChild(overlayCanvas);
 
-    grayscale = new Glitter.GrayScaleMedia(video, width, height);
-    grayscale.requestStream()
-        .then(source => {
-            initStats();
-            onInit(source);
-        })
-        .catch(err => {
-            console.warn("ERROR: " + err);
-        });
+    glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
+    glitterDetector.start();
 }
