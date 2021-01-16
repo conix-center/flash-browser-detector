@@ -4,9 +4,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["WasmAR"] = factory();
+		exports["Glitter"] = factory();
 	else
-		root["WasmAR"] = factory();
+		root["Glitter"] = factory();
 })(typeof self !== 'undefined' ? self : this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -91,10 +91,107 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./js/glitter-lib.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./js/index.js");
 /******/ })
 /************************************************************************/
 /******/ ({
+
+/***/ "./js/gl-utils.js":
+/*!************************!*\
+  !*** ./js/gl-utils.js ***!
+  \************************/
+/*! exports provided: GLUtils */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GLUtils", function() { return GLUtils; });
+class GLUtils {
+  static createGL(canvas, width, height) {
+    const gl = canvas.getContext("webgl");
+    gl.viewport(0, 0, width, height);
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    const vertices = new Float32Array([-1, -1, -1, 1, 1, 1, -1, -1, 1, 1, 1, -1]);
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    return gl;
+  }
+
+  static createShader(gl, type, shaderProg) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, shaderProg);
+    gl.compileShader(shader);
+    return shader;
+  }
+
+  static createProgram(gl, vertShaderProg, fragShaderProg) {
+    const vertShader = GLUtils.createShader(gl, gl.VERTEX_SHADER, vertShaderProg);
+    const fragShader = GLUtils.createShader(gl, gl.FRAGMENT_SHADER, fragShaderProg);
+    const program = gl.createProgram();
+    gl.attachShader(program, vertShader);
+    gl.attachShader(program, fragShader);
+    gl.linkProgram(program);
+    return program;
+  }
+
+  static useProgram(gl, program) {
+    gl.useProgram(program);
+  }
+
+  static createTexture(gl, width, height) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture); // if either dimension of image is not a power of 2
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return texture;
+  }
+
+  static bindTexture(gl, texture) {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    return texture;
+  }
+
+  static bindElem(gl, elem) {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, elem);
+  }
+
+  static updateElem(gl, elem) {
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, elem);
+  }
+
+  static destroyTexture(gl, texture) {
+    gl.deleteTexture(texture);
+  }
+
+  static createFramebuffer(gl, texture) {
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    return fbo;
+  }
+
+  static destroyFramebuffer(gl, fbo) {
+    gl.deleteFramebuffer(fbo);
+  }
+
+  static draw(gl) {
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+
+  static readPixels(gl, width, height, buffer) {
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
+  }
+
+}
+
+/***/ }),
 
 /***/ "./js/glitter-detector.js":
 /*!********************************!*\
@@ -106,22 +203,9 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GlitterDetector", function() { return GlitterDetector; });
-/* harmony import */ var _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-/* harmony import */ var _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-/* harmony import */ var _babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1__);
-
-
-
-function dec2bin(dec) {
-  return (dec >>> 0).toString(2);
-}
-
-var GlitterDetector = /*#__PURE__*/function () {
-  function GlitterDetector(code, callback) {
-    _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0___default()(this, GlitterDetector);
-
-    var _this = this;
+class GlitterDetector {
+  constructor(code, callback) {
+    let _this = this;
 
     this.ready = false;
     this.shouldTrack = false;
@@ -136,78 +220,52 @@ var GlitterDetector = /*#__PURE__*/function () {
     });
   }
 
-  _babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1___default()(GlitterDetector, [{
-    key: "onWasmInit",
-    value: function onWasmInit(Module) {
-      this._Module = Module;
-      this._init = Module.cwrap("init", "number", ["number"]);
-      this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
-      this.ready = this._init(this.code) == 0;
+  onWasmInit(Module) {
+    this._Module = Module;
+    this._init = Module.cwrap("init", "number", ["number"]);
+    this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+    this.ready = this._init(this.code) == 0;
+  }
+
+  track(im_arr, width, height) {
+    let quads = [];
+    if (!this.ready) return quads;
+
+    const im_ptr = this._Module._malloc(im_arr.length);
+
+    this._Module.HEAPU8.set(im_arr, im_ptr);
+
+    const ptr = this._track(im_ptr, width, height);
+
+    const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
+
+    const numQuads = this._Module.getValue(ptr, "double"); // console.log("numQuads = ", numQuads);
+
+
+    for (var i = 0; i < numQuads; i++) {
+      var q = {
+        p00: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 0],
+        p01: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 1],
+        p10: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 2],
+        p11: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 3],
+        p20: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 4],
+        p21: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 5],
+        p30: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 6],
+        p31: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 7],
+        c0: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 8],
+        c1: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 9]
+      };
+      quads.push(q);
     }
-  }, {
-    key: "track",
-    value: function track(im_arr, width, height) {
-      var quads = [];
-      if (!this.ready) return quads;
 
-      var im_ptr = this._Module._malloc(im_arr.length);
+    this._Module._free(ptr);
 
-      this._Module.HEAPU8.set(im_arr, im_ptr);
+    this._Module._free(im_ptr);
 
-      var ptr = this._track(im_ptr, width, height);
+    return quads;
+  }
 
-      var ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
-
-      var numQuads = this._Module.getValue(ptr, "double"); // console.log("numQuads = ", numQuads);
-
-
-      for (var i = 0; i < numQuads; i++) {
-        var q = {
-          p00: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 0],
-          p01: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 1],
-          p10: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 2],
-          p11: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 3],
-          p20: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 4],
-          p21: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 5],
-          p30: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 6],
-          p31: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 7],
-          c0: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 8],
-          c1: this._Module.HEAPF64[ptrF64 + 10 * i + 1 + 9]
-        };
-        quads.push(q); // console.log(dec2bin(q.code));
-      }
-
-      this._Module._free(ptr);
-
-      this._Module._free(im_ptr);
-
-      return quads;
-    }
-  }]);
-
-  return GlitterDetector;
-}();
-
-/***/ }),
-
-/***/ "./js/glitter-lib.js":
-/*!***************************!*\
-  !*** ./js/glitter-lib.js ***!
-  \***************************/
-/*! exports provided: GrayScaleMedia, GlitterDetector */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _grayscale_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./grayscale.js */ "./js/grayscale.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GrayScaleMedia", function() { return _grayscale_js__WEBPACK_IMPORTED_MODULE_0__["GrayScaleMedia"]; });
-
-/* harmony import */ var _glitter_detector_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./glitter-detector.js */ "./js/glitter-detector.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GlitterDetector", function() { return _glitter_detector_js__WEBPACK_IMPORTED_MODULE_1__["GlitterDetector"]; });
-
-
-
-
+}
 
 /***/ }),
 
@@ -221,141 +279,114 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GrayScaleMedia", function() { return GrayScaleMedia; });
-/* harmony import */ var _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-/* harmony import */ var _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-/* harmony import */ var _babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils */ "./js/utils.js");
+/* harmony import */ var _gl_utils__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./gl-utils */ "./js/gl-utils.js");
 
 
+class GrayScaleMedia {
+  constructor(source, width, height, canvas) {
+    this.source = source;
+    this.width = width;
+    this.height = height;
+    this.canvas = canvas ? canvas : document.createElement("canvas");
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    this.gl = _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].createGL(this.canvas, this.width, this.height);
 
-function isMobile() {
-  var mobile = false;
+    const flipProg = __webpack_require__(/*! ./shaders/flip-image.glsl */ "./js/shaders/flip-image.glsl");
 
-  (function (a) {
-    if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4))) mobile = true;
-  })(navigator.userAgent || navigator.vendor || window.opera);
+    const grayProg = __webpack_require__(/*! ./shaders/grayscale.glsl */ "./js/shaders/grayscale.glsl");
 
-  return mobile;
-}
+    const program = _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].createProgram(this.gl, flipProg, grayProg);
+    _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].useProgram(this.gl, program);
+    const positionLocation = this.gl.getAttribLocation(program, "position");
+    this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(positionLocation);
+    const flipLocation = this.gl.getUniformLocation(program, "flipY");
+    this.gl.uniform1f(flipLocation, -1); // flip image
 
-;
-var GrayScaleMedia = /*#__PURE__*/function () {
-  function GrayScaleMedia(source, width, height, canvas) {
-    _babel_runtime_helpers_classCallCheck__WEBPACK_IMPORTED_MODULE_0___default()(this, GrayScaleMedia);
-
-    this._source = source;
-    this._width = width;
-    this._height = height;
-    this._canvas = canvas ? canvas : document.createElement("canvas");
-    this._canvas.width = width;
-    this._canvas.height = height;
-    this._flipImageProg = __webpack_require__(/*! ./shaders/flip-image.glsl */ "./js/shaders/flip-image.glsl");
-    this._grayscaleProg = __webpack_require__(/*! ./shaders/grayscale.glsl */ "./js/shaders/grayscale.glsl");
-    this.glReady = false;
-    this.initGL(this._flipImageProg, this._grayscaleProg);
+    this.texture = _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].createTexture(this.gl, this.width, this.height);
+    _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].bindTexture(this.gl, this.texture);
+    this.glReady = true;
+    this.pixelBuf = new Uint8ClampedArray(this.width * this.height * 4);
+    this.grayBuf = new Uint8ClampedArray(this.width * this.height);
   }
 
-  _babel_runtime_helpers_createClass__WEBPACK_IMPORTED_MODULE_1___default()(GrayScaleMedia, [{
-    key: "initGL",
-    value: function initGL(vertShaderSource, fragShaderSource) {
-      this.gl = this._canvas.getContext("webgl");
-      this.gl.viewport(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight);
-      this.gl.clearColor(0.1, 0.1, 0.1, 1.0);
-      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-      var vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
-      var fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-      this.gl.shaderSource(vertShader, vertShaderSource);
-      this.gl.shaderSource(fragShader, fragShaderSource);
-      this.gl.compileShader(vertShader);
-      this.gl.compileShader(fragShader);
-      var program = this.gl.createProgram();
-      this.gl.attachShader(program, vertShader);
-      this.gl.attachShader(program, fragShader);
-      this.gl.linkProgram(program);
-      this.gl.useProgram(program);
-      var vertices = new Float32Array([-1, -1, -1, 1, 1, 1, -1, -1, 1, 1, 1, -1]);
-      var buffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-      var positionLocation = this.gl.getAttribLocation(program, "position");
-      this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-      this.gl.enableVertexAttribArray(positionLocation);
-      this.flipLocation = this.gl.getUniformLocation(program, "flipY");
-      var texture = this.gl.createTexture();
-      this.gl.activeTexture(this.gl.TEXTURE0);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, texture); // if either dimension of image is not a power of 2
+  getPixels() {
+    if (!this.glReady) return undefined;
+    _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].updateElem(this.gl, this.source);
+    _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].draw(this.gl);
+    _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].readPixels(this.gl, this.width, this.height, this.pixelBuf);
+    let j = 0;
 
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-      this.glReady = true;
-      this.pixelBuf = new Uint8Array(this.gl.drawingBufferWidth * this.gl.drawingBufferHeight * 4);
-      this.grayBuf = new Uint8Array(this.gl.drawingBufferWidth * this.gl.drawingBufferHeight);
+    for (let i = 0; i < this.pixelBuf.length; i += 4) {
+      this.grayBuf[j] = this.pixelBuf[i];
+      j++;
     }
-  }, {
-    key: "getFrame",
-    value: function getFrame() {
-      if (!this.glReady) return undefined;
-      this.gl.uniform1f(this.flipLocation, -1); // flip image
 
-      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this._source);
-      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-      this.gl.readPixels(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.pixelBuf);
-      var j = 0;
+    return this.grayBuf;
+  }
 
-      for (var i = 0; i < this.pixelBuf.length; i += 4) {
-        this.grayBuf[j] = this.pixelBuf[i];
-        j++;
+  requestStream() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return reject(); // Hack for mobile browsers: aspect ratio is flipped.
+
+      var aspect = this.width / this.height;
+
+      if (_utils__WEBPACK_IMPORTED_MODULE_0__["Utils"].isMobile()) {
+        aspect = 1 / aspect;
       }
 
-      return this.grayBuf;
-    }
-  }, {
-    key: "requestStream",
-    value: function requestStream() {
-      var _this = this;
-
-      return new Promise(function (resolve, reject) {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return reject(); // Hack for mobile browsers: aspect ratio is flipped.
-
-        var aspect = _this._width / _this._height;
-
-        if (isMobile()) {
-          aspect = 1 / aspect;
+      navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          width: {
+            ideal: this.width
+          },
+          height: {
+            ideal: this.height
+          },
+          aspectRatio: {
+            ideal: aspect
+          },
+          facingMode: "environment"
         }
+      }).then(stream => {
+        this.source.srcObject = stream;
 
-        navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            width: {
-              ideal: _this._width
-            },
-            height: {
-              ideal: _this._height
-            },
-            aspectRatio: {
-              ideal: aspect
-            },
-            facingMode: "environment"
-          }
-        }).then(function (stream) {
-          _this._source.srcObject = stream;
-
-          _this._source.onloadedmetadata = function (e) {
-            _this._source.play();
-
-            resolve(_this._source);
-          };
-        })["catch"](function (err) {
-          reject(err);
-        });
+        this.source.onloadedmetadata = e => {
+          this.source.play();
+          _gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].bindElem(this.gl, this.source);
+          resolve(this.source);
+        };
+      }).catch(err => {
+        reject(err);
       });
-    }
-  }]);
+    });
+  }
 
-  return GrayScaleMedia;
-}();
+}
+
+/***/ }),
+
+/***/ "./js/index.js":
+/*!*********************!*\
+  !*** ./js/index.js ***!
+  \*********************/
+/*! exports provided: GrayScaleMedia, GlitterDetector */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _grayscale__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./grayscale */ "./js/grayscale.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GrayScaleMedia", function() { return _grayscale__WEBPACK_IMPORTED_MODULE_0__["GrayScaleMedia"]; });
+
+/* harmony import */ var _glitter_detector__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./glitter-detector */ "./js/glitter-detector.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GlitterDetector", function() { return _glitter_detector__WEBPACK_IMPORTED_MODULE_1__["GlitterDetector"]; });
+
+
+
+
 
 /***/ }),
 
@@ -381,47 +412,22 @@ module.exports = "precision highp float;\nuniform sampler2D u_image;\nvarying ve
 
 /***/ }),
 
-/***/ "./node_modules/@babel/runtime/helpers/classCallCheck.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/classCallCheck.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ "./js/utils.js":
+/*!*********************!*\
+  !*** ./js/utils.js ***!
+  \*********************/
+/*! exports provided: Utils */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Utils", function() { return Utils; });
+class Utils {
+  static isMobile() {
+    return /Android|mobile|iPad|iPhone/i.test(navigator.userAgent);
   }
+
 }
-
-module.exports = _classCallCheck;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/createClass.js":
-/*!************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/createClass.js ***!
-  \************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _defineProperties(target, props) {
-  for (var i = 0; i < props.length; i++) {
-    var descriptor = props[i];
-    descriptor.enumerable = descriptor.enumerable || false;
-    descriptor.configurable = true;
-    if ("value" in descriptor) descriptor.writable = true;
-    Object.defineProperty(target, descriptor.key, descriptor);
-  }
-}
-
-function _createClass(Constructor, protoProps, staticProps) {
-  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-  if (staticProps) _defineProperties(Constructor, staticProps);
-  return Constructor;
-}
-
-module.exports = _createClass;
 
 /***/ })
 

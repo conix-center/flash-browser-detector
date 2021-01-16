@@ -9,8 +9,8 @@ export class GrayScaleMedia {
         this.height = height;
 
         this.canvas = canvas ? canvas : document.createElement("canvas");
-        this.canvas.width = width;
-        this.canvas.height = height;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
 
         this.gl = GLUtils.createGL(this.canvas, this.width, this.height);
 

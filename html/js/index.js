@@ -11,7 +11,7 @@ let overlayCanvas = null;
 const targetFps = 30;
 const fpsInterval = 1000 / targetFps; // ms
 
-let start_t, prev_t;
+let startTime, prevTime;
 let imageData = null;
 
 let glitterDetector = null;
@@ -23,7 +23,7 @@ function initStats() {
 }
 
 function clearOverlayCtx(overlayCtx) {
-    overlayCtx.clearRect( 0, 0, width, height );
+    overlayCtx.clearRect(0, 0, width, height);
 }
 
 function drawQuad(quad) {
@@ -53,18 +53,18 @@ function drawQuads(quads) {
 
 function tick() {
     // const now = Date.now();
-    // const dt = now - prev_t;
+    // const dt = now - prevTime;
 
     // if (dt >= fpsInterval) {
-        // prev_t = now - (dt % fpsInterval);
-
-    console.time("filter");
-    imageData = grayscale.getPixels();
-    console.timeEnd("filter");
+        // prevTime = now - (dt % fpsInterval);
 
     const videoCanvasCtx = videoCanvas.getContext("2d");
     videoCanvasCtx.drawImage(
         videoSource, 0, 0, width, height);
+
+    console.time("filter");
+    imageData = grayscale.getPixels();
+    console.timeEnd("filter");
 
     console.time("quads");
     const quads = glitterDetector.track(imageData, width, height);
@@ -82,8 +82,8 @@ function tick() {
 function onInit(source) {
     videoSource = source;
     glitterDetector = new Glitter.GlitterDetector(code, () => {
-        start_t = Date.now()
-        prev_t = start_t;
+        startTime = Date.now()
+        prevTime = startTime;
         // tick();
         setInterval(tick, fpsInterval)
     });
