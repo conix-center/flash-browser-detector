@@ -27,4 +27,8 @@ static inline void qb_stats(struct queue_buf *qb, uint8_t *max, uint8_t *min) {
     *min = (*min != 255) ? *min : 0;
 }
 
+static inline void qb_copy(struct queue_buf *src, struct queue_buf *dest) {
+    memcpy(src, dest, sizeof(struct queue_buf));
+}
+
 #endif

@@ -1,12 +1,11 @@
 export class GlitterModule {
     constructor(code, callback) {
         let _this = this;
+
         this.ready = false;
-        this.shouldTrack = false;
-        this.validPoints = false;
         this.code = code;
 
-        GlitterWASM().then(function (Module) {
+        GlitterWASM().then(function(Module) {
             console.log("GLITTER WASM module loaded.");
             _this.onWasmInit(Module);
             if (callback) callback();

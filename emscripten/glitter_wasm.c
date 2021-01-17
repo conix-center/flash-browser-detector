@@ -35,11 +35,9 @@ int init(uint8_t code) {
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
-    // td->qtp.min_white_black_diff = 5;
+    td->qtp.min_white_black_diff = 10;
 
     ld = lightanchor_detector_create(code);
-
-    printf("Ready!\n");
 
     return 0;
 }
@@ -58,9 +56,10 @@ double *track(uint8_t frame[], int cols, int rows) {
     zarray_t *quads = detect_quads(td, &im);
     zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
-    const int size = (1+10*zarray_size(quads))*sizeof(double); // len + 4 quad pts + 2 center
+    const int len = zarray_size(lightanchors);
+    const int size = (1+10*len)*sizeof(double); // len + 4 quad pts + 2 center
     output = calloc(1, size);
-    output[0] = zarray_size(lightanchors);
+    output[0] = len;
 
     for (int i = 0; i < zarray_size(lightanchors); i++) {
         struct lightanchor *la;

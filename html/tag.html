@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
 
-    <title>GLITTER tag</title>
+    <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
 
     <style type="text/css">
         body {
@@ -21,11 +21,18 @@
             margin: 50px;
         }
     </style>
+
+    <title>Web GLITTER tag</title>
 </head>
 <body>
+    <div id="stats"></div>
     <div id="tag"></div>
 
     <script type="text/javascript">
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.getElementById("stats").appendChild(stats.domElement);
+
         const tag = document.getElementById("tag");
 
         function getUrlVars() {
@@ -96,6 +103,7 @@
                         tag.style.background = "#222"
                     }
                     idx = (idx+1) % len;
+                    stats.update();
                 }, period);
             }
             else {
