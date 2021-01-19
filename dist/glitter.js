@@ -108,7 +108,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GlitterDetector", function() { return GlitterDetector; });
 /* harmony import */ var _grayscale__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./grayscale */ "./js/grayscale.js");
 /* harmony import */ var _glitter_module__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./glitter-module */ "./js/glitter-module.js");
-/* harmony import */ var _imu__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./imu */ "./js/imu.js");
+/* harmony import */ var _timer__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./timer */ "./js/timer.js");
+/* harmony import */ var _imu__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./imu */ "./js/imu.js");
+
 
 
 
@@ -137,11 +139,14 @@ class GlitterDetector {
 
   _onInit(source) {
     function startTick() {
-      setInterval(this.tick.bind(this), this.fpsInterval);
+      this.prev = Date.now(); // setInterval(this.tick.bind(this), this.fpsInterval);
+
+      this.timer = new _timer__WEBPACK_IMPORTED_MODULE_2__["Timer"](this.tick.bind(this), this.fpsInterval);
+      this.timer.run();
     }
 
-    this.imu = new _imu__WEBPACK_IMPORTED_MODULE_2__["DeviceIMU"]();
-    this.glitterModule = new _glitter_module__WEBPACK_IMPORTED_MODULE_1__["GlitterModule"](this.code, startTick.bind(this));
+    this.imu = new _imu__WEBPACK_IMPORTED_MODULE_3__["DeviceIMU"]();
+    this.glitterModule = new _glitter_module__WEBPACK_IMPORTED_MODULE_1__["GlitterModule"](this.code, this.width, this.height, startTick.bind(this));
     const initEvent = new CustomEvent("onGlitterInit", {
       detail: {
         source: source
@@ -159,11 +164,13 @@ class GlitterDetector {
   }
 
   tick() {
-    const start = performance.now();
+    const start = Date.now(); // console.log(start - this.prev, this.timer.getError());
+
+    this.prev = start;
     this.imageData = this.grayScaleMedia.getPixels();
-    const mid = performance.now();
-    const quads = this.glitterModule.track(this.imageData, this.width, this.height);
-    const end = performance.now();
+    const mid = Date.now();
+    const quads = this.glitterModule.track(this.imageData);
+    const end = Date.now();
 
     if (end - start > this.fpsInterval) {
       console.log("getPixels:", mid - start, "quads:", end - mid, "total:", end - start);
@@ -194,12 +201,12 @@ class GlitterDetector {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GlitterModule", function() { return GlitterModule; });
 class GlitterModule {
-  constructor(code, callback) {
+  constructor(code, width, height, callback) {
     let _this = this;
 
+    this.width = width;
+    this.height = height;
     this.ready = false;
-    this.shouldTrack = false;
-    this.validPoints = false;
     this.code = code;
     GlitterWASM().then(function (Module) {
       console.log("GLITTER WASM module loaded.");
@@ -215,22 +222,20 @@ class GlitterModule {
     this._init = Module.cwrap("init", "number", ["number"]);
     this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
     this.ready = this._init(this.code) == 0;
+    this.imPtr = this._Module._malloc(this.width * this.height);
   }
 
-  track(im_arr, width, height) {
+  track(pixels) {
     let quads = [];
     if (!this.ready) return quads;
 
-    const im_ptr = this._Module._malloc(im_arr.length);
+    this._Module.HEAPU8.set(pixels, this.imPtr);
 
-    this._Module.HEAPU8.set(im_arr, im_ptr);
-
-    const ptr = this._track(im_ptr, width, height);
+    const ptr = this._track(this.imPtr, this.width, this.height);
 
     const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
-    const numQuads = this._Module.getValue(ptr, "double"); // console.log("numQuads = ", numQuads);
-
+    const numQuads = this._Module.getValue(ptr, "double");
 
     for (var i = 0; i < numQuads; i++) {
       var q = {
@@ -249,8 +254,6 @@ class GlitterModule {
     }
 
     this._Module._free(ptr);
-
-    this._Module._free(im_ptr);
 
     return quads;
   }
@@ -292,8 +295,8 @@ class GrayScaleMedia {
     const positionLocation = this.gl.getAttribLocation(program, "position");
     this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(positionLocation);
-    const flipLocation = this.gl.getUniformLocation(program, "flipY");
-    this.gl.uniform1f(flipLocation, -1); // flip image
+    const flipYLocation = this.gl.getUniformLocation(program, "flipY");
+    this.gl.uniform1f(flipYLocation, -1); // flip image
 
     this.texture = _utils_gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].createTexture(this.gl, this.width, this.height);
     _utils_gl_utils__WEBPACK_IMPORTED_MODULE_1__["GLUtils"].bindTexture(this.gl, this.texture);
@@ -469,7 +472,61 @@ module.exports = "attribute vec2 position;\nvarying vec2 tex_coords;\nuniform fl
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "precision highp float;\nuniform sampler2D u_image;\nvarying vec2 tex_coords;\nconst vec3 g = vec3(0.299, 0.587, 0.114);\nvoid main(void) {\nvec4 color = texture2D(u_image, tex_coords);\nfloat gray = dot(color.rgb, g);\ngl_FragColor = vec4(vec3(gray), 1.0);\n}"
+module.exports = "precision highp float;\nuniform sampler2D u_image;\nvarying vec2 tex_coords;\nconst vec3 g = vec3(0.33, 0.33, 0.33);\nvoid main(void) {\nvec4 color = texture2D(u_image, tex_coords);\nfloat gray = dot(color.rgb, g);\ngl_FragColor = vec4(vec3(gray), 1.0);\n}"
+
+/***/ }),
+
+/***/ "./js/timer.js":
+/*!*********************!*\
+  !*** ./js/timer.js ***!
+  \*********************/
+/*! exports provided: Timer */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Timer", function() { return Timer; });
+class Timer {
+  constructor(callback, interval) {
+    this.callback = callback;
+    this.interval = interval;
+    this.running = false;
+  }
+
+  run() {
+    this.running = true;
+    this.totalDt = 0;
+    this.iters = 0;
+    this.expected = Date.now() + this.interval;
+    setTimeout(tick.bind(this), this.interval);
+
+    function tick() {
+      if (!this.running) return;
+      const dt = Date.now() - this.expected; // drift
+
+      const startCompute = Date.now();
+      this.totalDt += Math.abs(dt);
+      this.iters++;
+      this.callback();
+      this.expected += this.interval;
+      const computationTime = Date.now() - startCompute;
+      setTimeout(tick.bind(this), Math.max(0, this.interval - dt - computationTime)); // take into account drift
+    }
+  }
+
+  stop() {
+    this.running = false;
+  }
+
+  getError() {
+    if (this.iters > 0) {
+      return Math.abs(this.totalDt / this.iters);
+    } else {
+      return -1;
+    }
+  }
+
+}
 
 /***/ }),
 

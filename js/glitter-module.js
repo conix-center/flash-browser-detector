@@ -1,6 +1,9 @@
 export class GlitterModule {
-    constructor(code, callback) {
+    constructor(code, width, height, callback) {
         let _this = this;
+
+        this.width = width;
+        this.height = height;
 
         this.ready = false;
         this.code = code;
@@ -14,23 +17,25 @@ export class GlitterModule {
 
     onWasmInit(Module) {
         this._Module = Module;
+
         this._init = Module.cwrap("init", "number", ["number"]);
         this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+
         this.ready = (this._init(this.code) == 0);
+
+        this.imPtr = this._Module._malloc(this.width*this.height);
     }
 
-    track(im_arr, width, height) {
+    track(pixels) {
         let quads = [];
         if (!this.ready) return quads;
 
-        const im_ptr = this._Module._malloc(im_arr.length);
-        this._Module.HEAPU8.set(im_arr, im_ptr);
+        this._Module.HEAPU8.set(pixels, this.imPtr);
 
-        const ptr = this._track(im_ptr, width, height);
+        const ptr = this._track(this.imPtr, this.width, this.height);
         const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
         const numQuads = this._Module.getValue(ptr, "double");
-        // console.log("numQuads = ", numQuads);
 
         for (var i = 0; i < numQuads; i++) {
             var q = {
@@ -49,7 +54,6 @@ export class GlitterModule {
         }
 
         this._Module._free(ptr);
-        this._Module._free(im_ptr);
 
         return quads;
     }

@@ -23,8 +23,8 @@ export class GrayScaleMedia {
         this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
         this.gl.enableVertexAttribArray(positionLocation);
 
-        const flipLocation = this.gl.getUniformLocation(program, "flipY");
-        this.gl.uniform1f(flipLocation, -1); // flip image
+        const flipYLocation = this.gl.getUniformLocation(program, "flipY");
+        this.gl.uniform1f(flipYLocation, -1); // flip image
 
         this.texture = GLUtils.createTexture(this.gl, this.width, this.height);
         GLUtils.bindTexture(this.gl, this.texture);

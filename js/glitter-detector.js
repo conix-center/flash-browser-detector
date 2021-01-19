@@ -38,8 +38,8 @@ export class GlitterDetector {
         }
 
         this.imu = new DeviceIMU();
-        this.glitterModule = new GlitterModule(this.code, startTick.bind(this));
-        const initEvent = new CustomEvent("onGlitterInit", { detail: { source: source } });
+        this.glitterModule = new GlitterModule(this.code, this.width, this.height, startTick.bind(this));
+        const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
         document.dispatchEvent(initEvent);
     }
 
@@ -62,7 +62,7 @@ export class GlitterDetector {
 
         const mid = Date.now();
 
-        const quads = this.glitterModule.track(this.imageData, this.width, this.height);
+        const quads = this.glitterModule.track(this.imageData);
 
         const end = Date.now();
 
@@ -71,7 +71,7 @@ export class GlitterDetector {
         }
 
         if (quads) {
-            const tagEvent = new CustomEvent("onGlitterTagsFound", { detail: { tags: quads } });
+            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: quads}});
             document.dispatchEvent(tagEvent);
         }
     }
