@@ -6,6 +6,7 @@
 #include "common/math_util.h"
 #include "lightanchor.h"
 #include "queue_buf.h"
+#include <emscripten/emscripten.h>
 
 lightanchor_t *lightanchor_create(struct quad *quad)
 {
@@ -24,7 +25,13 @@ lightanchor_t *lightanchor_create(struct quad *quad)
     if (quad->H) {
         l->H = matd_copy(quad->H);
         homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
-        return l;
+        // if the center is within 50px of any of the quad points ==> too small ==> invalid
+        if (g2d_distance(l->c, l->p[0]) > 50 &&
+            g2d_distance(l->c, l->p[1]) > 50 &&
+            g2d_distance(l->c, l->p[2]) > 50 &&
+            g2d_distance(l->c, l->p[3]) > 50) {
+            return l;
+        }
     }
 
     return NULL;
@@ -93,13 +100,11 @@ uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     min_y = imin(py2, min_y);
     min_y = imin(py3, min_y);
 
-    // printf("%d %d %d %d\n", min_x, max_x, min_y, max_y);
-
     zarray_t *quad_poly = g2d_polygon_create_data(l->p, 4);
 
     double p[2] = {-1,-1};
-    for (int ix = min_x; ix <= max_x; ix+=2) {
-        for (int iy = min_y; iy <= max_y; iy+=2) {
+    for (int ix = min_x; ix <= max_x; ix+=4) {
+        for (int iy = min_y; iy <= max_y; iy+=4) {
             p[0] = (double)ix;
             p[1] = (double)iy;
             if (g2d_polygon_contains_point(quad_poly, p)) {
@@ -109,12 +114,9 @@ uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
         }
     }
 
-    uint8_t res;
-    if (n != 0) {
+    uint8_t res = 0;
+    if (n > 0) {
         res = (uint8_t)(avg / n);
-    }
-    else {
-        res = 255;
     }
     zarray_destroy(quad_poly);
     return res;

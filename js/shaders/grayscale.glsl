@@ -3,7 +3,7 @@ precision highp float;
 uniform sampler2D u_image;
 varying vec2 tex_coords;
 
-const vec3 g = vec3(0.299, 0.587, 0.114);
+const vec3 g = vec3(0.33, 0.33, 0.33);
 
 void main(void) {
     vec4 color = texture2D(u_image, tex_coords);

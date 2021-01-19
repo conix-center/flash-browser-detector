@@ -9,7 +9,7 @@
 #define EVEN_MASK       0xaaaa
 #define ODD_MASK        0x5555
 
-static inline size_t cyclic_lsr(size_t bits, size_t size)
+static inline size_t cyclic_lsl(size_t bits, size_t size)
 {
     return (bits << 1) | ((bits >> (size - 1)) & 0x1);
 }
@@ -54,10 +54,10 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
         match_code = candidate_curr->next_code;
 #ifdef DEBUG
         printf(" "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                        BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
 #endif
         if (match_even_odd(candidate_curr->code, match_code)) {
-            candidate_curr->next_code = cyclic_lsr(match_code, 16);
+            candidate_curr->next_code = cyclic_lsl(match_code, 16);
             candidate_curr->valid++;
             return 1;
         }
@@ -65,12 +65,14 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 #ifdef DEBUG
             printf("==== LOST ====\n");
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" != ",
-                BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
+                    BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
                     BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
 
+            int j = candidate_curr->brightnesses.idx;
             for (int i = 0; i < BUF_SIZE; i++) {
-                printf("%u ", candidate_curr->brightnesses.buf[i]);
+                printf("%u ", candidate_curr->brightnesses.buf[j]);
+                j = (j + 1) % BUF_SIZE;
             }
             puts("");
             printf("===============\n");
@@ -96,7 +98,7 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             printf("===============\n");
 #endif
             candidate_curr->code = match_code;
-            candidate_curr->next_code = cyclic_lsr(match_code, 16);
+            candidate_curr->next_code = cyclic_lsl(match_code, 16);
             candidate_curr->valid++;
             return 1;
         }

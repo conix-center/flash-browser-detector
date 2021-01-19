@@ -1,5 +1,6 @@
 import {GrayScaleMedia} from "./grayscale";
 import {GlitterModule} from "./glitter-module";
+import {Timer} from "./timer";
 import {DeviceIMU} from "./imu";
 
 export class GlitterDetector {
@@ -30,7 +31,10 @@ export class GlitterDetector {
 
     _onInit(source) {
         function startTick() {
-            setInterval(this.tick.bind(this), this.fpsInterval);
+            this.prev = Date.now();
+            // setInterval(this.tick.bind(this), this.fpsInterval);
+            this.timer = new Timer(this.tick.bind(this), this.fpsInterval);
+            this.timer.run();
         }
 
         this.imu = new DeviceIMU();
@@ -50,15 +54,17 @@ export class GlitterDetector {
     }
 
     tick() {
-        const start = performance.now();
+        const start = Date.now();
+        // console.log(start - this.prev, this.timer.getError());
+        this.prev = start;
 
         this.imageData = this.grayScaleMedia.getPixels();
 
-        const mid = performance.now();
+        const mid = Date.now();
 
         const quads = this.glitterModule.track(this.imageData, this.width, this.height);
 
-        const end = performance.now();
+        const end = Date.now();
 
         if (end-start > this.fpsInterval) {
             console.log("getPixels:", mid-start, "quads:", end-mid, "total:", end-start);

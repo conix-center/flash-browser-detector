@@ -35,7 +35,7 @@ int init(uint8_t code) {
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
-    td->qtp.min_white_black_diff = 10;
+    // td->qtp.min_white_black_diff = 10;
 
     ld = lightanchor_detector_create(code);
 

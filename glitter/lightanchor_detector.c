@@ -1,4 +1,3 @@
-
 /** @file lightanchor_detector.c
  *  @brief Implementation of the lightanchor detector library
  *  @see lightanchor_detector.h for documentation
@@ -19,7 +18,7 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define RANGE_THRES         85
+#define RANGE_THRES         45
 #define MAX_DIST            1000000
 
 lightanchor_detector_t *lightanchor_detector_create(char code)
@@ -220,10 +219,9 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                 qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);
                 candidate_curr->brightness = get_brightness(candidate_curr, im);
 
-                uint8_t max, min;
+                uint8_t max, min, thres;
                 qb_add(&candidate_curr->brightnesses, candidate_curr->brightness);
-                qb_stats(&candidate_curr->brightnesses, &max, &min);
-                uint8_t thres = (max + min) / 2;
+                qb_stats(&candidate_curr->brightnesses, &max, &min, &thres);
                 if ((max - min) > RANGE_THRES)
                 {
                     candidate_curr->code = (candidate_curr->code << 1) | (candidate_curr->brightness > thres);
