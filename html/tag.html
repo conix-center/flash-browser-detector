@@ -3,29 +3,36 @@
 <head>
     <meta charset="utf-8">
 
-    <title>GLITTER tag</title>
+    <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
 
     <style type="text/css">
         body {
             display: flex;
             justify-content: center;
-            background: #333;
+            background: white;
         }
         #tag {
-            background: #222;
-            width: 70vmin;
-            height: 70vmin;
-            border: 10vmin;
+            background: #111;
+            width: 57vmin;
+            height: 57vmin;
+            border: 13vmin;
             border-style: solid;
             border-color: black;
-            margin: 10px;
+            margin: 50px;
         }
     </style>
+
+    <title>Web GLITTER tag</title>
 </head>
 <body>
+    <div id="stats"></div>
     <div id="tag"></div>
 
     <script type="text/javascript">
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.getElementById("stats").appendChild(stats.domElement);
+
         const tag = document.getElementById("tag");
 
         function getUrlVars() {
@@ -89,27 +96,19 @@
                 let idx = 0;
                 blink = setInterval(function() {
                     const bit = Number(!!(code & (1 << (len-idx-1))));
-                    console.log(bit, Date.now() - start_t)
                     if (bit == 1) {
                         tag.style.background = "white"
-                        // const nextIdx = (idx+1) % len;
-                        // const nextBit = !!(code & (1 << (len-nextIdx-1)));
-                        // if (nextBit != bit) {
-                        //     setTimeout(() => {
-                        //         console.log(0, Date.now() - start_t)
-                        //         tag.style.background = "#222"
-                        //     }, period/2);
-                        // }
                     }
                     else {
-                        tag.style.background = "#222"
+                        tag.style.background = "#111"
                     }
                     idx = (idx+1) % len;
+                    stats.update();
                 }, period);
             }
             else {
                 clearInterval(blink);
-                tag.style.background = "#222"
+                tag.style.background = "#111"
             }
             started = !started;
         }

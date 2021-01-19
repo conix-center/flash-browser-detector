@@ -16,6 +16,7 @@
 #include "common/pjpeg.h"
 #include "common/zarray.h"
 
+#include "lightanchor.h"
 #include "lightanchor_detector.h"
 
 apriltag_family_t *tf = NULL;
@@ -30,20 +31,19 @@ int init(uint8_t code) {
     apriltag_detector_add_family(td, tf);
 
     td->quad_decimate = 2.0;
-    td->quad_sigma = 0.0;
+    td->quad_sigma = 1.0;
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
+    // td->qtp.min_white_black_diff = 10;
 
     ld = lightanchor_detector_create(code);
-
-    printf("Ready!\n");
 
     return 0;
 }
 
 EMSCRIPTEN_KEEPALIVE
-double *track(uint8_t frame[], size_t cols, size_t rows) {
+double *track(uint8_t frame[], int cols, int rows) {
     double *output;
 
     image_u8_t im = {
@@ -56,9 +56,10 @@ double *track(uint8_t frame[], size_t cols, size_t rows) {
     zarray_t *quads = detect_quads(td, &im);
     zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
-    const int size = (1+10*zarray_size(quads))*sizeof(double); // len + 4 quad pts + 2 center
+    const int len = zarray_size(lightanchors);
+    const int size = (1+10*len)*sizeof(double); // len + 4 quad pts + 2 center
     output = calloc(1, size);
-    output[0] = zarray_size(lightanchors);
+    output[0] = len;
 
     for (int i = 0; i < zarray_size(lightanchors); i++) {
         struct lightanchor *la;

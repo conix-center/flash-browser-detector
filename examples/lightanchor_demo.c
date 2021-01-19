@@ -46,6 +46,7 @@ either expressed or implied, of the Regents of The University of Michigan.
 #include "common/pjpeg.h"
 #include "common/zarray.h"
 
+#include "lightanchor.h"
 #include "lightanchor_detector.h"
 
 #include "common/postscript_utils.h"

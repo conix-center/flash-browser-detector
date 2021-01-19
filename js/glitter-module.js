@@ -1,15 +1,14 @@
-function dec2bin(dec){
-    return (dec >>> 0).toString(2);
-}
-class GLITTER_Detector {
-    constructor(code, callback) {
+export class GlitterModule {
+    constructor(code, width, height, callback) {
         let _this = this;
+
+        this.width = width;
+        this.height = height;
+
         this.ready = false;
-        this.shouldTrack = false;
-        this.validPoints = false;
         this.code = code;
 
-        GlitterWASM().then(function (Module) {
+        GlitterWASM().then(function(Module) {
             console.log("GLITTER WASM module loaded.");
             _this.onWasmInit(Module);
             if (callback) callback();
@@ -18,23 +17,25 @@ class GLITTER_Detector {
 
     onWasmInit(Module) {
         this._Module = Module;
+
         this._init = Module.cwrap("init", "number", ["number"]);
         this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+
         this.ready = (this._init(this.code) == 0);
+
+        this.imPtr = this._Module._malloc(this.width*this.height);
     }
 
-    track(im_arr, width, height) {
+    track(pixels) {
         let quads = [];
         if (!this.ready) return quads;
 
-        const im_ptr = this._Module._malloc(im_arr.length);
-        this._Module.HEAPU8.set(im_arr, im_ptr);
+        this._Module.HEAPU8.set(pixels, this.imPtr);
 
-        const ptr = this._track(im_ptr, width, height);
+        const ptr = this._track(this.imPtr, this.width, this.height);
         const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
         const numQuads = this._Module.getValue(ptr, "double");
-        // console.log("numQuads = ", numQuads);
 
         for (var i = 0; i < numQuads; i++) {
             var q = {
@@ -50,11 +51,9 @@ class GLITTER_Detector {
                 c1  : this._Module.HEAPF64[ptrF64+10*i+1+9],
             };
             quads.push(q);
-            // console.log(dec2bin(q.code));
         }
 
         this._Module._free(ptr);
-        this._Module._free(im_ptr);
 
         return quads;
     }

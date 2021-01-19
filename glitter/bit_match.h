@@ -3,6 +3,7 @@
 
 #include "apriltag.h"
 #include "common/zarray.h"
+#include "lightanchor.h"
 #include "lightanchor_detector.h"
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"

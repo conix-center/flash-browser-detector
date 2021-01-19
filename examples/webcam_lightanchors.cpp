@@ -13,6 +13,7 @@ extern "C" {
 #include "common/pjpeg.h"
 #include "common/zarray.h"
 
+#include "lightanchor.h"
 #include "lightanchor_detector.h"
 }
 
