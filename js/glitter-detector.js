@@ -29,7 +29,7 @@ export class GlitterDetector {
         this.grayScaleMedia = new GrayScaleMedia(this.video, this.width, this.height);
     }
 
-    _onInit(source) {
+    onInit(source) {
         function startTick() {
             this.prev = Date.now();
             // setInterval(this.tick.bind(this), this.fpsInterval);
@@ -46,7 +46,7 @@ export class GlitterDetector {
     start() {
         this.grayScaleMedia.requestStream()
             .then(source => {
-                this._onInit(source);
+                this.onInit(source);
             })
             .catch(err => {
                 console.warn("ERROR: " + err);
@@ -62,12 +62,12 @@ export class GlitterDetector {
 
         const mid = Date.now();
 
-        const quads = this.glitterModule.track(this.imageData);
+        const quads = this.glitterModule.detect_tags(this.imageData);
 
         const end = Date.now();
 
         if (end-start > this.fpsInterval) {
-            console.log("getPixels:", mid-start, "quads:", end-mid, "total:", end-start);
+            console.log("GPU:", mid-start, "CPU:", end-mid, "total:", end-start);
         }
 
         if (quads) {

@@ -18,21 +18,21 @@ export class GlitterModule {
     onWasmInit(Module) {
         this._Module = Module;
 
-        this._init = Module.cwrap("init", "number", ["number"]);
-        this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+        this._init = this._Module.cwrap("init", "number", ["number"]);
+        this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init(this.code) == 0);
 
         this.imPtr = this._Module._malloc(this.width*this.height);
     }
 
-    track(pixels) {
+    detect_tags(pixels) {
         let quads = [];
         if (!this.ready) return quads;
 
         this._Module.HEAPU8.set(pixels, this.imPtr);
 
-        const ptr = this._track(this.imPtr, this.width, this.height);
+        const ptr = this._detect_tags(this.imPtr, this.width, this.height);
         const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
         const numQuads = this._Module.getValue(ptr, "double");

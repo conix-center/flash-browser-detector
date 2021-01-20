@@ -43,7 +43,7 @@ int init(uint8_t code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-double *track(uint8_t frame[], int cols, int rows) {
+double *detect_tags(uint8_t frame[], int cols, int rows) {
     double *output;
 
     image_u8_t im = {
@@ -57,7 +57,7 @@ double *track(uint8_t frame[], int cols, int rows) {
     zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
     const int len = zarray_size(lightanchors);
-    const int size = (1+10*len)*sizeof(double); // len + 4 quad pts + 2 center
+    const int size = (1+10*len)*sizeof(double); // len + 8 quad pts + 2 center pts
     output = calloc(1, size);
     output[0] = len;
 

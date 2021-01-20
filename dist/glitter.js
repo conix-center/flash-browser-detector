@@ -137,7 +137,7 @@ class GlitterDetector {
     this.grayScaleMedia = new _grayscale__WEBPACK_IMPORTED_MODULE_0__["GrayScaleMedia"](this.video, this.width, this.height);
   }
 
-  _onInit(source) {
+  onInit(source) {
     function startTick() {
       this.prev = Date.now(); // setInterval(this.tick.bind(this), this.fpsInterval);
 
@@ -157,7 +157,7 @@ class GlitterDetector {
 
   start() {
     this.grayScaleMedia.requestStream().then(source => {
-      this._onInit(source);
+      this.onInit(source);
     }).catch(err => {
       console.warn("ERROR: " + err);
     });
@@ -169,11 +169,11 @@ class GlitterDetector {
     this.prev = start;
     this.imageData = this.grayScaleMedia.getPixels();
     const mid = Date.now();
-    const quads = this.glitterModule.track(this.imageData);
+    const quads = this.glitterModule.detect_tags(this.imageData);
     const end = Date.now();
 
     if (end - start > this.fpsInterval) {
-      console.log("getPixels:", mid - start, "quads:", end - mid, "total:", end - start);
+      console.log("GPU:", mid - start, "CPU:", end - mid, "total:", end - start);
     }
 
     if (quads) {
@@ -219,19 +219,19 @@ class GlitterModule {
 
   onWasmInit(Module) {
     this._Module = Module;
-    this._init = Module.cwrap("init", "number", ["number"]);
-    this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
+    this._init = this._Module.cwrap("init", "number", ["number"]);
+    this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
     this.ready = this._init(this.code) == 0;
     this.imPtr = this._Module._malloc(this.width * this.height);
   }
 
-  track(pixels) {
+  detect_tags(pixels) {
     let quads = [];
     if (!this.ready) return quads;
 
     this._Module.HEAPU8.set(pixels, this.imPtr);
 
-    const ptr = this._track(this.imPtr, this.width, this.height);
+    const ptr = this._detect_tags(this.imPtr, this.width, this.height);
 
     const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
