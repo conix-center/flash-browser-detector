@@ -5,7 +5,7 @@ if (window.innerWidth > 1000) {
     height /= 2;
 }
 
-const code = 0xa7;
+const code = 0xaf;
 const targetFps = 30;
 
 let stats = null;

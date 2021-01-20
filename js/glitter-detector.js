@@ -70,7 +70,7 @@ export class GlitterDetector {
         const end = Date.now();
 
         if (this.printPerformance || end-start > this.fpsInterval) {
-            console.log("GPU:", mid-start, "CPU:", end-mid, "total:", end-start);
+            console.log("[performance]", "GPU:", mid-start, "CPU:", end-mid, "total:", end-start);
         }
 
         if (quads) {

@@ -16,18 +16,19 @@ C_FLAGS 			= -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -O3
 CXX_FLAGS			= -g -std=c++11 -Wall -O3
 LD_FLAGS 			= -lpthread -lm
 
-WASM_MODULE_NAME 	= GlitterWASM
-WEBPACK_FILE 		= ./build/glitter.min.js
 WASM_FLAGS			= -Wall -O3
+WEBPACK_BUILD_DIR 	= build
+WEBPACK_FILE 		= glitter.min.js
+WASM_MODULE_NAME 	= GlitterWASM
 
-WASM_LD_FLAGS 		= " "
 WASM_LD_FLAGS 		+= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"'
 WASM_LD_FLAGS 		+= -s MODULARIZE=1
-WASM_LD_FLAGS 		+= --extern-post-js $(WEBPACK_FILE)
+WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
 WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
 WASM_LD_FLAGS 		+= -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "setValue"]'
 WASM_LD_FLAGS 		+= --memory-init-file 0
+# WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
 WASM_LD_FLAGS 		+= -s WASM=1
 
 OPENCV_C_FLAGS		= `pkg-config --cflags opencv`
@@ -113,4 +114,4 @@ $(BIN_DIR) $(OBJ_DIR) $(WASM_OUTPUT_DIR):
 	@mkdir $@
 
 clean:
-	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(APRILTAG_DIR)/*.o $(APRILTAG_DIR)/common/*.o *.pnm *.ps
+	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(WASM_OUTPUT_DIR) $(APRILTAG_DIR)/*.o $(APRILTAG_DIR)/common/*.o *.pnm *.ps

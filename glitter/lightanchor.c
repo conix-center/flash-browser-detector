@@ -6,7 +6,6 @@
 #include "common/math_util.h"
 #include "lightanchor.h"
 #include "queue_buf.h"
-#include <emscripten/emscripten.h>
 
 lightanchor_t *lightanchor_create(struct quad *quad)
 {
