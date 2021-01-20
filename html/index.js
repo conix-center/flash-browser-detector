@@ -1,5 +1,9 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
+if (window.innerWidth > 1000) {
+    width /= 2;
+    height /= 2;
+}
 
 const code = 0xaf;
 const targetFps = 30;
@@ -11,19 +15,25 @@ let overlayCanvas = null;
 
 let glitterDetector = null;
 
+function dec2bin(dec) {
+    return (dec >>> 0).toString(2);
+}
+
 function drawQuad(quad) {
     const overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
-    overlayCtx.strokeStyle = "blue";
-    overlayCtx.lineWidth = 5;
-
-    overlayCtx.moveTo(quad.p00, quad.p01);
-    overlayCtx.lineTo(quad.p10, quad.p11);
-    overlayCtx.lineTo(quad.p20, quad.p21);
-    overlayCtx.lineTo(quad.p30, quad.p31);
-    overlayCtx.lineTo(quad.p00, quad.p01);
-
+        overlayCtx.lineWidth = 5;
+        overlayCtx.strokeStyle = "blue";
+        overlayCtx.moveTo(quad.corners[0].x, quad.corners[0].y);
+        overlayCtx.lineTo(quad.corners[1].x, quad.corners[1].y);
+        overlayCtx.lineTo(quad.corners[2].x, quad.corners[2].y);
+        overlayCtx.lineTo(quad.corners[3].x, quad.corners[3].y);
+        overlayCtx.lineTo(quad.corners[0].x, quad.corners[0].y);
+        overlayCtx.font = "bold 20px Arial";
+        overlayCtx.textAlign = "center";
+        overlayCtx.fillStyle = "blue";
+        overlayCtx.fillText(dec2bin(code), quad.center.x, quad.center.y+10);
     overlayCtx.stroke();
 }
 
@@ -79,5 +89,6 @@ window.onload = () => {
     document.body.appendChild(overlayCanvas);
 
     glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
+    // glitterDetector.printPerformance = true;
     glitterDetector.start();
 }

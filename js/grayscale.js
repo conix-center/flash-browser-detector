@@ -30,8 +30,8 @@ export class GrayScaleMedia {
         GLUtils.bindTexture(this.gl, this.texture);
 
         this.glReady = true;
-        this.pixelBuf = new Uint8ClampedArray(this.width * this.height * 4);
-        this.grayBuf = new Uint8ClampedArray(this.width * this.height);
+        this.pixelBuf = new Uint8Array(this.width * this.height * 4);
+        this.grayBuf = new Uint8Array(this.width * this.height);
     }
 
     getPixels() {

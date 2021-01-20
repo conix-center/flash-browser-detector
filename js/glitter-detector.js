@@ -5,6 +5,8 @@ import {DeviceIMU} from "./imu";
 
 export class GlitterDetector {
     constructor(code, targetFps, width, height, video) {
+        let _this = this;
+
         this.code = code;
         this.fpsInterval = 1000 / targetFps; // ms
 
@@ -12,6 +14,7 @@ export class GlitterDetector {
         this.height = height;
 
         this.imageData = null;
+        this.printPerformance = false;
 
         if (video) {
             this.video = video;
@@ -66,7 +69,7 @@ export class GlitterDetector {
 
         const end = Date.now();
 
-        if (end-start > this.fpsInterval) {
+        if (this.printPerformance || end-start > this.fpsInterval) {
             console.log("GPU:", mid-start, "CPU:", end-mid, "total:", end-start);
         }
 

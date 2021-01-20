@@ -38,17 +38,19 @@ export class GlitterModule {
         const numQuads = this._Module.getValue(ptr, "double");
 
         for (var i = 0; i < numQuads; i++) {
+            const p00 = this._Module.HEAPF64[ptrF64+10*i+1+0];
+            const p01 = this._Module.HEAPF64[ptrF64+10*i+1+1];
+            const p10 = this._Module.HEAPF64[ptrF64+10*i+1+2];
+            const p11 = this._Module.HEAPF64[ptrF64+10*i+1+3];
+            const p20 = this._Module.HEAPF64[ptrF64+10*i+1+4];
+            const p21 = this._Module.HEAPF64[ptrF64+10*i+1+5];
+            const p30 = this._Module.HEAPF64[ptrF64+10*i+1+6];
+            const p31 = this._Module.HEAPF64[ptrF64+10*i+1+7];
+            const c0  = this._Module.HEAPF64[ptrF64+10*i+1+8];
+            const c1  = this._Module.HEAPF64[ptrF64+10*i+1+9];
             var q = {
-                p00 : this._Module.HEAPF64[ptrF64+10*i+1+0],
-                p01 : this._Module.HEAPF64[ptrF64+10*i+1+1],
-                p10 : this._Module.HEAPF64[ptrF64+10*i+1+2],
-                p11 : this._Module.HEAPF64[ptrF64+10*i+1+3],
-                p20 : this._Module.HEAPF64[ptrF64+10*i+1+4],
-                p21 : this._Module.HEAPF64[ptrF64+10*i+1+5],
-                p30 : this._Module.HEAPF64[ptrF64+10*i+1+6],
-                p31 : this._Module.HEAPF64[ptrF64+10*i+1+7],
-                c0  : this._Module.HEAPF64[ptrF64+10*i+1+8],
-                c1  : this._Module.HEAPF64[ptrF64+10*i+1+9],
+                corners: [{x:p00,y:p01}, {x:p10,y:p11}, {x:p20,y:p21}, {x:p30,y:p31}],
+                center: {x:c0, y:c1}
             };
             quads.push(q);
         }
