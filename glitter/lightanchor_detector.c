@@ -18,7 +18,7 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define RANGE_THRES         45
+#define RANGE_THRES         43      // = 255/6
 #define MAX_DIST            1000000
 
 lightanchor_detector_t *lightanchor_detector_create(char code)

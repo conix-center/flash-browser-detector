@@ -5,7 +5,7 @@ if (window.innerWidth > 1000) {
     height /= 2;
 }
 
-const code = 0xaf;
+const code = 0xa7;
 const targetFps = 30;
 
 let stats = null;
@@ -33,7 +33,7 @@ function drawQuad(quad) {
         overlayCtx.font = "bold 20px Arial";
         overlayCtx.textAlign = "center";
         overlayCtx.fillStyle = "blue";
-        overlayCtx.fillText(dec2bin(code), quad.center.x, quad.center.y+10);
+        overlayCtx.fillText(dec2bin(code), quad.center.x, quad.center.y);
     overlayCtx.stroke();
 }
 
