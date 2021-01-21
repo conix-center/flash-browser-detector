@@ -1,8 +1,10 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
-if (window.innerWidth > 1000) {
-    width /= 2;
-    height /= 2;
+if (width > 1024 || height > 1024) {
+    oldWidth = width;
+    oldHeight = height;
+    width = Math.pow(2, Math.floor(Math.log2(oldWidth/2)));
+    height = (width / oldWidth) * height;
 }
 
 const code = 0xaf;
@@ -46,14 +48,14 @@ function drawQuads(quads) {
     }
 }
 
-document.addEventListener("onGlitterInit", (e) => {
+window.addEventListener("onGlitterInit", (e) => {
     stats = new Stats();
     stats.showPanel(0);
     document.getElementById("stats").appendChild(stats.domElement);
     videoSource = e.detail.source;
 });
 
-document.addEventListener("onGlitterTagsFound", (e) => {
+window.addEventListener("onGlitterTagsFound", (e) => {
     const videoCanvasCtx = videoCanvas.getContext("2d");
     videoCanvasCtx.drawImage(
         videoSource, 0, 0, width, height);

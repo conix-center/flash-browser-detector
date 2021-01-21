@@ -20,12 +20,18 @@
             border-color: black;
             margin: 50px;
         }
+        #log {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+        }
     </style>
 
     <title>Web GLITTER tag</title>
 </head>
 <body>
     <div id="stats"></div>
+    <div id="log">Average Timer Error: 0 ms</div>
     <div id="tag"></div>
 
     <script type="text/javascript">
@@ -34,6 +40,11 @@
         document.getElementById("stats").appendChild(stats.domElement);
 
         const tag = document.getElementById("tag");
+        const log = document.getElementById("log");
+
+        function dec2bin(dec) {
+            return (dec >>> 0).toString(2);
+        }
 
         function getUrlVars() {
             const vars = {};
@@ -52,10 +63,6 @@
                 return defaultValue;
             }
             return urlParameter;
-        }
-
-        function dec2bin(dec) {
-            return (dec >>> 0).toString(2);
         }
 
         function preprocess(code) {
@@ -82,19 +89,28 @@
             return res;
         }
 
-        const len = 16;
         const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
-        const period = 1000 / freq; // ms
+        const interval = 1000 / freq; // ms
+
+        const len = 16;
         let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
         code = preprocess(code);
 
-        let started = false;
+        let running = false;
         let blink;
+        let totalDt = 0; let iters = 0;
         window.onmouseup = window.ontouchend = function() {
-            let start_t = Date.now();
-            if (!started) {
+            if (!running) {
                 let idx = 0;
-                blink = setInterval(function() {
+                let expected = Date.now() + interval;
+                setTimeout(tick, interval);
+                function tick() {
+                    if (!running) return;
+                    const dt = Date.now() - expected; // drift
+                    const startCompute = Date.now();
+                    totalDt += Math.abs(dt); iters++;
+                    log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+
                     const bit = Number(!!(code & (1 << (len-idx-1))));
                     if (bit == 1) {
                         tag.style.background = "white"
@@ -104,13 +120,16 @@
                     }
                     idx = (idx+1) % len;
                     stats.update();
-                }, period);
+
+                    expected += interval;
+                    const computationTime = Date.now() - startCompute;
+                    setTimeout(tick, Math.max(0, interval - dt - computationTime)); // take into account drift
+                }
             }
             else {
-                clearInterval(blink);
                 tag.style.background = "#111"
             }
-            started = !started;
+            running = !running;
         }
     </script>
 </body>

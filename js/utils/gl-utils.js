@@ -61,6 +61,10 @@ export class GLUtils {
         return texture;
     }
 
+    static destroyTexture(gl, texture) {
+        gl.deleteTexture(texture);
+    }
+
     static bindTexture(gl, texture) {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         return texture;
@@ -74,10 +78,6 @@ export class GLUtils {
     static updateElem(gl, elem) {
         gl.texSubImage2D(
             gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, elem);
-    }
-
-    static destroyTexture(gl, texture) {
-        gl.deleteTexture(texture);
     }
 
     static createFramebuffer(gl, texture) {

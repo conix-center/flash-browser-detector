@@ -43,7 +43,7 @@ export class GlitterDetector {
         this.imu = new DeviceIMU();
         this.glitterModule = new GlitterModule(this.code, this.width, this.height, startTick.bind(this));
         const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
-        document.dispatchEvent(initEvent);
+        window.dispatchEvent(initEvent);
     }
 
     start() {
@@ -75,7 +75,7 @@ export class GlitterDetector {
 
         if (quads) {
             const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: quads}});
-            document.dispatchEvent(tagEvent);
+            window.dispatchEvent(tagEvent);
         }
     }
 }
