@@ -111,32 +111,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     }
 
     zarray_t *quads = apriltag_quad_thresh(td, quad_im);
-
-    // adjust centers of pixels so that they correspond to the
-    // original full-resolution image.
-    if (td->quad_decimate > 1)
-    {
-        for (int i = 0; i < zarray_size(quads); i++)
-        {
-            struct quad *q;
-            zarray_get_volatile(quads, i, &q);
-
-            for (int j = 0; j < 4; j++)
-            {
-                if (td->quad_decimate == 1.5)
-                {
-                    q->p[j][0] *= td->quad_decimate;
-                    q->p[j][1] *= td->quad_decimate;
-                }
-                else
-                {
-                    q->p[j][0] = (q->p[j][0] - 0.5) * td->quad_decimate + 0.5;
-                    q->p[j][1] = (q->p[j][1] - 0.5) * td->quad_decimate + 0.5;
-                }
-            }
-        }
-    }
-
     zarray_t *quads_valid = zarray_create(sizeof(struct quad));
 
     double det;
@@ -144,6 +118,25 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     {
         struct quad *quad;
         zarray_get_volatile(quads, i, &quad);
+
+        // adjust centers of pixels so that they correspond to the
+        // original full-resolution image.
+        if (td->quad_decimate > 1)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (td->quad_decimate == 1.5)
+                {
+                    quad->p[j][0] *= td->quad_decimate;
+                    quad->p[j][1] *= td->quad_decimate;
+                }
+                else
+                {
+                    quad->p[j][0] = (quad->p[j][0] - 0.5) * td->quad_decimate + 0.5;
+                    quad->p[j][1] = (quad->p[j][1] - 0.5) * td->quad_decimate + 0.5;
+                }
+            }
+        }
 
         // find homographies for each detected quad
         if (quad_update_homographies(quad))

@@ -39,6 +39,18 @@ export class GrayScaleMedia {
         return this.pixelBuf;
     }
 
+    resize(width, height) {
+        GLUtils.resize(this.gl, width, height);
+
+        this.width = width;
+        this.height = height;
+
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+
+        this.pixelBuf = new Uint8Array(this.width * this.height * 4);
+    }
+
     requestStream() {
         return new Promise((resolve, reject) => {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)

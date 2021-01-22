@@ -18,6 +18,10 @@ export class GLUtils {
         return gl;
     }
 
+    static resize(gl, width, height) {
+        gl.viewport(0, 0, width, height);
+    }
+
     static createShader(gl, type, shaderProg) {
         const shader = gl.createShader(type);
 

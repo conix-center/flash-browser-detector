@@ -1,10 +1,6 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
 if (width > 1024 || height > 1024) {
-    // oldWidth = width;
-    // oldHeight = height;
-    // width = Math.pow(2, Math.floor(Math.log2(oldWidth/2)));
-    // height = (width / oldWidth) * height;
     width /= 2;
     height /= 2;
 }
@@ -63,6 +59,24 @@ window.addEventListener("onGlitterTagsFound", (e) => {
         videoSource, 0, 0, width, height);
     drawQuads(e.detail.tags);
     stats.update();
+});
+
+function resize(width, height) {
+    videoCanvas.width = width;
+    videoCanvas.height = height;
+
+    overlayCanvas.width = width;
+    overlayCanvas.height = height;
+}
+
+window.addEventListener("resize", (e) => {
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    if (width > 1024 || height > 1024) {
+        width /= 2;
+        height /= 2;
+    }
+    resize(width, height);
 });
 
 function setVideoStyle(elem) {

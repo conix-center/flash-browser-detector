@@ -46,6 +46,13 @@ export class GlitterDetector {
         window.dispatchEvent(initEvent);
     }
 
+    resize(width, height) {
+        this.width = width;
+        this.height = height;
+        this.glitterModule.resize(this.width, this.height);
+        this.grayScaleMedia.resize(this.width, this.height);
+    }
+
     start() {
         this.grayScaleMedia.requestStream()
             .then(source => {

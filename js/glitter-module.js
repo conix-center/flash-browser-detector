@@ -28,6 +28,17 @@ export class GlitterModule {
         this.grayPtr = this._Module._malloc(this.width*this.height);
     }
 
+    resize(width, height) {
+        this.width = width;
+        this.height = height;
+
+        this._Module._free(this.imagePtr);
+        this._Module._free(this.grayPtr);
+
+        this.imagePtr = this._Module._malloc(this.width*this.height*4);
+        this.grayPtr = this._Module._malloc(this.width*this.height);
+    }
+
     saveGrayscale(pixels) {
         this._Module.HEAPU8.set(pixels, this.imagePtr);
         return this._save_grayscale(this.imagePtr, this.grayPtr, this.width, this.height);
