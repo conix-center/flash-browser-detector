@@ -1,12 +1,16 @@
+#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
+#else
+precision mediump float;
+#endif
 
 uniform sampler2D u_image;
 varying vec2 tex_coords;
 
-const vec3 g = vec3(0.33, 0.33, 0.33);
+const vec4 g = vec4(0.333, 0.333, 0.333, 0.0);
 
 void main(void) {
     vec4 color = texture2D(u_image, tex_coords);
-    float gray = dot(color.rgb, g);
-    gl_FragColor = vec4(vec3(gray), 1.0);
+    float gray = dot(color, g);
+    gl_FragColor = vec4(gray, gray, gray, 1.0);
 }

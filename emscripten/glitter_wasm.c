@@ -43,23 +43,32 @@ int init(uint8_t code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-double *detect_tags(uint8_t frame[], int cols, int rows) {
+int save_grayscale(uint8_t pixels[], uint8_t gray[], int cols, int rows) {
+    const int len = cols*rows*4;
+    for (int i = 0, j = 0; i < len; i+=4, j++) {
+        gray[j] = pixels[i];
+    }
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+double *detect_tags(uint8_t gray[], int cols, int rows) {
     double *output;
 
     image_u8_t im = {
         .width = cols,
         .height = rows,
         .stride = cols,
-        .buf = frame
+        .buf = gray
     };
 
     zarray_t *quads = detect_quads(td, &im);
     zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
-    const int len = zarray_size(lightanchors);
-    const int size = (1+10*len)*sizeof(double); // len + 8 quad pts + 2 center pts
-    output = calloc(1, size);
-    output[0] = len;
+    const int num_tags = zarray_size(lightanchors);
+    const int len = 1 + 10*num_tags; // len + 8 quad pts + 2 center pts
+    output = calloc(len, sizeof(double));
+    output[0] = num_tags;
 
     for (int i = 0; i < zarray_size(lightanchors); i++) {
         struct lightanchor *la;

@@ -19,44 +19,54 @@ export class GlitterModule {
         this._Module = Module;
 
         this._init = this._Module.cwrap("init", "number", ["number"]);
+        this._save_grayscale = this._Module.cwrap("save_grayscale", "number", ["number", "number", "number", "number"]);
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init(this.code) == 0);
 
-        this.imPtr = this._Module._malloc(this.width*this.height);
+        this.imagePtr = this._Module._malloc(this.width*this.height*4);
+        this.grayPtr = this._Module._malloc(this.width*this.height);
     }
 
-    detect_tags(pixels) {
-        let quads = [];
-        if (!this.ready) return quads;
+    saveGrayscale(pixels) {
+        this._Module.HEAPU8.set(pixels, this.imagePtr);
+        return this._save_grayscale(this.imagePtr, this.grayPtr, this.width, this.height);
+    }
 
-        this._Module.HEAPU8.set(pixels, this.imPtr);
+    detect_tags() {
+        let tags = [];
+        if (!this.ready) return tags;
 
-        const ptr = this._detect_tags(this.imPtr, this.width, this.height);
+        const ptr = this._detect_tags(this.grayPtr, this.width, this.height);
         const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
 
-        const numQuads = this._Module.getValue(ptr, "double");
+        const numTags = this._Module.getValue(ptr, "double");
 
-        for (var i = 0; i < numQuads; i++) {
-            const p00 = this._Module.HEAPF64[ptrF64+10*i+1+0];
-            const p01 = this._Module.HEAPF64[ptrF64+10*i+1+1];
-            const p10 = this._Module.HEAPF64[ptrF64+10*i+1+2];
-            const p11 = this._Module.HEAPF64[ptrF64+10*i+1+3];
-            const p20 = this._Module.HEAPF64[ptrF64+10*i+1+4];
-            const p21 = this._Module.HEAPF64[ptrF64+10*i+1+5];
-            const p30 = this._Module.HEAPF64[ptrF64+10*i+1+6];
-            const p31 = this._Module.HEAPF64[ptrF64+10*i+1+7];
-            const c0  = this._Module.HEAPF64[ptrF64+10*i+1+8];
-            const c1  = this._Module.HEAPF64[ptrF64+10*i+1+9];
-            var q = {
-                corners: [{x:p00,y:p01}, {x:p10,y:p11}, {x:p20,y:p21}, {x:p30,y:p31}],
-                center: {x:c0, y:c1}
+        for (var i = 0; i < numTags; i++) {
+            const p0x = this._Module.HEAPF64[ptrF64+10*i+1+0];
+            const p0y = this._Module.HEAPF64[ptrF64+10*i+1+1];
+            const p1x = this._Module.HEAPF64[ptrF64+10*i+1+2];
+            const p1y = this._Module.HEAPF64[ptrF64+10*i+1+3];
+            const p2x = this._Module.HEAPF64[ptrF64+10*i+1+4];
+            const p2y = this._Module.HEAPF64[ptrF64+10*i+1+5];
+            const p3x = this._Module.HEAPF64[ptrF64+10*i+1+6];
+            const p3y = this._Module.HEAPF64[ptrF64+10*i+1+7];
+            const cx  = this._Module.HEAPF64[ptrF64+10*i+1+8];
+            const cy  = this._Module.HEAPF64[ptrF64+10*i+1+9];
+            var tag = {
+                corners: [
+                        {x: p0x, y: p0y},
+                        {x: p1x, y: p1y},
+                        {x: p2x, y: p2y},
+                        {x: p3x, y: p3y}
+                    ],
+                center: {x: cx, y: cy}
             };
-            quads.push(q);
+            tags.push(tag);
         }
 
         this._Module._free(ptr);
 
-        return quads;
+        return tags;
     }
 }

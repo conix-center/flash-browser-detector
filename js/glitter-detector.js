@@ -35,13 +35,13 @@ export class GlitterDetector {
     onInit(source) {
         function startTick() {
             this.prev = Date.now();
-            // setInterval(this.tick.bind(this), this.fpsInterval);
             this.timer = new Timer(this.tick.bind(this), this.fpsInterval);
             this.timer.run();
         }
 
         this.imu = new DeviceIMU();
         this.glitterModule = new GlitterModule(this.code, this.width, this.height, startTick.bind(this));
+
         const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
         window.dispatchEvent(initEvent);
     }
@@ -62,19 +62,20 @@ export class GlitterDetector {
         this.prev = start;
 
         this.imageData = this.grayScaleMedia.getPixels();
+        this.glitterModule.saveGrayscale(this.imageData);
 
         const mid = Date.now();
 
-        const quads = this.glitterModule.detect_tags(this.imageData);
+        const tags = this.glitterModule.detect_tags();
 
         const end = Date.now();
 
         if (this.printPerformance || end-start > this.fpsInterval) {
-            console.log("[performance]", "GPU:", mid-start, "CPU:", end-mid, "total:", end-start);
+            console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 
-        if (quads) {
-            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: quads}});
+        if (tags) {
+            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: tags}});
             window.dispatchEvent(tagEvent);
         }
     }

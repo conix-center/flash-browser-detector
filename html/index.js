@@ -1,10 +1,12 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
 if (width > 1024 || height > 1024) {
-    oldWidth = width;
-    oldHeight = height;
-    width = Math.pow(2, Math.floor(Math.log2(oldWidth/2)));
-    height = (width / oldWidth) * height;
+    // oldWidth = width;
+    // oldHeight = height;
+    // width = Math.pow(2, Math.floor(Math.log2(oldWidth/2)));
+    // height = (width / oldWidth) * height;
+    width /= 2;
+    height /= 2;
 }
 
 const code = 0xaf;
