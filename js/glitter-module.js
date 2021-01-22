@@ -1,13 +1,12 @@
 export class GlitterModule {
     constructor(code, width, height, callback) {
-        let _this = this;
-
         this.width = width;
         this.height = height;
 
         this.ready = false;
         this.code = code;
 
+        let _this = this;
         GlitterWASM().then(function(Module) {
             console.log("GLITTER WASM module loaded.");
             _this.onWasmInit(Module);
@@ -24,8 +23,8 @@ export class GlitterModule {
 
         this.ready = (this._init(this.code) == 0);
 
-        this.imagePtr = this._Module._malloc(this.width*this.height*4);
-        this.grayPtr = this._Module._malloc(this.width*this.height);
+        this.imagePtr = this._Module._malloc(this.width * this.height * 4);
+        this.grayPtr = this._Module._malloc(this.width * this.height);
     }
 
     resize(width, height) {
@@ -35,8 +34,8 @@ export class GlitterModule {
         this._Module._free(this.imagePtr);
         this._Module._free(this.grayPtr);
 
-        this.imagePtr = this._Module._malloc(this.width*this.height*4);
-        this.grayPtr = this._Module._malloc(this.width*this.height);
+        this.imagePtr = this._Module._malloc(this.width * this.height * 4);
+        this.grayPtr = this._Module._malloc(this.width * this.height);
     }
 
     saveGrayscale(pixels) {

@@ -29,26 +29,26 @@ export class GrayScaleMedia {
         this.texture = GLUtils.createTexture(this.gl, this.width, this.height);
         GLUtils.bindTexture(this.gl, this.texture);
 
-        this.pixelBuf = new Uint8Array(this.width * this.height * 4);
+        this.imageData = new Uint8Array(this.width * this.height * 4);
     }
 
     getPixels() {
         GLUtils.updateElem(this.gl, this.source);
         GLUtils.draw(this.gl);
-        GLUtils.readPixels(this.gl, this.width, this.height, this.pixelBuf);
-        return this.pixelBuf;
+        GLUtils.readPixels(this.gl, this.width, this.height, this.imageData);
+        return this.imageData;
     }
 
     resize(width, height) {
-        GLUtils.resize(this.gl, width, height);
-
         this.width = width;
         this.height = height;
+
+        GLUtils.resize(this.gl, this.width, this.height);
 
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
-        this.pixelBuf = new Uint8Array(this.width * this.height * 4);
+        this.imageData = new Uint8Array(this.width * this.height * 4);
     }
 
     requestStream() {

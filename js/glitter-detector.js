@@ -77,7 +77,7 @@ export class GlitterDetector {
 
         const end = Date.now();
 
-        if (this.printPerformance || end-start > this.fpsInterval) {
+        if (this.printPerformance) {
             console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 

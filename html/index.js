@@ -107,6 +107,6 @@ window.onload = () => {
     document.body.appendChild(overlayCanvas);
 
     glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
-    // glitterDetector.printPerformance = true;
+    glitterDetector.printPerformance = true;
     glitterDetector.start();
 }
