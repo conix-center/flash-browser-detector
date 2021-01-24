@@ -18,8 +18,8 @@ export class GLUtils {
         return gl;
     }
 
-    static resize(gl, width, height) {
-        gl.viewport(0, 0, width, height);
+    static resize(gl) {
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 
     static createShader(gl, type, shaderProg) {

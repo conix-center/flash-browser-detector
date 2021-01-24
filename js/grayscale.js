@@ -43,10 +43,9 @@ export class GrayScaleMedia {
         this.width = width;
         this.height = height;
 
-        GLUtils.resize(this.gl, this.width, this.height);
-
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+        GLUtils.resize(this.gl);
 
         this.imageData = new Uint8Array(this.width * this.height * 4);
     }

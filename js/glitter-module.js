@@ -19,6 +19,7 @@ export class GlitterModule {
 
         this._init = this._Module.cwrap("init", "number", ["number"]);
         this._save_grayscale = this._Module.cwrap("save_grayscale", "number", ["number", "number", "number", "number"]);
+        this._set_quad_decimate = this._Module.cwrap("set_quad_decimate", "number", ["number"]);
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init(this.code) == 0);
@@ -36,6 +37,10 @@ export class GlitterModule {
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);
+    }
+
+    setQuadDecimate(factor) {
+        return this._set_quad_decimate(factor);
     }
 
     saveGrayscale(pixels) {

@@ -52,11 +52,11 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
     // and blurring parameters.
-    image_u8_t *quad_im = im_orig;
-    if (td->quad_decimate > 1)
-    {
-        quad_im = image_u8_decimate(im_orig, td->quad_decimate);
-    }
+    image_u8_t *quad_im = image_u8_copy(im_orig);
+    // if (td->quad_decimate > 1)
+    // {
+    //     quad_im = image_u8_decimate(im_orig, td->quad_decimate);
+    // }
 
     if (td->quad_sigma != 0)
     {
@@ -118,25 +118,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     {
         struct quad *quad;
         zarray_get_volatile(quads, i, &quad);
-
-        // adjust centers of pixels so that they correspond to the
-        // original full-resolution image.
-        if (td->quad_decimate > 1)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                if (td->quad_decimate == 1.5)
-                {
-                    quad->p[j][0] *= td->quad_decimate;
-                    quad->p[j][1] *= td->quad_decimate;
-                }
-                else
-                {
-                    quad->p[j][0] = (quad->p[j][0] - 0.5) * td->quad_decimate + 0.5;
-                    quad->p[j][1] = (quad->p[j][1] - 0.5) * td->quad_decimate + 0.5;
-                }
-            }
-        }
 
         // find homographies for each detected quad
         if (quad_update_homographies(quad))

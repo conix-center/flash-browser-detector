@@ -26,19 +26,35 @@ lightanchor_detector_t *ld = NULL;
 EMSCRIPTEN_KEEPALIVE
 int init(uint8_t code) {
     tf = tag36h11_create();
+    if (tf == NULL)
+        return 1;
 
     td = apriltag_detector_create();
+    if (td == NULL)
+        return 1;
+
     apriltag_detector_add_family(td, tf);
 
-    td->quad_decimate = 2.0;
+    td->quad_decimate = 1.0;
     td->quad_sigma = 1.0;
     td->nthreads = 1;
     td->debug = 0;
     td->refine_edges = 1;
-    // td->qtp.min_white_black_diff = 10;
+    td->qtp.min_white_black_diff = 20;
 
     ld = lightanchor_detector_create(code);
+    if (ld == NULL)
+        return 1;
 
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int set_quad_decimate(float quad_decimate) {
+    if (td == NULL)
+        return 1;
+
+    td->quad_decimate = quad_decimate;
     return 0;
 }
 
@@ -73,6 +89,19 @@ double *detect_tags(uint8_t gray[], int cols, int rows) {
     for (int i = 0; i < zarray_size(lightanchors); i++) {
         struct lightanchor *la;
         zarray_get_volatile(lightanchors, i, &la);
+
+        // adjust centers of pixels so that they correspond to the
+        // original full-resolution image.
+        if (td->quad_decimate > 1)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                la->p[j][0] = (la->p[j][0] - 0.5) * td->quad_decimate + 0.5;
+                la->p[j][1] = (la->p[j][1] - 0.5) * td->quad_decimate + 0.5;
+            }
+            la->c[0] = (la->c[0] - 0.5) * td->quad_decimate + 0.5;
+            la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
+        }
 
         output[10*i+1+0] = la->p[0][0];
         output[10*i+1+1] = la->p[0][1];

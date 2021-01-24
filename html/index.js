@@ -1,9 +1,5 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
-if (width > 1024 || height > 1024) {
-    width /= 2;
-    height /= 2;
-}
 
 const code = 0xaf;
 const targetFps = 30;
@@ -61,7 +57,10 @@ window.addEventListener("onGlitterTagsFound", (e) => {
     stats.update();
 });
 
-function resize(width, height) {
+function resize(newWidth, newHeight) {
+    width = newWidth;
+    height = newHeight;
+
     videoCanvas.width = width;
     videoCanvas.height = height;
 
@@ -72,10 +71,6 @@ function resize(width, height) {
 window.addEventListener("resize", (e) => {
     let width = window.innerWidth;
     let height = window.innerHeight;
-    if (width > 1024 || height > 1024) {
-        width /= 2;
-        height /= 2;
-    }
     resize(width, height);
 });
 
@@ -107,6 +102,6 @@ window.onload = () => {
     document.body.appendChild(overlayCanvas);
 
     glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
-    glitterDetector.printPerformance = true;
+    // glitterDetector.printPerformance = true;
     glitterDetector.start();
 }

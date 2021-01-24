@@ -24,13 +24,7 @@ lightanchor_t *lightanchor_create(struct quad *quad)
     if (quad->H) {
         l->H = matd_copy(quad->H);
         homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
-        // if the center is within 50px of any of the quad points ==> too small ==> invalid
-        if (g2d_distance(l->c, l->p[0]) > 50 &&
-            g2d_distance(l->c, l->p[1]) > 50 &&
-            g2d_distance(l->c, l->p[2]) > 50 &&
-            g2d_distance(l->c, l->p[3]) > 50) {
-            return l;
-        }
+        return l;
     }
 
     return NULL;
@@ -102,8 +96,8 @@ uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     zarray_t *quad_poly = g2d_polygon_create_data(l->p, 4);
 
     double p[2] = {-1,-1};
-    for (int ix = min_x; ix <= max_x; ix+=4) {
-        for (int iy = min_y; iy <= max_y; iy+=4) {
+    for (int ix = min_x; ix <= max_x; ix+=2) {
+        for (int iy = min_y; iy <= max_y; iy+=2) {
             p[0] = (double)ix;
             p[1] = (double)iy;
             if (g2d_polygon_contains_point(quad_poly, p)) {
