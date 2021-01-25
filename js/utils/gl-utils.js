@@ -18,6 +18,10 @@ export class GLUtils {
         return gl;
     }
 
+    static resize(gl) {
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
+
     static createShader(gl, type, shaderProg) {
         const shader = gl.createShader(type);
 
@@ -61,6 +65,10 @@ export class GLUtils {
         return texture;
     }
 
+    static destroyTexture(gl, texture) {
+        gl.deleteTexture(texture);
+    }
+
     static bindTexture(gl, texture) {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         return texture;
@@ -76,16 +84,17 @@ export class GLUtils {
             gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, elem);
     }
 
-    static destroyTexture(gl, texture) {
-        gl.deleteTexture(texture);
-    }
-
     static createFramebuffer(gl, texture) {
         const fbo = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
         gl.framebufferTexture2D(
             gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         return fbo;
+    }
+
+    static checkFramebufferStatus(gl) {
+        return gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE;
     }
 
     static destroyFramebuffer(gl, fbo) {

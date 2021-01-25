@@ -2,16 +2,35 @@ import {GrayScaleMedia} from "./grayscale";
 import {GlitterModule} from "./glitter-module";
 import {Timer} from "./timer";
 import {DeviceIMU} from "./imu";
+import {Utils} from './utils/utils';
 
 export class GlitterDetector {
     constructor(code, targetFps, width, height, video) {
+        let _this = this;
+
         this.code = code;
-        this.fpsInterval = 1000 / targetFps; // ms
+        this.targetFps = targetFps; // FPS/Hz
+        this.fpsInterval = 1000 / this.targetFps; // ms
+
+        this.origWidth = width;
+        this.origHeight = height;
 
         this.width = width;
         this.height = height;
 
         this.imageData = null;
+        this.imageDecimate = 1.0;
+
+        this.options = {
+            printPerformance: false,
+            maxImageDecimationFactor: 10,
+            imageDecimationDelta: 0.2,
+            rangeThreshold: 45,
+            quadSigma: 1.0,
+            refineEdges: 1,
+            decodeSharpening: 0.25,
+            minWhiteBlackDiff: 20,
+        }
 
         if (video) {
             this.video = video;
@@ -23,34 +42,47 @@ export class GlitterDetector {
             this.video.setAttribute("playsinline", "");
         }
 
-        this.glitterModule = null;
         this.imu = null;
-
+        if (Utils.isMobile()) {
+            this.imu = new DeviceIMU();
+        }
         this.grayScaleMedia = new GrayScaleMedia(this.video, this.width, this.height);
     }
 
-    _onInit(source) {
-        function startTick() {
-            this.prev = Date.now();
-            // setInterval(this.tick.bind(this), this.fpsInterval);
-            this.timer = new Timer(this.tick.bind(this), this.fpsInterval);
-            this.timer.run();
-        }
-
-        this.imu = new DeviceIMU();
-        this.glitterModule = new GlitterModule(this.code, this.width, this.height, startTick.bind(this));
-        const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
-        document.dispatchEvent(initEvent);
+    setOptions(options) {
+        this.options = Object.assign(this.options, options);
     }
 
     start() {
         this.grayScaleMedia.requestStream()
             .then(source => {
-                this._onInit(source);
+                this.onInit(source);
             })
             .catch(err => {
                 console.warn("ERROR: " + err);
             });
+    }
+
+    onInit(source) {
+        let _this = this;
+        function startTick(argument) {
+            _this.prev = Date.now();
+            _this.timer = new Timer(_this.tick.bind(_this), _this.fpsInterval);
+            _this.timer.run();
+        }
+
+        this.glitterModule = new GlitterModule(this.code, this.width, this.height, this.options, startTick);
+
+        const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
+        window.dispatchEvent(initEvent);
+    }
+
+    resize(width, height) {
+        this.width = width;
+        this.height = height;
+        this.grayScaleMedia.resize(this.width, this.height);
+        this.glitterModule.resize(this.width, this.height);
+        this.glitterModule.setQuadDecimate(this.imageDecimate);
     }
 
     tick() {
@@ -59,20 +91,32 @@ export class GlitterDetector {
         this.prev = start;
 
         this.imageData = this.grayScaleMedia.getPixels();
+        this.glitterModule.saveGrayscale(this.imageData);
 
         const mid = Date.now();
 
-        const quads = this.glitterModule.track(this.imageData);
+        const tags = this.glitterModule.detect_tags();
 
         const end = Date.now();
 
-        if (end-start > this.fpsInterval) {
-            console.log("getPixels:", mid-start, "quads:", end-mid, "total:", end-start);
+        if (this.options.printPerformance) {
+            console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 
-        if (quads) {
-            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: quads}});
-            document.dispatchEvent(tagEvent);
+        if (end-start > this.fpsInterval) {
+            if (this.imageDecimate < this.options.maxImageDecimationFactor) {
+                this.imageDecimate += this.options.imageDecimationDelta;
+                this.imageDecimate = Utils.round2(this.imageDecimate);
+                this.resize(this.origWidth/this.imageDecimate, this.origHeight/this.imageDecimate)
+
+                const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
+                window.dispatchEvent(calibrateEvent);
+            }
+        }
+
+        if (tags) {
+            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: tags}});
+            window.dispatchEvent(tagEvent);
         }
     }
 }

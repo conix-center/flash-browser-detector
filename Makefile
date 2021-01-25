@@ -4,7 +4,7 @@ EMCC 				= emcc
 
 BIN_DIR 			= bin
 OBJ_DIR 			= obj
-JS_DIR 				= js
+WASM_OUTPUT_DIR 	= dist
 
 GLITTER_DIR 		= glitter
 APRILTAG_DIR 		= apriltag
@@ -13,12 +13,23 @@ EMSCRIPTEN_DIR 		= emscripten
 
 INCLUDE 			= -I$(APRILTAG_DIR)/ -I$(GLITTER_DIR)/
 C_FLAGS 			= -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -O3
-CXX_FLAGS			= -g -Wall -O3 -std=c++11
+CXX_FLAGS			= -g -std=c++11 -Wall -O3
 LD_FLAGS 			= -lpthread -lm
 
-WASM_MODULE_NAME 	= GlitterWASM
 WASM_FLAGS			= -Wall -O3
-WASM_LD_FLAGS 		= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"' -s MODULARIZE=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='["_malloc", "_free"]' -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "setValue"]' -s WASM=1
+WEBPACK_BUILD_DIR 	= build
+WEBPACK_FILE 		= glitter.min.js
+WASM_MODULE_NAME 	= GlitterWASM
+
+WASM_LD_FLAGS 		+= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"'
+WASM_LD_FLAGS 		+= -s MODULARIZE=1
+WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
+WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
+WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
+WASM_LD_FLAGS 		+= -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "setValue"]'
+WASM_LD_FLAGS 		+= --memory-init-file 0
+# WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
+WASM_LD_FLAGS 		+= -s WASM=1
 
 OPENCV_C_FLAGS		= `pkg-config --cflags opencv`
 OPENCV_LD_FLAGS		= `pkg-config --libs opencv`
@@ -35,13 +46,13 @@ EXAMPLES_OBJS		:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(OBJ_DIR)/%.o) $(EXAMPLES
 EXAMPLES_TARGETS	:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(BIN_DIR)/%) $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.cpp=$(BIN_DIR)/%)
 
 WASM_SRCS			:= $(wildcard $(EMSCRIPTEN_DIR)/*.c)
-WASM_TARGETS		:= $(WASM_SRCS:$(EMSCRIPTEN_DIR)/%.c=$(JS_DIR)/%.js)
+WASM_TARGET			:= $(WASM_SRCS:$(EMSCRIPTEN_DIR)/%.c=$(WASM_OUTPUT_DIR)/%.js)
 
 .PHONY: all clean
 
-all: 		$(EXAMPLES_TARGETS) $(WASM_TARGETS)
+all: 		$(EXAMPLES_TARGETS) $(WASM_TARGET)
 examples: 	$(EXAMPLES_TARGETS)
-wasm: 		$(WASM_TARGETS)
+wasm: 		$(WASM_TARGET)
 
 $(BIN_DIR)/apriltag_demo: $(OBJ_DIR)/apriltag_demo.o $(APRILTAG_OBJS)
 	@echo "=================================================="
@@ -93,14 +104,14 @@ $(OBJ_DIR)/%.o: $(EXAMPLES_DIR)/%.cpp | $(BIN_DIR) $(OBJ_DIR)
 	@echo "    Compiling target [$<]"
 	@$(CXX) -o $@ -c $< $(CXX_FLAGS) $(INCLUDE) $(OPENCV_C_FLAGS)
 
-$(JS_DIR)/%.js: $(EMSCRIPTEN_DIR)/%.c $(APRILTAG_SRCS) $(GLITTER_SRCS) | $(JS_DIR) $(HTML_OBJ_DIR)
+$(WASM_OUTPUT_DIR)/%.js: $(EMSCRIPTEN_DIR)/%.c $(APRILTAG_SRCS) $(GLITTER_SRCS) | $(WASM_OUTPUT_DIR) $(HTML_OBJ_DIR)
 	@echo "=================================================="
 	@echo "    Compiling WASM target [$<]"
 	@echo "    Be sure to clone emsdk and run 'source ./emsdk/emsdk_env.sh'!"
 	@$(EMCC) -o $@ $^ $(INCLUDE) $(WASM_FLAGS) $(WASM_LD_FLAGS)
 
-$(BIN_DIR) $(OBJ_DIR) $(JS_DIR):
+$(BIN_DIR) $(OBJ_DIR) $(WASM_OUTPUT_DIR):
 	@mkdir $@
 
 clean:
-	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(APRILTAG_DIR)/*.o $(APRILTAG_DIR)/common/*.o *.pnm *.ps
+	@rm -rf $(BIN_DIR) $(OBJ_DIR) $(WASM_OUTPUT_DIR) $(APRILTAG_DIR)/*.o $(APRILTAG_DIR)/common/*.o *.pnm *.ps

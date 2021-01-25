@@ -18,7 +18,6 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define RANGE_THRES         45
 #define MAX_DIST            1000000
 
 lightanchor_detector_t *lightanchor_detector_create(char code)
@@ -52,11 +51,11 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
     // and blurring parameters.
-    image_u8_t *quad_im = im_orig;
-    if (td->quad_decimate > 1)
-    {
-        quad_im = image_u8_decimate(im_orig, td->quad_decimate);
-    }
+    image_u8_t *quad_im = image_u8_copy(im_orig);
+    // if (td->quad_decimate > 1)
+    // {
+    //     quad_im = image_u8_decimate(im_orig, td->quad_decimate);
+    // }
 
     if (td->quad_sigma != 0)
     {
@@ -111,32 +110,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     }
 
     zarray_t *quads = apriltag_quad_thresh(td, quad_im);
-
-    // adjust centers of pixels so that they correspond to the
-    // original full-resolution image.
-    if (td->quad_decimate > 1)
-    {
-        for (int i = 0; i < zarray_size(quads); i++)
-        {
-            struct quad *q;
-            zarray_get_volatile(quads, i, &q);
-
-            for (int j = 0; j < 4; j++)
-            {
-                if (td->quad_decimate == 1.5)
-                {
-                    q->p[j][0] *= td->quad_decimate;
-                    q->p[j][1] *= td->quad_decimate;
-                }
-                else
-                {
-                    q->p[j][0] = (q->p[j][0] - 0.5) * td->quad_decimate + 0.5;
-                    q->p[j][1] = (q->p[j][1] - 0.5) * td->quad_decimate + 0.5;
-                }
-            }
-        }
-    }
-
     zarray_t *quads_valid = zarray_create(sizeof(struct quad));
 
     double det;
@@ -222,7 +195,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                 uint8_t max, min, thres;
                 qb_add(&candidate_curr->brightnesses, candidate_curr->brightness);
                 qb_stats(&candidate_curr->brightnesses, &max, &min, &thres);
-                if ((max - min) > RANGE_THRES)
+                if ((max - min) > ld->range_thres)
                 {
                     candidate_curr->code = (candidate_curr->code << 1) | (candidate_curr->brightness > thres);
 

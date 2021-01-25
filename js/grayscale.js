@@ -29,24 +29,25 @@ export class GrayScaleMedia {
         this.texture = GLUtils.createTexture(this.gl, this.width, this.height);
         GLUtils.bindTexture(this.gl, this.texture);
 
-        this.glReady = true;
-        this.pixelBuf = new Uint8ClampedArray(this.width * this.height * 4);
-        this.grayBuf = new Uint8ClampedArray(this.width * this.height);
+        this.imageData = new Uint8Array(this.width * this.height * 4);
     }
 
     getPixels() {
-        if (!this.glReady) return undefined;
-
         GLUtils.updateElem(this.gl, this.source);
         GLUtils.draw(this.gl);
-        GLUtils.readPixels(this.gl, this.width, this.height, this.pixelBuf);
+        GLUtils.readPixels(this.gl, this.width, this.height, this.imageData);
+        return this.imageData;
+    }
 
-        let j = 0;
-        for (let i = 0; i < this.pixelBuf.length; i += 4) {
-            this.grayBuf[j] = this.pixelBuf[i];
-            j++;
-        }
-        return this.grayBuf;
+    resize(width, height) {
+        this.width = width;
+        this.height = height;
+
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        GLUtils.resize(this.gl);
+
+        this.imageData = new Uint8Array(this.width * this.height * 4);
     }
 
     requestStream() {

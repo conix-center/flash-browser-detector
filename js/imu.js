@@ -19,6 +19,7 @@ export class DeviceIMU {
             cancelButtonText: "Deny",
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
+            reverseButtons: true
         })
             .then((result) => {
                 if (result.isConfirmed) {
