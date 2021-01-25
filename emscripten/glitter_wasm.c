@@ -35,16 +35,34 @@ int init(uint8_t code) {
 
     apriltag_detector_add_family(td, tf);
 
-    td->quad_decimate = 1.0;
-    td->quad_sigma = 1.0;
-    td->nthreads = 1;
-    td->debug = 0;
-    td->refine_edges = 1;
-    td->qtp.min_white_black_diff = 20;
-
     ld = lightanchor_detector_create(code);
     if (ld == NULL)
         return 1;
+
+    td->debug = 0;
+    td->nthreads = 1;
+    td->quad_decimate = 1.0;
+
+    // set default options
+    ld->range_thres = 45;
+    td->quad_sigma = 1.0;
+    td->refine_edges = 1;
+    td->decode_sharpening = 0.25;
+    td->qtp.min_white_black_diff = 20;
+
+    return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int set_detector_options(uint8_t range_thres, float quad_sigma, int refine_edges, int decode_sharpening, int min_white_black_diff) {
+    if (td == NULL)
+        return 1;
+
+    ld->range_thres = range_thres;
+    td->quad_sigma = quad_sigma;
+    td->refine_edges = refine_edges;
+    td->decode_sharpening = decode_sharpening;
+    td->qtp.min_white_black_diff = min_white_black_diff;
 
     return 0;
 }

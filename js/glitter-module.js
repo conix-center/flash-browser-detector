@@ -1,10 +1,12 @@
 export class GlitterModule {
-    constructor(code, width, height, callback) {
+    constructor(code, width, height, options, callback) {
         this.width = width;
         this.height = height;
 
         this.ready = false;
         this.code = code;
+
+        this.options = options;
 
         let _this = this;
         GlitterWASM().then(function(Module) {
@@ -18,11 +20,16 @@ export class GlitterModule {
         this._Module = Module;
 
         this._init = this._Module.cwrap("init", "number", ["number"]);
-        this._save_grayscale = this._Module.cwrap("save_grayscale", "number", ["number", "number", "number", "number"]);
+
+        this._set_detector_options = this._Module.cwrap("set_detector_options", "number", ["number", "number", "number", "number"]);
         this._set_quad_decimate = this._Module.cwrap("set_quad_decimate", "number", ["number"]);
+
+        this._save_grayscale = this._Module.cwrap("save_grayscale", "number", ["number", "number", "number", "number"]);
+
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init(this.code) == 0);
+        this.setDetectorOptions(this.options);
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);
@@ -37,6 +44,10 @@ export class GlitterModule {
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);
+    }
+
+    setDetectorOptions(options) {
+        this._set_detector_options(options.rangeThres, options.quadSigma, options.refineEdges, options.decodeSharpening, options.minWhiteBlackDiff);
     }
 
     setQuadDecimate(factor) {

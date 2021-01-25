@@ -9,7 +9,8 @@ export class GlitterDetector {
         let _this = this;
 
         this.code = code;
-        this.fpsInterval = 1000 / targetFps; // ms
+        this.targetFps = targetFps; // FPS/Hz
+        this.fpsInterval = 1000 / this.targetFps; // ms
 
         this.origWidth = width;
         this.origHeight = height;
@@ -18,9 +19,18 @@ export class GlitterDetector {
         this.height = height;
 
         this.imageData = null;
-        this.printPerformance = false;
-
         this.imageDecimate = 1.0;
+
+        this.options = {
+            printPerformance: false,
+            maxImageDecimation: 10,
+            imageDecimationDelta: 0.2,
+            rangeThres: 45,
+            quadSigma: 1.0,
+            refineEdges: 1,
+            decodeSharpening: 0.25,
+            minWhiteBlackDiff: 20,
+        }
 
         if (video) {
             this.video = video;
@@ -32,10 +42,15 @@ export class GlitterDetector {
             this.video.setAttribute("playsinline", "");
         }
 
-        this.glitterModule = null;
         this.imu = null;
-
+        if (Utils.isMobile()) {
+            this.imu = new DeviceIMU();
+        }
         this.grayScaleMedia = new GrayScaleMedia(this.video, this.width, this.height);
+    }
+
+    setOptions(options) {
+        this.options = Object.assign(this.options, options);
     }
 
     start() {
@@ -49,14 +64,14 @@ export class GlitterDetector {
     }
 
     onInit(source) {
-        function startTick() {
-            this.prev = Date.now();
-            this.timer = new Timer(this.tick.bind(this), this.fpsInterval);
-            this.timer.run();
+        let _this = this;
+        function startTick(argument) {
+            _this.prev = Date.now();
+            _this.timer = new Timer(_this.tick.bind(_this), _this.fpsInterval);
+            _this.timer.run();
         }
 
-        this.imu = new DeviceIMU();
-        this.glitterModule = new GlitterModule(this.code, this.width, this.height, startTick.bind(this));
+        this.glitterModule = new GlitterModule(this.code, this.width, this.height, this.options, startTick);
 
         const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
         window.dispatchEvent(initEvent);
@@ -84,13 +99,13 @@ export class GlitterDetector {
 
         const end = Date.now();
 
-        if (this.printPerformance) {
+        if (this.options.printPerformance) {
             console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 
         if (end-start > this.fpsInterval) {
-            if (this.imageDecimate < 10) {
-                this.imageDecimate += 0.2;
+            if (this.imageDecimate < this.options.maxImageDecimation) {
+                this.imageDecimate += this.options.imageDecimationDelta;
                 this.imageDecimate = Utils.round2(this.imageDecimate);
                 this.resize(this.origWidth/this.imageDecimate, this.origHeight/this.imageDecimate)
 

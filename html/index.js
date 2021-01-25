@@ -61,11 +61,13 @@ function resize(newWidth, newHeight) {
     width = newWidth;
     height = newHeight;
 
-    videoCanvas.width = width;
-    videoCanvas.height = height;
+    if (videoCanvas && overlayCanvas) {
+        videoCanvas.width = width;
+        videoCanvas.height = height;
 
-    overlayCanvas.width = width;
-    overlayCanvas.height = height;
+        overlayCanvas.width = width;
+        overlayCanvas.height = height;
+    }
 }
 
 window.addEventListener("resize", (e) => {
@@ -102,6 +104,8 @@ window.onload = () => {
     document.body.appendChild(overlayCanvas);
 
     glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
-    // glitterDetector.printPerformance = true;
+    // glitterDetector.setOptions({
+    //     printPerformance: true,
+    // });
     glitterDetector.start();
 }
