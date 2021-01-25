@@ -47,7 +47,7 @@ export class GlitterModule {
     }
 
     setDetectorOptions(options) {
-        this._set_detector_options(options.rangeThres, options.quadSigma, options.refineEdges, options.decodeSharpening, options.minWhiteBlackDiff);
+        this._set_detector_options(options.rangeThreshold, options.quadSigma, options.refineEdges, options.decodeSharpening, options.minWhiteBlackDiff);
     }
 
     setQuadDecimate(factor) {
