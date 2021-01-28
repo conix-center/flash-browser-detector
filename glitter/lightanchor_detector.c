@@ -170,8 +170,11 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                 lightanchor_t *local_tag;
                 zarray_get_volatile(local_tags, j, &local_tag);
 
-                double dist;
-                if ((dist = g2d_distance(global_tag->c, local_tag->c)) < min_dist)
+                double dist = ( g2d_distance(global_tag->p[0], local_tag->p[0]) +
+                                g2d_distance(global_tag->p[1], local_tag->p[1]) +
+                                g2d_distance(global_tag->p[2], local_tag->p[2]) +
+                                g2d_distance(global_tag->p[3], local_tag->p[3]) ) / 4;
+                if (dist < min_dist)
                 {
                     min_dist = dist;
                     match_idx = j;

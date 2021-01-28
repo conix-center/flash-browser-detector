@@ -96,8 +96,8 @@ uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     zarray_t *quad_poly = g2d_polygon_create_data(l->p, 4);
 
     double p[2] = {-1,-1};
-    for (int ix = min_x; ix <= max_x; ix+=2) {
-        for (int iy = min_y; iy <= max_y; iy+=2) {
+    for (int ix = min_x; ix <= max_x; ix++) {
+        for (int iy = min_y; iy <= max_y; iy++) {
             p[0] = (double)ix;
             p[1] = (double)iy;
             if (g2d_polygon_contains_point(quad_poly, p)) {
