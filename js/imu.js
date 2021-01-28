@@ -2,67 +2,55 @@ import Swal from "sweetalert2";
 
 export class DeviceIMU {
     constructor() {
-        this.orientationActive = false;
-        this.motionActive = false;
+        this.screenOrientation = 0;
+        this.deviceOrientation = {};
 
-        this.orientation = null;
-        this.acceleration = null;
-        this.accelerationIncludingGravity = null;
-        this.rotationRate = null;
+        this.updateScreenOrientation();
+    }
 
-        Swal.fire({
-            title: "GLITTER requires access to your device orientation and motion sensors.",
-            icon: "warning",
-            showConfirmButton: true,
-            showCancelButton: true,
-            confirmButtonText: "Allow",
-            cancelButtonText: "Deny",
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            reverseButtons: true
-        })
-            .then((result) => {
-                if (result.isConfirmed) {
-                    this.requestPermission();
-                }
-            });
+    start() {
+        if (DeviceOrientationEvent !== undefined && typeof DeviceOrientationEvent.requestPermission === "function") {
+            Swal.fire({
+                title: "GLITTER requires access to your device orientation and motion sensors.",
+                icon: "warning",
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: "Allow",
+                cancelButtonText: "Deny",
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                reverseButtons: true
+            })
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        this.requestPermission();
+                    }
+                });
+        }
+        else {
+            window.addEventListener("deviceorientation", this.updateDeviceOrientation.bind(this));
+            window.addEventListener("orientationchange", this.updateScreenOrientation.bind(this));
+        }
     }
 
     requestPermission() {
-        if (DeviceOrientationEvent && typeof(DeviceOrientationEvent.requestPermission) === "function") {
-            DeviceOrientationEvent.requestPermission()
-                .then((permissionState) => {
-                    if (permissionState == "granted") {
-                        this.orientationActive = true;
-                        window.addEventListener("deviceorientation", this.updateOrientation.bind(this));
-                    }
-                })
-                .catch((err) => {
-                    console.error(err);
-                });
-        }
-
-        if (DeviceMotionEvent && typeof(DeviceMotionEvent.requestPermission) === "function") {
-            DeviceMotionEvent.requestPermission()
-                .then((permissionState) => {
-                    if (permissionState == "granted") {
-                        this.motionActive = true;
-                        window.addEventListener("devicemotion", this.updateMotion.bind(this));
-                    }
-                })
-                .catch((err) => {
-                    console.error(err);
-                });
-        }
+        DeviceOrientationEvent.requestPermission()
+            .then((permissionState) => {
+                if (permissionState == "granted") {
+                    window.addEventListener("deviceorientation", this.updateDeviceOrientation.bind(this));
+                    window.addEventListener("orientationchange", this.updateScreenOrientation.bind(this));
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     }
 
-    updateOrientation(e) {
-        this.orientation = e;
+    updateScreenOrientation(e) {
+        this.screenOrientation = window.orientation || 0;
     }
 
-    updateMotion(e) {
-        this.acceleration = e.acceleration;
-        this.accelerationIncludingGravity = e.accelerationIncludingGravity;
-        this.rotationRate = e.rotationRate;
+    updateDeviceOrientation(e) {
+        this.deviceOrientation = e;
     }
 }

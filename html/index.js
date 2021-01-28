@@ -26,6 +26,7 @@ function drawQuad(quad) {
         overlayCtx.lineTo(quad.corners[2].x, quad.corners[2].y);
         overlayCtx.lineTo(quad.corners[3].x, quad.corners[3].y);
         overlayCtx.lineTo(quad.corners[0].x, quad.corners[0].y);
+
         overlayCtx.font = "bold 20px Arial";
         overlayCtx.textAlign = "center";
         overlayCtx.fillStyle = "blue";

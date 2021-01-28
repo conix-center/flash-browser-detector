@@ -6,8 +6,6 @@ import {Utils} from './utils/utils';
 
 export class GlitterDetector {
     constructor(code, targetFps, width, height, video) {
-        let _this = this;
-
         this.code = code;
         this.targetFps = targetFps; // FPS/Hz
         this.fpsInterval = 1000 / this.targetFps; // ms
@@ -24,7 +22,7 @@ export class GlitterDetector {
         this.options = {
             printPerformance: false,
             maxImageDecimationFactor: 10,
-            imageDecimationDelta: 0.2,
+            imageDecimationDelta: 0.3,
             rangeThreshold: 45,
             quadSigma: 1.0,
             refineEdges: 1,
@@ -42,10 +40,7 @@ export class GlitterDetector {
             this.video.setAttribute("playsinline", "");
         }
 
-        this.imu = null;
-        if (Utils.isMobile()) {
-            this.imu = new DeviceIMU();
-        }
+        this.imu = new DeviceIMU();
         this.grayScaleMedia = new GrayScaleMedia(this.video, this.width, this.height);
     }
 
@@ -65,13 +60,14 @@ export class GlitterDetector {
 
     onInit(source) {
         let _this = this;
-        function startTick(argument) {
+        function startTick() {
             _this.prev = Date.now();
             _this.timer = new Timer(_this.tick.bind(_this), _this.fpsInterval);
             _this.timer.run();
         }
 
         this.glitterModule = new GlitterModule(this.code, this.width, this.height, this.options, startTick);
+        this.imu.start();
 
         const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
         window.dispatchEvent(initEvent);
