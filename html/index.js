@@ -1,7 +1,7 @@
 let width = window.innerWidth;
 let height = window.innerHeight;
 
-const code = 217;
+const code = 0xaf;
 const targetFps = 30;
 
 let stats = null;
@@ -105,7 +105,7 @@ window.onload = () => {
     document.body.appendChild(overlayCanvas);
 
     var info = document.getElementById("info");
-    info.innerText = `Detecting code:\n${dec2bin(code)} (${code})`;
+    info.innerText = `Detecting Code:\n${dec2bin(code)} (${code})`;
     info.style.zIndex = 2;
 
     glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
