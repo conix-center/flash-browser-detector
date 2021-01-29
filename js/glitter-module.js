@@ -29,7 +29,7 @@ export class GlitterModule {
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init(this.code) == 0);
-        this.setDetectorOptions(this.options);
+        this.setDetectorOptions(this.options); // set default options
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);

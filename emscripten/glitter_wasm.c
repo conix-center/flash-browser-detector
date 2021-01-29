@@ -43,13 +43,6 @@ int init(uint8_t code) {
     td->nthreads = 1;
     td->quad_decimate = 1.0;
 
-    // set default options
-    ld->range_thres = 45;
-    td->quad_sigma = 1.0;
-    td->refine_edges = 1;
-    td->decode_sharpening = 0.25;
-    td->qtp.min_white_black_diff = 20;
-
     return 0;
 }
 
@@ -73,6 +66,7 @@ int set_quad_decimate(float quad_decimate) {
         return 1;
 
     td->quad_decimate = quad_decimate;
+
     return 0;
 }
 

@@ -13,7 +13,11 @@ export class Timer {
         setTimeout(tick.bind(this), this.interval);
         function tick() {
             if (!this.running) return;
-            const dt = Date.now() - this.expected; // drift
+            const dt = Date.now() - this.expected; // calculate drift
+            if (dt > this.interval) { // adjust for errors
+                this.expected += this.interval * Math.floor(dt / this.interval);
+            }
+
             const startCompute = Date.now();
             this.totalDt += Math.abs(dt); this.iters++;
 

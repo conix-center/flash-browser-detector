@@ -5,13 +5,22 @@
 
 struct queue_buf {
     int idx;
+    int full;
     uint8_t buf[BUF_SIZE];
 };
+
+static inline int qb_full(struct queue_buf *qb) {
+    return qb->full;
+}
 
 static inline uint8_t qb_add(struct queue_buf *qb, uint8_t in) {
     uint8_t res = qb->buf[qb->idx];
     qb->buf[qb->idx] = in;
-    qb->idx = (qb->idx + 1) % BUF_SIZE;
+    qb->idx++;
+    if (qb->idx == BUF_SIZE) {
+        qb->full = true;
+        qb->idx = 0;
+    }
     return res;
 }
 

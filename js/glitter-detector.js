@@ -21,8 +21,8 @@ export class GlitterDetector {
 
         this.options = {
             printPerformance: false,
-            maxImageDecimationFactor: 10,
-            imageDecimationDelta: 0.3,
+            maxImageDecimationFactor: 5,
+            imageDecimationDelta: 0.2,
             rangeThreshold: 45,
             quadSigma: 1.0,
             refineEdges: 1,

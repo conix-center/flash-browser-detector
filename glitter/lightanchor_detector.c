@@ -194,9 +194,9 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
 
                 qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);
                 candidate_curr->brightness = get_brightness(candidate_curr, im);
+                qb_add(&candidate_curr->brightnesses, candidate_curr->brightness);
 
                 uint8_t max, min, thres;
-                qb_add(&candidate_curr->brightnesses, candidate_curr->brightness);
                 qb_stats(&candidate_curr->brightnesses, &max, &min, &thres);
                 if ((max - min) > ld->range_thres)
                 {
@@ -208,7 +208,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if (match(ld, candidate_curr))
+                    if (qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr))
                     {
                         zarray_add(ld->detections, candidate_curr);
                     }
