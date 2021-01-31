@@ -8,7 +8,7 @@ export class DeviceIMU {
         this.updateScreenOrientation();
     }
 
-    start() {
+    init() {
         if (DeviceOrientationEvent !== undefined && typeof DeviceOrientationEvent.requestPermission === "function") {
             Swal.fire({
                 title: "GLITTER requires access to your device orientation and motion sensors.",

@@ -1,10 +1,7 @@
-import {Utils} from './utils/utils';
 import {GLUtils} from './utils/gl-utils';
 
-export class GrayScaleMedia {
-    constructor(source, width, height, canvas) {
-        this.source = source;
-
+export class GrayScale {
+    constructor(width, height, canvas) {
         this.width = width;
         this.height = height;
 
@@ -33,10 +30,15 @@ export class GrayScaleMedia {
     }
 
     getPixels() {
-        GLUtils.updateElem(this.gl, this.source);
-        GLUtils.draw(this.gl);
-        GLUtils.readPixels(this.gl, this.width, this.height, this.imageData);
-        return this.imageData;
+        if (this.source) {
+            GLUtils.bindElem(this.gl, this.source);
+            GLUtils.draw(this.gl);
+            GLUtils.readPixels(this.gl, this.width, this.height, this.imageData);
+            return this.imageData;
+        }
+        else {
+            return null;
+        }
     }
 
     resize(width, height) {
@@ -50,37 +52,8 @@ export class GrayScaleMedia {
         this.imageData = new Uint8Array(this.width * this.height * 4);
     }
 
-    requestStream() {
-        return new Promise((resolve, reject) => {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
-                return reject();
-
-            // Hack for mobile browsers: aspect ratio is flipped.
-            var aspect = this.width / this.height;
-            if (Utils.isMobile()) {
-                aspect = 1 / aspect;
-            }
-
-            navigator.mediaDevices.getUserMedia({
-                audio: false,
-                video: {
-                    width: { ideal: this.width },
-                    height: { ideal: this.height },
-                    aspectRatio: { ideal: aspect },
-                    facingMode: "environment"
-                }
-            })
-            .then(stream => {
-                this.source.srcObject = stream;
-                this.source.onloadedmetadata = e => {
-                    this.source.play();
-                    GLUtils.bindElem(this.gl, this.source);
-                    resolve(this.source);
-                };
-            })
-            .catch(err => {
-                reject(err);
-            });
-        });
+    attachElem(source) {
+        this.source = source;
+        GLUtils.bindElem(this.gl, this.source);
     }
 }

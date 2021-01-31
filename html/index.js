@@ -5,8 +5,8 @@ const code = 0xaf;
 const targetFps = 30;
 
 let stats = null;
+let info = null;
 let videoSource = null;
-let videoCanvas = null;
 let overlayCanvas = null;
 
 let glitterDetector = null;
@@ -36,7 +36,7 @@ function drawQuad(quad) {
 
 function drawQuads(quads) {
     const overlayCtx = overlayCanvas.getContext("2d");
-    overlayCtx.clearRect(0, 0, width, height);
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
     for (var i = 0; i < quads.length; i++) {
         drawQuad(quads[i]);
@@ -48,69 +48,80 @@ window.addEventListener("onGlitterInit", (e) => {
     stats.showPanel(0);
     document.getElementById("stats").appendChild(stats.domElement);
     videoSource = e.detail.source;
+    document.body.appendChild(videoSource);
+    resize(width, height);
 });
 
 window.addEventListener("onGlitterTagsFound", (e) => {
-    const videoCanvasCtx = videoCanvas.getContext("2d");
-    videoCanvasCtx.drawImage(
-        videoSource, 0, 0, width, height);
     drawQuads(e.detail.tags);
     stats.update();
 });
 
+window.addEventListener("onGlitterCalibrate", (e) => {
+    info.innerText = `Detecting Code:\n${dec2bin(code)} (${code})\n` + e.detail.decimationFactor;
+});
+
 function resize(newWidth, newHeight) {
-    width = newWidth;
-    height = newHeight;
+    var screenWidth = newWidth;
+    var screenHeight = newHeight;
 
-    if (videoCanvas && overlayCanvas) {
-        videoCanvas.width = width;
-        videoCanvas.height = height;
+    var sourceWidth = videoSource.videoWidth;
+    var sourceHeight = videoSource.videoHeight;
 
-        overlayCanvas.width = width;
-        overlayCanvas.height = height;
+    var sourceAspect = sourceWidth / sourceHeight;
+    var screenAspect = screenWidth / screenHeight;
+
+    if (screenAspect < sourceAspect) {
+        // compute newWidth and set .width/.marginLeft
+        var newWidth = sourceAspect * screenHeight;
+        videoSource.style.width = newWidth + "px";
+        videoSource.style.marginLeft = -(newWidth - screenWidth) / 2 + "px";
+
+        // init style.height/.marginTop to normal value
+        videoSource.style.height = screenHeight + "px";
+        videoSource.style.marginTop = "0px";
+    } else {
+        // compute newHeight and set .height/.marginTop
+        var newHeight = 1 / (sourceAspect / screenWidth);
+        videoSource.style.height = newHeight + "px";
+        videoSource.style.marginTop = -(newHeight - screenHeight) / 2 + "px";
+
+        // init style.width/.marginLeft to normal value
+        videoSource.style.width = screenWidth + "px";
+        videoSource.style.marginLeft = "0px";
     }
+
+    overlayCanvas.style.width = videoSource.style.width
+    overlayCanvas.style.height = videoSource.style.height
+    overlayCanvas.style.marginLeft = videoSource.style.marginLeft
+    overlayCanvas.style.marginTop = videoSource.style.marginTop
 }
 
 window.addEventListener("resize", (e) => {
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    resize(width, height);
+    resize(window.innerWidth, window.innerHeight);
 });
 
 function setVideoStyle(elem) {
     elem.style.position = "absolute";
-    elem.style.top = 0;
+    elem.style.top = "0px";
+    elem.style.left = "0px";
+    elem.width = 640;
+    elem.height = 480;
 }
 
 window.onload = () => {
-    var video = document.createElement("video");
-    video.setAttribute("autoplay", "");
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-
-    videoCanvas = document.createElement("canvas");
-    setVideoStyle(videoCanvas);
-    videoCanvas.id = "video-canvas";
-    videoCanvas.width = width;
-    videoCanvas.height = height;
-    videoCanvas.style.zIndex = 0;
-    document.body.appendChild(videoCanvas);
-
     overlayCanvas = document.createElement("canvas");
-    setVideoStyle(overlayCanvas);
     overlayCanvas.id = "overlay";
-    overlayCanvas.width = width;
-    overlayCanvas.height = height;
-    overlayCanvas.style.zIndex = 1;
+    setVideoStyle(overlayCanvas);
     document.body.appendChild(overlayCanvas);
 
-    var info = document.getElementById("info");
+    info = document.getElementById("info");
     info.innerText = `Detecting Code:\n${dec2bin(code)} (${code})`;
-    info.style.zIndex = 2;
+    info.style.zIndex = "1";
 
-    glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
+    glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height);
     // glitterDetector.setOptions({
-    //     // printPerformance: true,
+    //     printPerformance: true,
     // });
     glitterDetector.start();
 }
