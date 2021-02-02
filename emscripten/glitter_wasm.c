@@ -24,7 +24,7 @@ apriltag_detector_t *td = NULL;
 lightanchor_detector_t *ld = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-int init(uint8_t code) {
+int init() {
     tf = tag36h11_create();
     if (tf == NULL)
         return 1;
@@ -35,7 +35,7 @@ int init(uint8_t code) {
 
     apriltag_detector_add_family(td, tf);
 
-    ld = lightanchor_detector_create(code);
+    ld = lightanchor_detector_create();
     if (ld == NULL)
         return 1;
 
@@ -44,6 +44,11 @@ int init(uint8_t code) {
     td->quad_decimate = 1.0;
 
     return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int add_code(char code) {
+    return lightanchor_detector_add_code(ld, code);
 }
 
 EMSCRIPTEN_KEEPALIVE

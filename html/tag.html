@@ -106,7 +106,10 @@
                 setTimeout(tick, interval);
                 function tick() {
                     if (!running) return;
-                    const dt = Date.now() - expected; // drift
+                    const dt = Date.now() - expected;
+                    if (dt > interval) { // adjust for errors
+                        expected += interval * Math.floor(dt / interval);
+                    }
                     const startCompute = Date.now();
                     totalDt += Math.abs(dt); iters++;
                     log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;

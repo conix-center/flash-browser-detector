@@ -20,16 +20,22 @@
 
 #define MAX_DIST            1000000
 
-lightanchor_detector_t *lightanchor_detector_create(char code)
+lightanchor_detector_t *lightanchor_detector_create()
 {
     lightanchor_detector_t *ld = (lightanchor_detector_t *)calloc(1, sizeof(lightanchor_detector_t));
 
     ld->candidates = zarray_create(sizeof(lightanchor_t));
     ld->detections = zarray_create(sizeof(lightanchor_t));
 
-    ld->code = double_bits(code);
+    ld->codes = ll_create(16);
 
     return ld;
+}
+
+int lightanchor_detector_add_code(lightanchor_detector_t *ld, char code) {
+    uint16_t doubled_code = double_bits(code);
+    ll_add(ld->codes, doubled_code);
+    return 0;
 }
 
 void lightanchor_detector_destroy(lightanchor_detector_t *ld)
@@ -155,8 +161,6 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
         }
     }
     else {
-        zarray_t *valid = zarray_create(sizeof(lightanchor_t));
-
         for (int i = 0; i < zarray_size(ld->candidates); i++)
         {
             lightanchor_t *global_tag;
@@ -186,7 +190,6 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                 // candidate_prev ==> candidate_curr
                 lightanchor_t *candidate_prev = global_tag, *candidate_curr;
                 zarray_get_volatile(local_tags, match_idx, &candidate_curr);
-                candidate_curr = lightanchor_copy(candidate_curr);
 
                 candidate_curr->valid = candidate_prev->valid;
                 candidate_curr->code = candidate_prev->code;
@@ -198,7 +201,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
 
                 uint8_t max, min, thres;
                 qb_stats(&candidate_curr->brightnesses, &max, &min, &thres);
-                if ((max - min) > ld->range_thres)
+                if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
                 {
                     candidate_curr->code = (candidate_curr->code << 1) | (candidate_curr->brightness > thres);
 
@@ -208,17 +211,16 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if (qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr))
+                    if (1||match(ld, candidate_curr))
                     {
                         zarray_add(ld->detections, candidate_curr);
                     }
-                    zarray_add(valid, candidate_curr);
                 }
             }
         }
 
         lightanchors_destroy(ld->candidates);
-        ld->candidates = valid;
+        ld->candidates = local_tags;
     }
 }
 
@@ -239,7 +241,6 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
     quads_destroy(quads);
 
     update_candidates(ld, local_tags, im);
-    lightanchors_destroy(local_tags);
 
     return ld->detections;
 }

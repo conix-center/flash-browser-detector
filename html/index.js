@@ -1,4 +1,4 @@
-var code = 0xaf;
+var codes = [0xaf, 123];
 var targetFps = 30;
 
 var stats = null;
@@ -13,9 +13,9 @@ overlayCanvas.style.left = "0px";
 overlayCanvas.width = glitterSource.options.width;
 overlayCanvas.height = glitterSource.options.height;
 
-var glitterDetector = new Glitter.GlitterDetector(code, targetFps, glitterSource);
+var glitterDetector = new Glitter.GlitterDetector(codes, targetFps, glitterSource);
 glitterDetector.setOptions({
-    printPerformance: true,
+    // printPerformance: true,
 });
 glitterDetector.init();
 
@@ -34,7 +34,7 @@ function drawQuad(quad) {
         overlayCtx.font = "bold 20px Arial";
         overlayCtx.textAlign = "center";
         overlayCtx.fillStyle = "blue";
-        overlayCtx.fillText(Glitter.Utils.dec2bin(code), quad.center.x, quad.center.y);
+        // overlayCtx.fillText(Glitter.Utils.dec2bin(code), quad.center.x, quad.center.y);
     overlayCtx.stroke();
 }
 
@@ -57,8 +57,12 @@ window.addEventListener("onGlitterInit", (e) => {
     document.body.appendChild(overlayCanvas);
 
     var info = document.getElementById("info");
-    info.innerText = `Detecting Code:\n${Glitter.Utils.dec2bin(code)} (${code})`;
     info.style.zIndex = "1";
+    info.innerText = "Detecting Codes:\n";
+    for(var i = 0; i < this.codes.length; i++) {
+        var code = this.codes[i];
+        info.innerText += `${Glitter.Utils.dec2bin(code)} (${code})\n`;
+    }
 
     resize();
 });
@@ -70,7 +74,12 @@ window.addEventListener("onGlitterTagsFound", (e) => {
 
 window.addEventListener("onGlitterCalibrate", (e) => {
     var info = document.getElementById("info");
-    info.innerText = `Detecting Code:\n${Glitter.Utils.dec2bin(code)} (${code})\n` + e.detail.decimationFactor;
+    info.innerText = "Detecting Codes:\n";
+    for(var i = 0; i < this.codes.length; i++) {
+        var code = this.codes[i];
+        info.innerText += `${Glitter.Utils.dec2bin(code)} (${code})\n`;
+    }
+    info.innerText += e.detail.decimationFactor;
 });
 
 function resize() {

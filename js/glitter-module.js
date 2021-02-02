@@ -1,10 +1,10 @@
 export class GlitterModule {
-    constructor(code, width, height, options, callback) {
+    constructor(codes, width, height, options, callback) {
         this.width = width;
         this.height = height;
 
         this.ready = false;
-        this.code = code;
+        this.codes = codes;
 
         this.options = options;
 
@@ -20,6 +20,7 @@ export class GlitterModule {
         this._Module = Module;
 
         this._init = this._Module.cwrap("init", "number", ["number"]);
+        this._add_code = this._Module.cwrap("add_code", "number", ["number"]);
 
         this._set_detector_options = this._Module.cwrap("set_detector_options", "number", ["number", "number", "number", "number"]);
         this._set_quad_decimate = this._Module.cwrap("set_quad_decimate", "number", ["number"]);
@@ -28,8 +29,12 @@ export class GlitterModule {
 
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
-        this.ready = (this._init(this.code) == 0);
+        this.ready = (this._init() == 0);
         this.setDetectorOptions(this.options); // set default options
+
+        for (var i = 0; i < this.codes.length; i++) {
+            this._add_code(this.codes[i]);
+        }
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);
@@ -44,6 +49,13 @@ export class GlitterModule {
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);
+    }
+
+    addCode(code) {
+        if (0x00 < code < 0xff) {
+            this._add_code(code);
+        }
+        return this.codes.push(code);
     }
 
     setDetectorOptions(options) {

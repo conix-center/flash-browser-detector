@@ -3,7 +3,7 @@
 
 struct ll_node {
     struct ll_node *next;
-    uint8_t data;
+    uint16_t data;
 };
 
 struct ll {
@@ -19,7 +19,7 @@ static inline struct ll *ll_create(uint8_t capacity) {
     return res;
 }
 
-static inline void ll_add(struct ll *list, uint8_t data) {
+static inline void ll_add(struct ll *list, uint16_t data) {
     struct ll_node *node = calloc(1, sizeof(struct ll_node));
     node->data = data;
     if (list->head == NULL && list->tail == NULL) {
@@ -39,18 +39,6 @@ static inline void ll_add(struct ll *list, uint8_t data) {
         list->tail = node;
         free(temp);
     }
-}
-
-static inline void ll_stats(struct ll *list, uint8_t *max, uint8_t *min) {
-    *max = 0;
-    *min = 255;
-    struct ll_node *node = list->head;
-    for (; node != list->tail; node = node->next) {
-        *max = (node->data > *max) ? node->data : *max;
-        *min = (node->data < *min) ? node->data : *min;
-    }
-    *max = (*max != 0) ? *max : 255;
-    *min = (*min != 255) ? *min : 0;
 }
 
 #endif

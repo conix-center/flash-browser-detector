@@ -6,8 +6,8 @@ import {GrayScale} from "./grayscale";
 import {GlitterModule} from "./glitter-module";
 
 export class GlitterDetector {
-    constructor(code, targetFps, source, options) {
-        this.code = code;
+    constructor(codes, targetFps, source, options) {
+        this.codes = codes;
         this.targetFps = targetFps; // FPS/Hz
         this.fpsInterval = 1000 / this.targetFps; // ms
 
@@ -26,7 +26,7 @@ export class GlitterDetector {
             quadSigma: 1.0,
             refineEdges: 1,
             decodeSharpening: 0.25,
-            minWhiteBlackDiff: 20,
+            minWhiteBlackDiff: 50,
         }
         this.setOptions(options);
 
@@ -59,7 +59,7 @@ export class GlitterDetector {
             _this.timer.run();
         }
 
-        this.glitterModule = new GlitterModule(this.code, this.sourceWidth, this.sourceHeight, this.options, startTick);
+        this.glitterModule = new GlitterModule(this.codes, this.sourceWidth, this.sourceHeight, this.options, startTick);
         this.imu.init();
 
         const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
@@ -70,6 +70,10 @@ export class GlitterDetector {
         this.grayScale.resize(width, height);
         this.glitterModule.resize(width, height);
         this.glitterModule.setQuadDecimate(this.imageDecimate);
+    }
+
+    addCode(code) {
+        return this.glitterModule.addCode(code);
     }
 
     tick() {
