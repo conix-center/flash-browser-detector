@@ -63,7 +63,7 @@ export class GlitterDetector {
         window.dispatchEvent(initEvent);
     }
 
-    resize(width, height) {
+    decimate(width, height) {
         this.grayScale.resize(width, height);
         this.glitterModule.resize(width, height);
         this.glitterModule.setQuadDecimate(this.imageDecimate);
@@ -91,7 +91,7 @@ export class GlitterDetector {
             if (this.imageDecimate < this.options.maxImageDecimationFactor) {
                 this.imageDecimate += this.options.imageDecimationDelta;
                 this.imageDecimate = Utils.round2(this.imageDecimate);
-                this.resize(this.options.sourceWidth/this.imageDecimate, this.options.sourceHeight/this.imageDecimate)
+                this.decimate(this.options.sourceWidth/this.imageDecimate, this.options.sourceHeight/this.imageDecimate)
 
                 const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
                 window.dispatchEvent(calibrateEvent);

@@ -91,10 +91,10 @@ function resize(newWidth, newHeight) {
         videoSource.style.marginLeft = "0px";
     }
 
-    overlayCanvas.style.width = videoSource.style.width
-    overlayCanvas.style.height = videoSource.style.height
-    overlayCanvas.style.marginLeft = videoSource.style.marginLeft
-    overlayCanvas.style.marginTop = videoSource.style.marginTop
+    overlayCanvas.style.width = videoSource.style.width;
+    overlayCanvas.style.height = videoSource.style.height;
+    overlayCanvas.style.marginLeft = videoSource.style.marginLeft;
+    overlayCanvas.style.marginTop = videoSource.style.marginTop;
 }
 
 window.addEventListener("resize", (e) => {
