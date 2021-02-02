@@ -14,10 +14,10 @@ overlayCanvas.width = glitterSource.options.width;
 overlayCanvas.height = glitterSource.options.height;
 
 var glitterDetector = new Glitter.GlitterDetector(code, targetFps, glitterSource);
-// glitterDetector.setOptions({
-//     printPerformance: true,
-// });
-glitterDetector.start();
+glitterDetector.setOptions({
+    printPerformance: true,
+});
+glitterDetector.init();
 
 function drawQuad(quad) {
     var overlayCtx = overlayCanvas.getContext("2d");
