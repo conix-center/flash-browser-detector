@@ -1,4 +1,3 @@
-
 /** @file lightanchor_detector.c
  *  @brief Implementation of the lightanchor detector library
  *  @see lightanchor_detector.h for documentation
@@ -6,25 +5,24 @@
  * Copyright (C) Wiselab CMU.
  * @date July, 2020
  *
- * @todo Actually implement the LED detector
  */
-
 #include <math.h>
 #include "apriltag.h"
 #include "common/zarray.h"
 #include "common/homography.h"
 #include "common/g2d.h"
 #include "common/math_util.h"
+#include "common/matd.h"
 #include "lightanchor.h"
 #include "lightanchor_detector.h"
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define RANGE_THRES         85
+#define MAX_DIST            1000000
 
 lightanchor_detector_t *lightanchor_detector_create(char code)
 {
-    lightanchor_detector_t *ld = (lightanchor_detector_t*)calloc(1, sizeof(lightanchor_detector_t));
+    lightanchor_detector_t *ld = (lightanchor_detector_t *)calloc(1, sizeof(lightanchor_detector_t));
 
     ld->candidates = zarray_create(sizeof(lightanchor_t));
     ld->detections = zarray_create(sizeof(lightanchor_t));
@@ -44,13 +42,6 @@ void lightanchor_detector_destroy(lightanchor_detector_t *ld)
 /** @copydoc detect_quads */
 zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
 {
-    if (zarray_size(td->tag_families) == 0)
-    {
-        zarray_t *s = zarray_create(sizeof(apriltag_detection_t *));
-        printf("apriltag.c: No tag families enabled.");
-        return s;
-    }
-
     if (td->wp == NULL || td->nthreads != workerpool_get_nthreads(td->wp))
     {
         workerpool_destroy(td->wp);
@@ -60,11 +51,11 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     ///////////////////////////////////////////////////////////
     // Step 1. Detect quads according to requested image decimation
     // and blurring parameters.
-    image_u8_t *quad_im = im_orig;
-    if (td->quad_decimate > 1)
-    {
-        quad_im = image_u8_decimate(im_orig, td->quad_decimate);
-    }
+    image_u8_t *quad_im = image_u8_copy(im_orig);
+    // if (td->quad_decimate > 1)
+    // {
+    //     quad_im = image_u8_decimate(im_orig, td->quad_decimate);
+    // }
 
     if (td->quad_sigma != 0)
     {
@@ -119,32 +110,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     }
 
     zarray_t *quads = apriltag_quad_thresh(td, quad_im);
-
-    // adjust centers of pixels so that they correspond to the
-    // original full-resolution image.
-    if (td->quad_decimate > 1)
-    {
-        for (int i = 0; i < zarray_size(quads); i++)
-        {
-            struct quad *q;
-            zarray_get_volatile(quads, i, &q);
-
-            for (int j = 0; j < 4; j++)
-            {
-                if (td->quad_decimate == 1.5)
-                {
-                    q->p[j][0] *= td->quad_decimate;
-                    q->p[j][1] *= td->quad_decimate;
-                }
-                else
-                {
-                    q->p[j][0] = (q->p[j][0] - 0.5) * td->quad_decimate + 0.5;
-                    q->p[j][1] = (q->p[j][1] - 0.5) * td->quad_decimate + 0.5;
-                }
-            }
-        }
-    }
-
     zarray_t *quads_valid = zarray_create(sizeof(struct quad));
 
     double det;
@@ -154,9 +119,10 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
         zarray_get_volatile(quads, i, &quad);
 
         // find homographies for each detected quad
-        quad_update_homographies(quad);
+        if (quad_update_homographies(quad))
+            continue;
 
-        det = MATD_EL(quad->H,0,0) * MATD_EL(quad->H,1,1) - MATD_EL(quad->H,1,0) * MATD_EL(quad->H,0,1);
+        det = matd_get(quad->H,0,0) * matd_get(quad->H,1,1) - matd_get(quad->H,1,0) * matd_get(quad->H,0,1);
         if (det < 0.0) continue;
 
         zarray_add(quads_valid, quad_copy(quad));
@@ -170,16 +136,17 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     return quads_valid;
 }
 
-static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, image_u8_t *im) {
+static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, image_u8_t *im)
+{
     assert(local_tags != NULL);
 
     zarray_clear(ld->detections);
 
     const int im_w = im->width, im_h = im->height;
-    const int64_t max_dist = sqrtf(im_w*im_w+im_h*im_h);
-    const double thres_dist = (double)imax(im_w, im_h) / 10;
+    const double thres_dist = (double)imax(im_w, im_h) / 4;
 
-    if (zarray_size(ld->candidates) == 0) {
+    if (zarray_size(ld->candidates) == 0)
+    {
         for (int i = 0; i < zarray_size(local_tags); i++)
         {
             lightanchor_t *candidate;
@@ -195,53 +162,62 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
             lightanchor_t *global_tag;
             zarray_get_volatile(ld->candidates, i, &global_tag);
 
-            int match_idx = 0;
-            double min_dist = max_dist;
+            int match_idx = -1;
+            double min_dist = MAX_DIST;
             // search for closest local tag
             for (int j = 0; j < zarray_size(local_tags); j++)
             {
                 lightanchor_t *local_tag;
                 zarray_get_volatile(local_tags, j, &local_tag);
 
-                double dist;
-                if ((dist = g2d_distance(global_tag->c, local_tag->c)) < min_dist) {
+                double dist = ( g2d_distance(global_tag->p[0], local_tag->p[0]) +
+                                g2d_distance(global_tag->p[1], local_tag->p[1]) +
+                                g2d_distance(global_tag->p[2], local_tag->p[2]) +
+                                g2d_distance(global_tag->p[3], local_tag->p[3]) ) / 4;
+                if (dist < min_dist)
+                {
                     min_dist = dist;
                     match_idx = j;
                 }
             }
 
-            if (min_dist < thres_dist) {
+            if (match_idx != -1 && min_dist < thres_dist)
+            {
                 // candidate_prev ==> candidate_curr
                 lightanchor_t *candidate_prev = global_tag, *candidate_curr;
                 zarray_get_volatile(local_tags, match_idx, &candidate_curr);
+                candidate_curr = lightanchor_copy(candidate_curr);
 
                 candidate_curr->valid = candidate_prev->valid;
                 candidate_curr->code = candidate_prev->code;
                 candidate_curr->next_code = candidate_prev->next_code;
 
-                memcpy(&candidate_curr->brightnesses, &candidate_prev->brightnesses, sizeof(struct queue_buf));
+                qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);
                 candidate_curr->brightness = get_brightness(candidate_curr, im);
-
-                uint8_t max, min;
                 qb_add(&candidate_curr->brightnesses, candidate_curr->brightness);
-                qb_stats(&candidate_curr->brightnesses, &max, &min);
-                uint8_t thres = (max + min) / 2;
-                if ((max - min) > RANGE_THRES) {
+
+                uint8_t max, min, thres;
+                qb_stats(&candidate_curr->brightnesses, &max, &min, &thres);
+                if ((max - min) > ld->range_thres)
+                {
                     candidate_curr->code = (candidate_curr->code << 1) | (candidate_curr->brightness > thres);
 
-                    // for (int i = 0; i < BUF_SIZE; i++) {
+                    // for (int i = 0; i < BUF_SIZE; i++)
+                    // {
                     //     printf("%u ", candidate_curr->brightnesses.buf[i]);
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if (match(ld, candidate_curr)) {
+                    if (qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr))
+                    {
                         zarray_add(ld->detections, candidate_curr);
                     }
                     zarray_add(valid, candidate_curr);
                 }
             }
         }
-        // lightanchors_destroy(ld->candidates);
+
+        lightanchors_destroy(ld->candidates);
         ld->candidates = valid;
     }
 }
@@ -258,11 +234,11 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
 
         lightanchor_t *lightanchor;
         if ((lightanchor = lightanchor_create(quad)) != NULL)
-            zarray_add(local_tags, lightanchor_copy(lightanchor));
+            zarray_add(local_tags, lightanchor);
     }
+    quads_destroy(quads);
 
     update_candidates(ld, local_tags, im);
-
     lightanchors_destroy(local_tags);
 
     return ld->detections;

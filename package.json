@@ -1,14 +1,26 @@
 {
   "name": "Glitter",
   "version": "1.0.0",
-  "main": "./js/glitter-lib.js",
+  "main": "./js/index.js",
   "scripts": {
     "dev": "webpack --mode development --progress --watch",
-    "build": "make; webpack --mode production; echo Built at `date`",
+    "build": "webpack --mode production; echo Built at `date`; rm -rf dist; make wasm",
     "serve": "python3 -m http.server"
   },
-  "keywords": [],
-  "author": "Edward Lu (EdwardLu2018)",
+  "author": "Edward Lu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/conix-center/glitter-browser-detector"
+  },
+  "license": "ISC",
+  "browserslist": [
+    "last 3 firefox versions",
+    "last 3 and_chr versions",
+    "last 3 chrome versions",
+    "last 3 opera versions",
+    "last 3 ios_saf versions",
+    "last 3 safari versions"
+  ],
   "devDependencies": {
     "eslint": "^7.15.0",
     "eslint-config-google": "^0.14.0",
@@ -20,7 +32,8 @@
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
     "raw-loader": "^4.0.1",
-    "terser-webpack-plugin": "^2.3.6"
+    "terser-webpack-plugin": "^2.3.6",
+    "sweetalert2": "^10.0.0"
   },
   "dependencies": {},
   "description": ""

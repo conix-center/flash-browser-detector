@@ -16,9 +16,9 @@ struct lightanchor
     uint8_t brightness;
     uint16_t code;
     uint16_t next_code;
+    matd_t *H;
     double c[2];
     double p[4][2];
-    matd_t *H;
     struct queue_buf brightnesses;
 };
 

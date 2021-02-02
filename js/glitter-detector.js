@@ -1,63 +1,109 @@
-function dec2bin(dec){
-    return (dec >>> 0).toString(2);
-}
+
+import {Timer} from "./timer";
+import {Utils} from "./utils/utils";
+import {DeviceIMU} from "./imu";
+import {GrayScale} from "./grayscale";
+import {GlitterModule} from "./glitter-module";
 
 export class GlitterDetector {
-    constructor(code, width, height, callback) {
-        this.ready = false;
-
-        this._width = width;
-        this._height = height;
-
+    constructor(code, targetFps, source, options) {
         this.code = code;
+        this.targetFps = targetFps; // FPS/Hz
+        this.fpsInterval = 1000 / this.targetFps; // ms
 
+        this.source = source;
+        this.sourceWidth = this.source.options.width;
+        this.sourceHeight = this.source.options.height;
+
+        this.imageData = null;
+        this.imageDecimate = 1.0;
+
+        this.options = {
+            printPerformance: false,
+            maxImageDecimationFactor: 3,
+            imageDecimationDelta: 0.1,
+            rangeThreshold: 45,
+            quadSigma: 1.0,
+            refineEdges: 1,
+            decodeSharpening: 0.25,
+            minWhiteBlackDiff: 20,
+        }
+        this.setOptions(options);
+
+        this.imu = new DeviceIMU();
+        this.grayScale = new GrayScale(this.sourceWidth, this.sourceHeight);
+    }
+
+    setOptions(options) {
+        if (options) {
+            this.options = Object.assign(this.options, options);
+        }
+    }
+
+    init() {
+        this.source.init()
+            .then((source) => {
+                this.grayScale.attachElem(source);
+                this.onInit(source);
+            })
+            .catch((err) => {
+                console.warn("ERROR: " + err);
+            });
+    }
+
+    onInit(source) {
         let _this = this;
-        GlitterWASM().then(function (Module) {
-            console.log("GLITTER WASM module loaded.");
-            _this.onWasmInit(Module);
-            if (callback) callback();
-        });
-    }
-
-    onWasmInit(Module) {
-        this._Module = Module;
-        this._init = Module.cwrap("init", "number", ["number"]);
-        this._track = this._Module.cwrap("track", "number", ["number", "number", "number"]);
-
-        this.ready = (this._init(this.code) == 0);
-
-        this.imPtr = this._Module._malloc(this._width * this._height);
-    }
-
-    track(imArr) {
-        let quads = [];
-        if (!this.ready) return quads;
-
-        this._Module.HEAPU8.set(imArr, this.imPtr);
-
-        const ptr = this._track(this.imPtr, this._width, this._height);
-        const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
-
-        const numQuads = this._Module.getValue(ptr, "double");
-
-        for (var i = 0; i < numQuads; i++) {
-            var q = {
-                p00 : this._Module.HEAPF64[ptrF64+10*i+1+0],
-                p01 : this._Module.HEAPF64[ptrF64+10*i+1+1],
-                p10 : this._Module.HEAPF64[ptrF64+10*i+1+2],
-                p11 : this._Module.HEAPF64[ptrF64+10*i+1+3],
-                p20 : this._Module.HEAPF64[ptrF64+10*i+1+4],
-                p21 : this._Module.HEAPF64[ptrF64+10*i+1+5],
-                p30 : this._Module.HEAPF64[ptrF64+10*i+1+6],
-                p31 : this._Module.HEAPF64[ptrF64+10*i+1+7],
-                c0  : this._Module.HEAPF64[ptrF64+10*i+1+8],
-                c1  : this._Module.HEAPF64[ptrF64+10*i+1+9],
-            };
-            quads.push(q);
+        function startTick() {
+            _this.prev = Date.now();
+            _this.timer = new Timer(_this.tick.bind(_this), _this.fpsInterval);
+            _this.timer.run();
         }
 
-        this._Module._free(ptr);
+        this.glitterModule = new GlitterModule(this.code, this.sourceWidth, this.sourceHeight, this.options, startTick);
+        this.imu.init();
 
-        return quads;
+        const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
+        window.dispatchEvent(initEvent);
+    }
+
+    decimate(width, height) {
+        this.grayScale.resize(width, height);
+        this.glitterModule.resize(width, height);
+        this.glitterModule.setQuadDecimate(this.imageDecimate);
+    }
+
+    tick() {
+        const start = Date.now();
+        // console.log(start - this.prev, this.timer.getError());
+        this.prev = start;
+
+        this.imageData = this.grayScale.getPixels();
+        this.glitterModule.saveGrayscale(this.imageData);
+
+        const mid = Date.now();
+
+        const tags = this.glitterModule.detect_tags();
+
+        const end = Date.now();
+
+        if (this.options.printPerformance) {
+            console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
+        }
+
+        if (end-start > this.fpsInterval) {
+            if (this.imageDecimate < this.options.maxImageDecimationFactor) {
+                this.imageDecimate += this.options.imageDecimationDelta;
+                this.imageDecimate = Utils.round2(this.imageDecimate);
+                this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate)
+
+                const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
+                window.dispatchEvent(calibrateEvent);
+            }
+        }
+
+        if (tags) {
+            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: tags}});
+            window.dispatchEvent(tagEvent);
+        }
     }
 }

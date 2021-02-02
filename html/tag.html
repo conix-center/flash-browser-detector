@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
 
-    <title>GLITTER tag</title>
+    <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
 
     <style type="text/css">
         body {
@@ -12,21 +12,39 @@
             background: white;
         }
         #tag {
-            background: #222;
-            width: 60vmin;
-            height: 60vmin;
+            background: #111;
+            width: 57vmin;
+            height: 57vmin;
             border: 13vmin;
             border-style: solid;
             border-color: black;
             margin: 50px;
         }
+        #log {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+        }
     </style>
+
+    <title>Web GLITTER tag</title>
 </head>
 <body>
+    <div id="stats"></div>
+    <div id="log">Average Timer Error: 0 ms</div>
     <div id="tag"></div>
 
     <script type="text/javascript">
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.getElementById("stats").appendChild(stats.domElement);
+
         const tag = document.getElementById("tag");
+        const log = document.getElementById("log");
+
+        function dec2bin(dec) {
+            return (dec >>> 0).toString(2);
+        }
 
         function getUrlVars() {
             const vars = {};
@@ -47,10 +65,6 @@
             return urlParameter;
         }
 
-        function dec2bin(dec) {
-            return (dec >>> 0).toString(2);
-        }
-
         function preprocess(code) {
             let res = 0;
             for (let i = 0; i < 8; i++) {
@@ -64,9 +78,9 @@
                     if (currBit == 1) {
                         res |= (0 << (16-2*i-2));
                     }
-                    else if (currBit == 0) {
-                        res |= (1 << (16-2*i-2));
-                    }
+                    // else if (currBit == 0) {
+                    //     res |= (1 << (16-2*i-2));
+                    // }
                 }
                 else {
                     res |= (currBit << (16-2*i-2));
@@ -75,34 +89,47 @@
             return res;
         }
 
+        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+        const interval = 1000 / freq; // ms
+
         const len = 16;
-        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 20;
-        const period = Math.floor(1000 / freq); // ms
         let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaf;
         code = preprocess(code);
 
-        let started = false;
+        let running = false;
         let blink;
+        let totalDt = 0; let iters = 0;
         window.onmouseup = window.ontouchend = function() {
-            let start_t = Date.now();
-            if (!started) {
+            if (!running) {
                 let idx = 0;
-                blink = setInterval(function() {
+                let expected = Date.now() + interval;
+                setTimeout(tick, interval);
+                function tick() {
+                    if (!running) return;
+                    const dt = Date.now() - expected; // drift
+                    const startCompute = Date.now();
+                    totalDt += Math.abs(dt); iters++;
+                    log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+
                     const bit = Number(!!(code & (1 << (len-idx-1))));
                     if (bit == 1) {
                         tag.style.background = "white"
                     }
                     else {
-                        tag.style.background = "#222"
+                        tag.style.background = "#111"
                     }
                     idx = (idx+1) % len;
-                }, period);
+                    stats.update();
+
+                    expected += interval;
+                    const computationTime = Date.now() - startCompute;
+                    setTimeout(tick, Math.max(0, interval - dt - computationTime)); // take into account drift
+                }
             }
             else {
-                clearInterval(blink);
-                tag.style.background = "#222"
+                tag.style.background = "#111"
             }
-            started = !started;
+            running = !running;
         }
     </script>
 </body>

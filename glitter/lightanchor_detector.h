@@ -23,6 +23,7 @@ extern int quads_destroy(zarray_t *quads);
 typedef struct lightanchor_detector lightanchor_detector_t;
 struct lightanchor_detector
 {
+    uint8_t range_thres; // min amplitude threshold for filtering out non-blinking quads
     uint16_t code;
     zarray_t *candidates;
     zarray_t *detections;

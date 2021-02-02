@@ -3,9 +3,9 @@ const webpack = require("webpack");
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = (env, argv) => ({
-  entry: './js/glitter-lib.js',
+  entry: './js/index.js',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'build'),
     filename: argv.mode == 'development' ? 'glitter.js' : 'glitter.min.js',
     library: 'Glitter',
     libraryTarget: 'umd',
