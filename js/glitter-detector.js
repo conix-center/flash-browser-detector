@@ -4,20 +4,19 @@ import {Utils} from "./utils/utils";
 import {DeviceIMU} from "./imu";
 import {GrayScale} from "./grayscale";
 import {GlitterModule} from "./glitter-module";
-import {GlitterSource} from "./glitter-source"
 
 export class GlitterDetector {
-    constructor(code, targetFps) {
+    constructor(code, targetFps, source, options) {
         this.code = code;
         this.targetFps = targetFps; // FPS/Hz
         this.fpsInterval = 1000 / this.targetFps; // ms
+
+        this.source = source;
 
         this.imageData = null;
         this.imageDecimate = 1.0;
 
         this.options = {
-            sourceWidth: 640,
-            sourceHeight: 480,
             printPerformance: false,
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.1,
@@ -27,14 +26,16 @@ export class GlitterDetector {
             decodeSharpening: 0.25,
             minWhiteBlackDiff: 20,
         }
+        this.setOptions(options);
 
         this.imu = new DeviceIMU();
-        this.source = new GlitterSource(this.options.sourceWidth, this.options.sourceHeight);
-        this.grayScale = new GrayScale(this.options.sourceWidth, this.options.sourceHeight);
+        this.grayScale = new GrayScale(this.source.options.width, this.source.options.height);
     }
 
     setOptions(options) {
-        this.options = Object.assign(this.options, options);
+        if (options) {
+            this.options = Object.assign(this.options, options);
+        }
     }
 
     start() {
@@ -56,7 +57,7 @@ export class GlitterDetector {
             _this.timer.run();
         }
 
-        this.glitterModule = new GlitterModule(this.code, this.options.sourceWidth, this.options.sourceHeight, this.options, startTick);
+        this.glitterModule = new GlitterModule(this.code, this.source.options.width, this.source.options.height, this.options, startTick);
         this.imu.init();
 
         const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
@@ -91,7 +92,7 @@ export class GlitterDetector {
             if (this.imageDecimate < this.options.maxImageDecimationFactor) {
                 this.imageDecimate += this.options.imageDecimationDelta;
                 this.imageDecimate = Utils.round2(this.imageDecimate);
-                this.decimate(this.options.sourceWidth/this.imageDecimate, this.options.sourceHeight/this.imageDecimate)
+                this.decimate(this.source.options.width/this.imageDecimate, this.source.options.height/this.imageDecimate)
 
                 const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
                 window.dispatchEvent(calibrateEvent);
