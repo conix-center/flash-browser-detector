@@ -178,7 +178,15 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                                 g2d_distance(global_tag->p[1], local_tag->p[1]) +
                                 g2d_distance(global_tag->p[2], local_tag->p[2]) +
                                 g2d_distance(global_tag->p[3], local_tag->p[3]) ) / 4;
-                if (dist < min_dist)
+                double dist_center_local = (g2d_distance(local_tag->p[0], local_tag->c) +
+                                            g2d_distance(local_tag->p[1], local_tag->c) +
+                                            g2d_distance(local_tag->p[2], local_tag->c) +
+                                            g2d_distance(local_tag->p[3], local_tag->c)) / 4;
+                double dist_center_global = (g2d_distance(global_tag->p[0], global_tag->c) +
+                                            g2d_distance(global_tag->p[1], global_tag->c) +
+                                            g2d_distance(global_tag->p[2], global_tag->c) +
+                                            g2d_distance(global_tag->p[3], global_tag->c)) / 4;
+                if (dist < min_dist && fabs(dist_center_local-dist_center_global) < 10)
                 {
                     min_dist = dist;
                     match_idx = j;
@@ -201,7 +209,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
 
                 uint8_t max, min, thres;
                 qb_stats(&candidate_curr->brightnesses, &max, &min, &thres);
-                if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
+                if ((max - min) > ld->range_thres)
                 {
                     candidate_curr->code = (candidate_curr->code << 1) | (candidate_curr->brightness > thres);
 
@@ -211,7 +219,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if (match(ld, candidate_curr))
+                    if (qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr))
                     {
                         zarray_add(ld->detections, candidate_curr);
                     }
