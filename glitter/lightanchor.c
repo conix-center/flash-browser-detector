@@ -19,8 +19,6 @@ lightanchor_t *lightanchor_create(struct quad *quad)
     l->p[3][0] = quad->p[3][0];
     l->p[3][1] = quad->p[3][1];
 
-    l->next_code = 0;
-
     if (quad->H) {
         l->H = matd_copy(quad->H);
         homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);

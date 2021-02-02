@@ -157,7 +157,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
         {
             lightanchor_t *candidate;
             zarray_get_volatile(local_tags, i, &candidate);
-            zarray_add(ld->candidates, lightanchor_copy(candidate));
+            zarray_add(ld->candidates, candidate);
         }
     }
     else {
@@ -211,7 +211,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if (1||match(ld, candidate_curr))
+                    if (match(ld, candidate_curr))
                     {
                         zarray_add(ld->detections, candidate_curr);
                     }
