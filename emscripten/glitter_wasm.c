@@ -24,7 +24,7 @@ apriltag_detector_t *td = NULL;
 lightanchor_detector_t *ld = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-int init(uint8_t code) {
+int init() {
     tf = tag36h11_create();
     if (tf == NULL)
         return 1;
@@ -35,7 +35,7 @@ int init(uint8_t code) {
 
     apriltag_detector_add_family(td, tf);
 
-    ld = lightanchor_detector_create(code);
+    ld = lightanchor_detector_create();
     if (ld == NULL)
         return 1;
 
@@ -43,14 +43,12 @@ int init(uint8_t code) {
     td->nthreads = 1;
     td->quad_decimate = 1.0;
 
-    // set default options
-    ld->range_thres = 45;
-    td->quad_sigma = 1.0;
-    td->refine_edges = 1;
-    td->decode_sharpening = 0.25;
-    td->qtp.min_white_black_diff = 20;
-
     return 0;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int add_code(char code) {
+    return lightanchor_detector_add_code(ld, code);
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -73,6 +71,7 @@ int set_quad_decimate(float quad_decimate) {
         return 1;
 
     td->quad_decimate = quad_decimate;
+
     return 0;
 }
 
@@ -86,9 +85,7 @@ int save_grayscale(uint8_t pixels[], uint8_t gray[], int cols, int rows) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-double *detect_tags(uint8_t gray[], int cols, int rows) {
-    double *output;
-
+int detect_tags(uint8_t gray[], int cols, int rows) {
     image_u8_t im = {
         .width = cols,
         .height = rows,
@@ -99,12 +96,9 @@ double *detect_tags(uint8_t gray[], int cols, int rows) {
     zarray_t *quads = detect_quads(td, &im);
     zarray_t *lightanchors = decode_tags(ld, quads, &im);
 
-    const int num_tags = zarray_size(lightanchors);
-    const int len = 1 + 10*num_tags; // len + 8 quad pts + 2 center pts
-    output = calloc(len, sizeof(double));
-    output[0] = num_tags;
+    int sz = zarray_size(lightanchors);
 
-    for (int i = 0; i < zarray_size(lightanchors); i++) {
+    for (int i = 0; i < sz; i++) {
         struct lightanchor *la;
         zarray_get_volatile(lightanchors, i, &la);
 
@@ -121,18 +115,54 @@ double *detect_tags(uint8_t gray[], int cols, int rows) {
             la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
         }
 
-        output[10*i+1+0] = la->p[0][0];
-        output[10*i+1+1] = la->p[0][1];
-        output[10*i+1+2] = la->p[1][0];
-        output[10*i+1+3] = la->p[1][1];
-        output[10*i+1+4] = la->p[2][0];
-        output[10*i+1+5] = la->p[2][1];
-        output[10*i+1+6] = la->p[3][0];
-        output[10*i+1+7] = la->p[3][1];
+        EM_ASM({
+            const tag = {};
 
-        output[10*i+1+8] = la->c[0];
-        output[10*i+1+9] = la->c[1];
+            tag["code"] = $0;
+
+            tag["corners"] = [];
+
+            const corner0 = {};
+            corner0["x"] = $1;
+            corner0["y"] = $2;
+            tag["corners"].push(corner0);
+
+            const corner1 = {};
+            corner1["x"] = $3;
+            corner1["y"] = $4;
+            tag["corners"].push(corner1);
+
+            const corner2 = {};
+            corner2["x"] = $5;
+            corner2["y"] = $6;
+            tag["corners"].push(corner2);
+
+            const corner3 = {};
+            corner3["x"] = $7;
+            corner3["y"] = $8;
+            tag["corners"].push(corner3);
+
+            const center = {};
+            center["x"] = $9;
+            center["y"] = $10;
+            tag["center"] = center;
+
+            const tagEvent = new CustomEvent("onGlitterTagFound", {detail: {tag: tag}});
+            window.dispatchEvent(tagEvent);
+        },
+            la->code,
+            la->p[0][0],
+            la->p[0][1],
+            la->p[1][0],
+            la->p[1][1],
+            la->p[2][0],
+            la->p[2][1],
+            la->p[3][0],
+            la->p[3][1],
+            la->c[0],
+            la->c[1]
+        );
     }
 
-    return output;
+    return sz;
 }

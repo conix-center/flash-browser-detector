@@ -1,44 +1,59 @@
-let width = window.innerWidth;
-let height = window.innerHeight;
+var codes = [0xaf, 123];
+var targetFps = 30;
 
-const code = 0xaf;
-const targetFps = 30;
+var stats = null;
 
-let stats = null;
-let videoSource = null;
-let videoCanvas = null;
-let overlayCanvas = null;
+var glitterSource = new Glitter.GlitterSource();
 
-let glitterDetector = null;
+var overlayCanvas = document.createElement("canvas");
+overlayCanvas.id = "overlay";
+overlayCanvas.style.position = "absolute";
+overlayCanvas.style.top = "0px";
+overlayCanvas.style.left = "0px";
+overlayCanvas.width = glitterSource.options.width;
+overlayCanvas.height = glitterSource.options.height;
 
-function dec2bin(dec) {
-    return (dec >>> 0).toString(2);
-}
+var glitterDetector = new Glitter.GlitterDetector(codes, targetFps, glitterSource);
+glitterDetector.setOptions({
+    // printPerformance: true,
+});
+glitterDetector.init();
 
-function drawQuad(quad) {
-    const overlayCtx = overlayCanvas.getContext("2d");
+function drawTag(tag) {
+    var overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
         overlayCtx.lineWidth = 5;
         overlayCtx.strokeStyle = "blue";
-        overlayCtx.moveTo(quad.corners[0].x, quad.corners[0].y);
-        overlayCtx.lineTo(quad.corners[1].x, quad.corners[1].y);
-        overlayCtx.lineTo(quad.corners[2].x, quad.corners[2].y);
-        overlayCtx.lineTo(quad.corners[3].x, quad.corners[3].y);
-        overlayCtx.lineTo(quad.corners[0].x, quad.corners[0].y);
-        overlayCtx.font = "bold 20px Arial";
+        overlayCtx.moveTo(tag.corners[0].x, tag.corners[0].y);
+        overlayCtx.lineTo(tag.corners[1].x, tag.corners[1].y);
+        overlayCtx.lineTo(tag.corners[2].x, tag.corners[2].y);
+        overlayCtx.lineTo(tag.corners[3].x, tag.corners[3].y);
+        overlayCtx.lineTo(tag.corners[0].x, tag.corners[0].y);
+
+        overlayCtx.font = "bold 15px Arial";
         overlayCtx.textAlign = "center";
-        overlayCtx.fillStyle = "blue";
-        overlayCtx.fillText(dec2bin(code), quad.center.x, quad.center.y);
+        overlayCtx.fillStyle = "red";
+        overlayCtx.fillText(Glitter.Utils.dec2bin(tag.code), tag.center.x, tag.center.y);
     overlayCtx.stroke();
 }
 
-function drawQuads(quads) {
-    const overlayCtx = overlayCanvas.getContext("2d");
-    overlayCtx.clearRect(0, 0, width, height);
+function drawTags(tags) {
+    var overlayCtx = overlayCanvas.getContext("2d");
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-    for (var i = 0; i < quads.length; i++) {
-        drawQuad(quads[i]);
+    for (var i = 0; i < tags.length; i++) {
+        drawTag(tags[i]);
+    }
+}
+
+function updateInfo() {
+    var info = document.getElementById("info");
+    info.style.zIndex = "1";
+    info.innerText = "Detecting Codes:\n";
+    for(var i = 0; i < this.codes.length; i++) {
+        var code = this.codes[i];
+        info.innerText += `${Glitter.Utils.dec2bin(code)} (${code})\n`;
     }
 }
 
@@ -46,66 +61,31 @@ window.addEventListener("onGlitterInit", (e) => {
     stats = new Stats();
     stats.showPanel(0);
     document.getElementById("stats").appendChild(stats.domElement);
-    videoSource = e.detail.source;
+
+    document.body.appendChild(e.detail.source);
+
+    document.body.appendChild(overlayCanvas);
+
+    updateInfo();
+
+    resize();
 });
 
 window.addEventListener("onGlitterTagsFound", (e) => {
-    const videoCanvasCtx = videoCanvas.getContext("2d");
-    videoCanvasCtx.drawImage(
-        videoSource, 0, 0, width, height);
-    drawQuads(e.detail.tags);
+    drawTags(e.detail.tags);
     stats.update();
 });
 
-function resize(newWidth, newHeight) {
-    width = newWidth;
-    height = newHeight;
+window.addEventListener("onGlitterCalibrate", (e) => {
+    updateInfo();
+    info.innerText += e.detail.decimationFactor;
+});
 
-    if (videoCanvas && overlayCanvas) {
-        videoCanvas.width = width;
-        videoCanvas.height = height;
-
-        overlayCanvas.width = width;
-        overlayCanvas.height = height;
-    }
+function resize() {
+    glitterSource.resize(window.innerWidth, window.innerHeight);
+    glitterSource.copyDimensionsTo(overlayCanvas);
 }
 
 window.addEventListener("resize", (e) => {
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    resize(width, height);
+    resize();
 });
-
-function setVideoStyle(elem) {
-    elem.style.position = "absolute";
-    elem.style.top = 0;
-}
-
-window.onload = () => {
-    var video = document.createElement("video");
-    video.setAttribute("autoplay", "");
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-
-    videoCanvas = document.createElement("canvas");
-    setVideoStyle(videoCanvas);
-    videoCanvas.id = "video-canvas";
-    videoCanvas.width = width;
-    videoCanvas.height = height;
-    videoCanvas.style.zIndex = 0;
-    document.body.appendChild(videoCanvas);
-
-    overlayCanvas = document.createElement("canvas");
-    setVideoStyle(overlayCanvas);
-    overlayCanvas.id = "overlay";
-    overlayCanvas.width = width;
-    overlayCanvas.height = height;
-    overlayCanvas.style.zIndex = 1;
-    document.body.appendChild(overlayCanvas);
-
-    glitterDetector = new Glitter.GlitterDetector(code, targetFps, width, height, video);
-    // glitterDetector.setOptions({
-    //     printPerformance: true,
-    // });
-    glitterDetector.start();
-}
