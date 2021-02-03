@@ -38,6 +38,13 @@ export class GlitterModule {
 
         this.imagePtr = this._Module._malloc(this.width * this.height * 4);
         this.grayPtr = this._Module._malloc(this.width * this.height);
+
+        this.tags = [];
+
+        let _this = this;
+        window.addEventListener("onGlitterTagFound", (e) => {
+            _this.tags.push(e.detail.tag);
+        });
     }
 
     resize(width, height) {
@@ -72,39 +79,11 @@ export class GlitterModule {
     }
 
     detect_tags() {
-        let tags = [];
-        if (!this.ready) return tags;
+        this.tags = []; // reset found tags
+        if (!this.ready) return this.tags;
 
-        const ptr = this._detect_tags(this.grayPtr, this.width, this.height);
-        const ptrF64 = ptr / Float64Array.BYTES_PER_ELEMENT;
+        this._detect_tags(this.grayPtr, this.width, this.height); // detect new tags
 
-        const numTags = this._Module.getValue(ptr, "double");
-
-        for (var i = 0; i < numTags; i++) {
-            const p0x = this._Module.HEAPF64[ptrF64+10*i+1+0];
-            const p0y = this._Module.HEAPF64[ptrF64+10*i+1+1];
-            const p1x = this._Module.HEAPF64[ptrF64+10*i+1+2];
-            const p1y = this._Module.HEAPF64[ptrF64+10*i+1+3];
-            const p2x = this._Module.HEAPF64[ptrF64+10*i+1+4];
-            const p2y = this._Module.HEAPF64[ptrF64+10*i+1+5];
-            const p3x = this._Module.HEAPF64[ptrF64+10*i+1+6];
-            const p3y = this._Module.HEAPF64[ptrF64+10*i+1+7];
-            const cx  = this._Module.HEAPF64[ptrF64+10*i+1+8];
-            const cy  = this._Module.HEAPF64[ptrF64+10*i+1+9];
-            var tag = {
-                corners: [
-                        {x: p0x, y: p0y},
-                        {x: p1x, y: p1y},
-                        {x: p2x, y: p2y},
-                        {x: p3x, y: p3y}
-                    ],
-                center: {x: cx, y: cy}
-            };
-            tags.push(tag);
-        }
-
-        this._Module._free(ptr);
-
-        return tags;
+        return this.tags;
     }
 }
