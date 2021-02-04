@@ -26,22 +26,45 @@ uint16_t double_bits(uint8_t bits)
     return res;
 }
 
-size_t hamming_dist(size_t a, size_t b)
+uint8_t undouble_bits(uint16_t bits)
 {
-    size_t c = a ^ b;
-    unsigned int hamm = 0;
-    while (c) {
-        ++hamm;
-        c &= (c-1);
+    uint8_t res = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        res |= ((bits & 0x1) << i);
+        bits >>= 2;
     }
-    return hamm;
+    return res;
 }
 
-static int match_even_odd(uint16_t a, uint16_t b)
+// size_t hamming_dist(size_t a, size_t b)
+// {
+//     size_t c = a ^ b;
+//     unsigned int hamm = 0;
+//     while (c) {
+//         ++hamm;
+//         c &= (c-1);
+//     }
+//     return hamm;
+// }
+
+static int match_even_odd(uint16_t a, uint16_t b, uint8_t *match)
 {
     uint16_t a_even = a & EVEN_MASK, a_odd = a & ODD_MASK;
     uint16_t b_even = b & EVEN_MASK, b_odd = b & ODD_MASK;
-    return (a_even == b_even) || (a_odd == b_odd);
+
+    if (a_even == b_even) {
+        if (match) *match = undouble_bits(b_even >> 1);
+        return 1;
+    }
+    else if (a_odd == b_odd) {
+        if (match) *match = undouble_bits(b_odd);
+        return 1;
+    }
+    else {
+        if (match) *match = 0xff; // invalid
+        return 0;
+    }
 }
 
 int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
@@ -51,15 +74,15 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
 #endif
 
-    uint16_t match_code;
+    uint16_t code_to_match;
     if (candidate_curr->valid > 0) {
-        match_code = candidate_curr->next_code;
+        code_to_match = candidate_curr->next_code;
 #ifdef DEBUG
         printf(" "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
 #endif
-        if (match_even_odd(candidate_curr->code, match_code)) {
-            candidate_curr->next_code = cyclic_lsl(match_code, 16);
+        if (match_even_odd(candidate_curr->code, code_to_match, NULL)) {
+            candidate_curr->next_code = cyclic_lsl(code_to_match, 16);
             candidate_curr->valid++;
             return 1;
         }
@@ -69,7 +92,7 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" != ",
                     BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
             printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                    BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                    BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
 
             int j = candidate_curr->brightnesses.idx;
             for (int i = 0; i < BUF_SIZE; i++) {
@@ -88,22 +111,22 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
         struct ll_node *curr = ld->codes->head;
         for (; curr != NULL; curr = curr->next)
         {
-            match_code = curr->data;
+            code_to_match = curr->data;
 #ifdef DEBUG
             printf(" "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                            BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                            BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
 #endif
-            if (match_even_odd(candidate_curr->code, match_code)) {
+            if (match_even_odd(candidate_curr->code, code_to_match, &candidate_curr->match_code)) {
 #ifdef DEBUG
                 printf("==== MATCH ====\n");
                 printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" == ",
                         BYTE_TO_BINARY(candidate_curr->code>>8), BYTE_TO_BINARY(candidate_curr->code));
                 printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                        BYTE_TO_BINARY(match_code>>8), BYTE_TO_BINARY(match_code));
+                        BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
                 printf("===============\n");
 #endif
-                candidate_curr->code = match_code;
-                candidate_curr->next_code = cyclic_lsl(match_code, 16);
+                candidate_curr->code = code_to_match;
+                candidate_curr->next_code = cyclic_lsl(code_to_match, 16);
                 candidate_curr->valid++;
                 return 1;
             }

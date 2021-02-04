@@ -31,7 +31,7 @@ function drawTag(tag) {
         overlayCtx.lineTo(tag.corners[3].x, tag.corners[3].y);
         overlayCtx.lineTo(tag.corners[0].x, tag.corners[0].y);
 
-        overlayCtx.font = "bold 15px Arial";
+        overlayCtx.font = "bold 20px Arial";
         overlayCtx.textAlign = "center";
         overlayCtx.fillStyle = "red";
         overlayCtx.fillText(Glitter.Utils.dec2bin(tag.code), tag.center.x, tag.center.y);

@@ -150,7 +150,7 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
             const tagEvent = new CustomEvent("onGlitterTagFound", {detail: {tag: tag}});
             window.dispatchEvent(tagEvent);
         },
-            la->code,
+            la->match_code,
             la->p[0][0],
             la->p[0][1],
             la->p[1][0],

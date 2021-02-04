@@ -201,6 +201,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
 
                 candidate_curr->valid = candidate_prev->valid;
                 candidate_curr->code = candidate_prev->code;
+                candidate_curr->match_code = candidate_prev->match_code;
                 candidate_curr->next_code = candidate_prev->next_code;
 
                 qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);

@@ -14,6 +14,7 @@ struct lightanchor
 {
     uint8_t valid;
     uint8_t brightness;
+    uint8_t match_code;
     uint16_t code;
     uint16_t next_code;
     matd_t *H;
