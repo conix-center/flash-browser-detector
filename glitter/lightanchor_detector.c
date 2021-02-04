@@ -58,10 +58,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     // Step 1. Detect quads according to requested image decimation
     // and blurring parameters.
     image_u8_t *quad_im = image_u8_copy(im_orig);
-    // if (td->quad_decimate > 1)
-    // {
-    //     quad_im = image_u8_decimate(im_orig, td->quad_decimate);
-    // }
 
     if (td->quad_sigma != 0)
     {
@@ -168,7 +164,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                                                 g2d_distance(global_tag->p[1], global_tag->c) +
                                                 g2d_distance(global_tag->p[2], global_tag->c) +
                                                 g2d_distance(global_tag->p[3], global_tag->c)) / 4;
-                    if (fabs(dist_center_local-dist_center_global) < 10)
+                    if (fabs(dist_center_local-dist_center_global) < 15)
                     {
                         min_dist = dist;
                         match_tag = global_tag;
@@ -202,7 +198,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if (1||(qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr)))
+                    if ((qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr)))
                     {
                         zarray_add(ld->detections, candidate_curr);
                     }

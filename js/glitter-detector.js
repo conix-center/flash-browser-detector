@@ -18,6 +18,8 @@ export class GlitterDetector {
         this.imageData = null;
         this.imageDecimate = 1.0;
 
+        this.numBadFrames = 0;
+
         this.options = {
             printPerformance: false,
             maxImageDecimationFactor: 3,
@@ -94,16 +96,18 @@ export class GlitterDetector {
             console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 
-        // if (end-start > this.fpsInterval) {
-        //     if (this.imageDecimate < this.options.maxImageDecimationFactor) {
-        //         this.imageDecimate += this.options.imageDecimationDelta;
-        //         this.imageDecimate = Utils.round2(this.imageDecimate);
-        //         this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate)
+        if (end-start > this.fpsInterval) {
+            this.numBadFrames++;
+            if (this.numBadFrames > this.targetFps/2 && this.imageDecimate < this.options.maxImageDecimationFactor) {
+                this.imageDecimate += this.options.imageDecimationDelta;
+                this.imageDecimate = Utils.round2(this.imageDecimate);
+                this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate);
+                this.numBadFrames = 0;
 
-        //         const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
-        //         window.dispatchEvent(calibrateEvent);
-        //     }
-        // }
+                const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
+                window.dispatchEvent(calibrateEvent);
+            }
+        }
 
         if (tags) {
             const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: tags}});

@@ -40,8 +40,16 @@ int init() {
         return 1;
 
     td->debug = 0;
+
     td->nthreads = 1;
     td->quad_decimate = 1.0;
+
+    td->qtp.max_nmaxima = 10;
+    td->qtp.min_cluster_pixels = 5;
+
+    td->qtp.max_line_fit_mse = 10.0;
+    td->qtp.cos_critical_rad = cos(10 * M_PI / 180);
+    td->qtp.deglitch = 0;
 
     return 0;
 }
