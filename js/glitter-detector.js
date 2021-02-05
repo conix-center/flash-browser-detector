@@ -23,7 +23,7 @@ export class GlitterDetector {
         this.options = {
             printPerformance: false,
             maxImageDecimationFactor: 3,
-            imageDecimationDelta: 0.1,
+            imageDecimationDelta: 0.2,
             rangeThreshold: 45,
             quadSigma: 1.0,
             refineEdges: 1,
@@ -100,7 +100,7 @@ export class GlitterDetector {
             this.numBadFrames++;
             if (this.numBadFrames > this.targetFps/2 && this.imageDecimate < this.options.maxImageDecimationFactor) {
                 this.imageDecimate += this.options.imageDecimationDelta;
-                this.imageDecimate = Utils.round2(this.imageDecimate);
+                this.imageDecimate = Utils.round3(this.imageDecimate);
                 this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate);
                 this.numBadFrames = 0;
 
