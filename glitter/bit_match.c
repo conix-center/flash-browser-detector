@@ -114,7 +114,7 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             code_to_match = curr->data;
 #ifdef DEBUG
             printf(" "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
-                            BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
+                    BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
 #endif
             if (match_even_odd(candidate_curr->code, code_to_match, &candidate_curr->match_code)) {
 #ifdef DEBUG

@@ -198,7 +198,7 @@ static void update_candidates(lightanchor_detector_t *ld, zarray_t *local_tags, 
                     // }
                     // printf("| %u, %u, %u\n", max, min, thres);
 
-                    if ((qb_full(&candidate_curr->brightnesses) && match(ld, candidate_curr)))
+                    if (qb_full(&candidate_curr->brightnesses) && (match(ld, candidate_curr)))
                     {
                         zarray_add(ld->detections, candidate_curr);
                     }
