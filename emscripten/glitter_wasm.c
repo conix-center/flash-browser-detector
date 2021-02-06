@@ -171,6 +171,7 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
             la->c[1]
         );
     }
+    lightanchors_destroy(lightanchors);
 
     return sz;
 }
