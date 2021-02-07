@@ -24,7 +24,7 @@ export class GlitterDetector {
             printPerformance: false,
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.2,
-            rangeThreshold: 85,
+            rangeThreshold: 45,
             quadSigma: 1.0,
             refineEdges: 1,
             decodeSharpening: 0.25,
