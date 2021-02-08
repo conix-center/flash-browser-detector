@@ -27,7 +27,6 @@ struct lightanchor_detector
     uint8_t range_thres; // min amplitude threshold for filtering out non-blinking quads
     struct ll *codes;
     zarray_t *candidates;
-    zarray_t *detections;
 };
 
 lightanchor_detector_t *lightanchor_detector_create();
