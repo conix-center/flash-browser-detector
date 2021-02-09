@@ -1,4 +1,4 @@
-var codes = [0xaf, 123];
+var codes = [0b10101010, 0b10011010, 0b10100011];
 var targetFps = 30;
 
 var stats = null;

@@ -86,6 +86,11 @@ int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             candidate_curr->valid++;
             return 1;
         }
+        // else if (match_even_odd(candidate_curr->code, cyclic_lsl(code_to_match, 16), NULL)) {
+        //     candidate_curr->next_code = cyclic_lsl(cyclic_lsl(code_to_match, 16), 16);
+        //     candidate_curr->valid++;
+        //     return 1;
+        // }
         else {
 #ifdef DEBUG
             printf("==== LOST ====\n");

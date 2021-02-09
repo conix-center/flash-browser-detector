@@ -120,7 +120,7 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
 
 static zarray_t *update_candidates(lightanchor_detector_t *ld, zarray_t *new_tags, image_u8_t *im)
 {
-    const double thres_dist = (double)imin(im->width, im->height) / 2;
+    const double thres_dist = (double)imax(im->width, im->height) / 4;
 
     zarray_t *detections = zarray_create(sizeof(lightanchor_t));
 
@@ -139,17 +139,14 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld, zarray_t *new_tag
             lightanchor_t *old_tag, *match_tag = NULL;
             zarray_get_volatile(ld->candidates, i, &old_tag);
 
-            double min_dist = MAX_DIST, min_dist_center_diff = MAX_DIST;
+            double min_dist = MAX_DIST;
             // search for closest tag
             for (int j = 0; j < zarray_size(new_tags); j++)
             {
                 lightanchor_t *new_tag;
                 zarray_get_volatile(new_tags, j, &new_tag);
 
-                double dist = ( g2d_distance(old_tag->p[0], new_tag->p[0]) +
-                                g2d_distance(old_tag->p[1], new_tag->p[1]) +
-                                g2d_distance(old_tag->p[2], new_tag->p[2]) +
-                                g2d_distance(old_tag->p[3], new_tag->p[3]) );
+                double dist = g2d_distance(old_tag->c, new_tag->c);
                 if (dist < min_dist && dist < thres_dist)
                 {
                     // reject tags with dissimilar shape
@@ -162,10 +159,9 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld, zarray_t *new_tag
                                               g2d_distance(old_tag->p[2], old_tag->c) +
                                               g2d_distance(old_tag->p[3], old_tag->c)) / 4;
                     double dist_center_diff = fabs(dist_center_new - dist_center_old);
-                    if (dist_center_diff < 10 && dist_center_diff < min_dist_center_diff)
+                    if (dist_center_diff < 25)
                     {
                         min_dist = dist;
-                        min_dist_center_diff = dist_center_diff;
                         match_tag = new_tag;
                     }
                 }
