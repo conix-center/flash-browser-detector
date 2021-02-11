@@ -60,14 +60,12 @@ int add_code(char code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_detector_options(uint8_t range_thres, float quad_sigma, int refine_edges, int decode_sharpening, int min_white_black_diff) {
+int set_detector_options(uint8_t range_thres, int refine_edges, int min_white_black_diff) {
     if (td == NULL)
         return 1;
 
     ld->range_thres = range_thres;
-    td->quad_sigma = quad_sigma;
     td->refine_edges = refine_edges;
-    td->decode_sharpening = decode_sharpening;
     td->qtp.min_white_black_diff = min_white_black_diff;
 
     return 0;

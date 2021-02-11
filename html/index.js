@@ -15,7 +15,7 @@ overlayCanvas.height = glitterSource.options.height;
 
 var glitterDetector = new Glitter.GlitterDetector(codes, targetFps, glitterSource);
 glitterDetector.setOptions({
-    // printPerformance: true,
+    printPerformance: true,
 });
 glitterDetector.init();
 
@@ -63,11 +63,9 @@ window.addEventListener("onGlitterInit", (e) => {
     document.getElementById("stats").appendChild(stats.domElement);
 
     document.body.appendChild(e.detail.source);
-
     document.body.appendChild(overlayCanvas);
 
     updateInfo();
-
     resize();
 });
 

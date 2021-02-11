@@ -70,7 +70,7 @@ static int match_even_odd(uint16_t a, uint16_t b, uint8_t *match)
     }
 }
 
-int match(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
+int decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 {
 #ifdef DEBUG
     printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" ",

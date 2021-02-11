@@ -53,63 +53,7 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
         td->wp = workerpool_create(td->nthreads);
     }
 
-    ///////////////////////////////////////////////////////////
-    // Step 1. Detect quads according to requested image decimation
-    // and blurring parameters.
     image_u8_t *quad_im = image_u8_copy(im_orig);
-
-    if (td->quad_sigma != 0)
-    {
-        // compute a reasonable kernel width by figuring that the
-        // kernel should go out 2 std devs.
-        //
-        // max sigma          ksz
-        // 0.499              1  (disabled)
-        // 0.999              3
-        // 1.499              5
-        // 1.999              7
-
-        float sigma = fabsf((float)td->quad_sigma);
-
-        int ksz = 4 * sigma; // 2 std devs in each direction
-        if ((ksz & 1) == 0)
-            ksz++;
-
-        if (ksz > 1)
-        {
-
-            if (td->quad_sigma > 0)
-            {
-                // Apply a blur
-                image_u8_gaussian_blur(quad_im, sigma, ksz);
-            }
-            else
-            {
-                // SHARPEN the image by subtracting the low frequency components.
-                image_u8_t *orig = image_u8_copy(quad_im);
-                image_u8_gaussian_blur(quad_im, sigma, ksz);
-
-                for (int y = 0; y < orig->height; y++)
-                {
-                    for (int x = 0; x < orig->width; x++)
-                    {
-                        int vorig = orig->buf[y * orig->stride + x];
-                        int vblur = quad_im->buf[y * quad_im->stride + x];
-
-                        int v = 2 * vorig - vblur;
-                        if (v < 0)
-                            v = 0;
-                        if (v > 255)
-                            v = 255;
-
-                        quad_im->buf[y * quad_im->stride + x] = (uint8_t)v;
-                    }
-                }
-                image_u8_destroy(orig);
-            }
-        }
-    }
-
     zarray_t *quads = apriltag_quad_thresh(td, quad_im);
 
     if (quad_im != im_orig)
@@ -203,7 +147,7 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld, zarray_t *new_tag
                 // }
                 // printf("| %u, %u, %u\n", max, min, mean);
 
-                if (match(ld, candidate_curr))
+                if (decode(ld, candidate_curr))
                 {
                     zarray_add(detections, lightanchor_copy(candidate_curr));
                 }

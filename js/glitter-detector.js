@@ -1,8 +1,7 @@
 
 import {Timer} from "./timer";
-import {Utils} from "./utils/utils";
 import {DeviceIMU} from "./imu";
-import {GrayScale} from "./grayscale";
+import {Preprocessor} from "./preprocessor";
 import {GlitterModule} from "./glitter-module";
 
 export class GlitterDetector {
@@ -22,30 +21,32 @@ export class GlitterDetector {
 
         this.options = {
             printPerformance: false,
+            decimateImage: true,
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.2,
             rangeThreshold: 45,
             quadSigma: 1.0,
             refineEdges: 1,
-            decodeSharpening: 0.25,
             minWhiteBlackDiff: 50,
         }
         this.setOptions(options);
 
         this.imu = new DeviceIMU();
-        this.grayScale = new GrayScale(this.sourceWidth, this.sourceHeight);
+        this.preprocessor = new Preprocessor(this.sourceWidth, this.sourceHeight);
+        this.preprocessor.setKernelSigma(this.options.quadSigma);
     }
 
     setOptions(options) {
         if (options) {
             this.options = Object.assign(this.options, options);
+            this.preprocessor.setKernelSigma(this.options.quadSigma);
         }
     }
 
     init() {
         this.source.init()
             .then((source) => {
-                this.grayScale.attachElem(source);
+                this.preprocessor.attachElem(source);
                 this.onInit(source);
             })
             .catch((err) => {
@@ -69,7 +70,7 @@ export class GlitterDetector {
     }
 
     decimate(width, height) {
-        this.grayScale.resize(width, height);
+        this.preprocessor.resize(width, height);
         this.glitterModule.resize(width, height);
         this.glitterModule.setQuadDecimate(this.imageDecimate);
     }
@@ -83,7 +84,7 @@ export class GlitterDetector {
         // console.log(start - this.prev, this.timer.getError());
         this.prev = start;
 
-        this.imageData = this.grayScale.getPixels();
+        this.imageData = this.preprocessor.getPixels();
         this.glitterModule.saveGrayscale(this.imageData);
 
         const mid = Date.now();
@@ -96,7 +97,7 @@ export class GlitterDetector {
             console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 
-        if (end-start > this.fpsInterval) {
+        if (this.decimateImage && end-start > this.fpsInterval) {
             this.numBadFrames++;
             if (this.numBadFrames > this.targetFps/2 && this.imageDecimate < this.options.maxImageDecimationFactor) {
                 this.imageDecimate += this.options.imageDecimationDelta;
