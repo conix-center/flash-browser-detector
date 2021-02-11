@@ -172,11 +172,11 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld, zarray_t *new_tag
                 lightanchor_t *candidate_prev = old_tag, *candidate_curr = match_tag;
                 if (candidate_curr->min_dist == 0 || min_dist < candidate_curr->min_dist) {
                     // candidate_prev ==> candidate_curr
-                    candidate_curr->valid = candidate_prev->valid;
 
+                    candidate_curr->valid = candidate_prev->valid;
+                    candidate_curr->match_code = candidate_prev->match_code;
                     candidate_curr->code = candidate_prev->code;
                     candidate_curr->next_code = candidate_prev->next_code;
-                    candidate_curr->match_code = candidate_prev->match_code;
                     candidate_curr->min_dist = min_dist;
 
                     qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);
