@@ -7,7 +7,7 @@ export class Utils {
         return (dec >>> 0).toString(2);
     }
 
-    static round2(num) {
-        return Math.round((num + Number.EPSILON) * 100) / 100;
+    static round3(num) {
+        return Math.round((num + Number.EPSILON) * 1000) / 1000;
     }
 }
