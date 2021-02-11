@@ -1,5 +1,6 @@
 
 import {Timer} from "./timer";
+import {Utils} from "./utils/utils";
 import {DeviceIMU} from "./imu";
 import {Preprocessor} from "./preprocessor";
 import {GlitterModule} from "./glitter-module";
@@ -97,9 +98,10 @@ export class GlitterDetector {
             console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
         }
 
-        if (this.decimateImage && end-start > this.fpsInterval) {
+        if (this.options.decimateImage && end-start > this.fpsInterval) {
             this.numBadFrames++;
-            if (this.numBadFrames > this.targetFps/2 && this.imageDecimate < this.options.maxImageDecimationFactor) {
+            if (this.numBadFrames > this.targetFps/2 &&
+                this.imageDecimate < this.options.maxImageDecimationFactor) {
                 this.imageDecimate += this.options.imageDecimationDelta;
                 this.imageDecimate = Utils.round3(this.imageDecimate);
                 this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate);
