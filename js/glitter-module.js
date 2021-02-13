@@ -1,3 +1,4 @@
+import GlitterWASM from "./glitter_wasm";
 export class GlitterModule {
     constructor(codes, width, height, options, callback) {
         this.width = width;
@@ -42,7 +43,7 @@ export class GlitterModule {
         this.tags = [];
 
         let _this = this;
-        window.addEventListener("onGlitterTagFound", (e) => {
+        self.addEventListener("onGlitterTagFound", (e) => {
             _this.tags.push(e.detail.tag);
         });
     }

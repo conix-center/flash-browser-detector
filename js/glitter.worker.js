@@ -1,52 +1,40 @@
-if ('function' === typeof importScripts) {
-    importScripts("./glitter_wasm.js");
-    importScripts("../dist/glitter.min.js");
+import {GlitterModule} from './glitter-module';
 
-    self.onmessage = function (e) {
-        var msg = e.data;
-        switch (msg.type) {
-            case "init": {
-                load(msg);
-                return;
-            }
-            case "process": {
-                next = msg.imagedata;
-                process();
-                return;
-            }
-            default: {
-                break;
-            }
+onmessage = (e) => {
+    const msg = e.data;
+    switch (msg.type) {
+        case 'init': {
+            init(msg);
+            return;
         }
-    };
-
-    var next = null;
-    var glitterDetector = null;
-    var result = null;
-
-    function load(msg) {
-        var onLoad = function() {
-            postMessage({ type: "loaded" });
+        case 'process': {
+            next = msg.imagedata;
+            process();
+            return;
         }
-
-        glitterDetector = new Glitter.GlitterDetector(msg.code, msg.width, msg.height, onLoad);
     }
+}
 
-    function process(width, height) {
-        result = null;
+var glitterModule = null;
+var next = null;
+var tags = null;
 
-        if (glitterDetector) {
-            result = glitterDetector.track(next, width, height);
+function init(msg) {
+    glitterModule = new GlitterModule(
+        msg.codes,
+        msg.width,
+        msg.height,
+        msg.options,
+        () => {
+            postMessage({type: "loaded"});
         }
+    );
+}
 
-        if (result) {
-            postMessage({ type: "result", result: result });
-        }
-        else {
-            postMessage({ type: "not found" });
-        }
-
-        next = null;
+function process() {
+    if (glitterModule) {
+        glitterModule.saveGrayscale(next);
+        tags = glitterModule.detect_tags();
+        postMessage({type: "result", tags: tags});
     }
-
 }

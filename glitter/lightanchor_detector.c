@@ -180,6 +180,6 @@ zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *i
     }
     quads_destroy(quads);
 
-    // return new_tags;
-    return update_candidates(ld, new_tags, im);
+    return new_tags;
+    // return update_candidates(ld, new_tags, im);
 }

@@ -154,7 +154,12 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
             tag["center"] = center;
 
             const tagEvent = new CustomEvent("onGlitterTagFound", {detail: {tag: tag}});
-            window.dispatchEvent(tagEvent);
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
         },
             la->match_code,
             la->p[0][0],

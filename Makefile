@@ -4,7 +4,7 @@ EMCC 				= emcc
 
 BIN_DIR 			= bin
 OBJ_DIR 			= obj
-WASM_OUTPUT_DIR 	= dist
+WASM_OUTPUT_DIR 	= js
 
 GLITTER_DIR 		= glitter
 APRILTAG_DIR 		= apriltag
@@ -23,7 +23,7 @@ WASM_MODULE_NAME 	= GlitterWASM
 
 WASM_LD_FLAGS 		+= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"'
 WASM_LD_FLAGS 		+= -s MODULARIZE=1
-WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
+# WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
 WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
 WASM_LD_FLAGS 		+= -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "setValue"]'

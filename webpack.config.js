@@ -5,8 +5,8 @@ const TerserPlugin = require('terser-webpack-plugin');
 module.exports = (env, argv) => ({
   entry: './js/index.js',
   output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: argv.mode == 'development' ? 'glitter.js' : 'glitter.min.js',
+    path: path.resolve(__dirname, 'dist'),
+    filename: argv.mode == 'development' ? 'glitter_wasm.js' : 'glitter_wasm.js',
     library: 'Glitter',
     libraryTarget: 'umd',
     globalObject: 'typeof self !== \'undefined\' ? self : this',
@@ -27,6 +27,13 @@ module.exports = (env, argv) => ({
             ]
           }
         }]
+      },
+      {
+        test: /\worker\.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: { inline: 'no-fallback' }
+        }
       },
       {
         test: /\.glsl$/i,
