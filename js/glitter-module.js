@@ -80,7 +80,7 @@ export class GlitterModule {
         return this._save_grayscale(this.imagePtr, this.grayPtr, this.width, this.height);
     }
 
-    detect_tags() {
+    detectTags() {
         this.tags = []; // reset found tags
         if (!this.ready) return this.tags;
 

@@ -125,12 +125,19 @@ export class GlitterDetector {
             this.numBadFrames++;
             if (this.numBadFrames > this.targetFps/2 &&
                 this.imageDecimate < this.options.maxImageDecimationFactor) {
-                this.imageDecimate += this.options.imageDecimationDelta;
-                this.imageDecimate = Utils.round3(this.imageDecimate);
-                this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate);
                 this.numBadFrames = 0;
 
-                const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
+                this.imageDecimate += this.options.imageDecimationDelta;
+                this.imageDecimate = Utils.round3(this.imageDecimate);
+                this.decimate(
+                        this.sourceWidth/this.imageDecimate,
+                        this.sourceHeight/this.imageDecimate
+                    );
+
+                const calibrateEvent = new CustomEvent(
+                        "onGlitterCalibrate",
+                        {detail: {decimationFactor: this.imageDecimate}}
+                    );
                 window.dispatchEvent(calibrateEvent);
             }
         }

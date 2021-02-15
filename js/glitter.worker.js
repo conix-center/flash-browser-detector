@@ -21,7 +21,6 @@ onmessage = (e) => {
 
 var glitterModule = null;
 var next = null;
-var tags = null;
 
 function init(msg) {
     function onLoaded() {
@@ -48,7 +47,7 @@ function process() {
         const start = Date.now();
 
         glitterModule.saveGrayscale(next);
-        tags = glitterModule.detect_tags();
+        const tags = glitterModule.detectTags();
         postMessage({type: "result", tags: tags});
 
         const end = Date.now();
