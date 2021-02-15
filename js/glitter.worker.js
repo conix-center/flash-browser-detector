@@ -20,21 +20,31 @@ var next = null;
 var tags = null;
 
 function init(msg) {
+    function onLoaded() {
+        postMessage({type: "loaded"});
+    }
+
     glitterModule = new GlitterModule(
         msg.codes,
         msg.width,
         msg.height,
         msg.options,
-        () => {
-            postMessage({type: "loaded"});
-        }
+        onLoaded
     );
 }
 
 function process() {
     if (glitterModule) {
+        const start = Date.now();
+
         glitterModule.saveGrayscale(next);
         tags = glitterModule.detect_tags();
         postMessage({type: "result", tags: tags});
+
+        const end = Date.now();
+
+        if (glitterModule.options.printPerformance) {
+            console.log("[performance]", "Detect:", end-start);
+        }
     }
 }

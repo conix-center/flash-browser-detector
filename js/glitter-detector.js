@@ -108,11 +108,6 @@ export class GlitterDetector {
         this.prev = start;
 
         this.imageData = this.preprocessor.getPixels();
-        // this.glitterModule.saveGrayscale(this.imageData);
-
-        const mid = Date.now();
-
-        // const tags = this.glitterModule.detect_tags();
         this.worker.postMessage({
             type: "process",
             imagedata: this.imageData
@@ -121,7 +116,7 @@ export class GlitterDetector {
         const end = Date.now();
 
         if (this.options.printPerformance) {
-            console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
+            console.log("[performance]", "Get Pixels:", end-start);
         }
 
         if (this.options.decimateImage && end-start > this.fpsInterval) {

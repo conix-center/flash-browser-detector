@@ -6,7 +6,7 @@ module.exports = (env, argv) => ({
   entry: './js/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: argv.mode == 'development' ? 'glitter_wasm.js' : 'glitter_wasm.js',
+    filename: argv.mode == 'development' ? 'glitter.js' : 'glitter.min.js',
     library: 'Glitter',
     libraryTarget: 'umd',
     globalObject: 'typeof self !== \'undefined\' ? self : this',

@@ -1,4 +1,4 @@
-import GlitterWASM from "./glitter_wasm";
+import GlitterWASM from "../build/glitter_wasm";
 export class GlitterModule {
     constructor(codes, width, height, options, callback) {
         this.width = width;
@@ -62,8 +62,9 @@ export class GlitterModule {
     addCode(code) {
         if (0x00 < code < 0xff) {
             this._add_code(code);
+            return this.codes.push(code);
         }
-        return this.codes.push(code);
+        return -1;
     }
 
     setDetectorOptions(options) {
