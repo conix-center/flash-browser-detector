@@ -7,6 +7,10 @@ onmessage = (e) => {
             init(msg);
             return;
         }
+        case 'add code': {
+            addCode(msg.code);
+            return;
+        }
         case 'process': {
             next = msg.imagedata;
             process();
@@ -31,6 +35,12 @@ function init(msg) {
         msg.options,
         onLoaded
     );
+}
+
+function addCode(code) {
+    if (glitterModule) {
+        glitterModule.addCode(code);
+    }
 }
 
 function process() {

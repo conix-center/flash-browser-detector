@@ -1,7 +1,7 @@
 
 import {Timer} from "./timer";
 import {Utils} from "./utils/utils";
-import {DeviceIMU} from "./imu";
+// import {DeviceIMU} from "./imu";
 import {Preprocessor} from "./preprocessor";
 import Worker from "./glitter.worker.js"
 
@@ -32,7 +32,7 @@ export class GlitterDetector {
         }
         this.setOptions(options);
 
-        this.imu = new DeviceIMU();
+        // this.imu = new DeviceIMU();
         this.preprocessor = new Preprocessor(this.sourceWidth, this.sourceHeight);
         this.preprocessor.setKernelSigma(this.options.quadSigma);
         this.worker = new Worker();
@@ -57,7 +57,6 @@ export class GlitterDetector {
             _this.timer.run();
         }
 
-        // this.glitterModule = new GlitterModule(this.codes, this.sourceWidth, this.sourceHeight, this.options, startTick);
         this.worker.postMessage({
             type: "init",
             codes: this.codes,
@@ -70,7 +69,7 @@ export class GlitterDetector {
             const msg = e.data
             switch (msg.type) {
                 case "loaded": {
-                    this.imu.init();
+                    // this.imu.init();
                     startTick();
                     const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
                     window.dispatchEvent(initEvent);
@@ -98,9 +97,12 @@ export class GlitterDetector {
         }
     }
 
-    // addCode(code) {
-    //     return this.glitterModule.addCode(code);
-    // }
+    addCode(code) {
+        this.worker.postMessage({
+            type: "add code",
+            code: code
+        });
+    }
 
     tick() {
         const start = Date.now();
