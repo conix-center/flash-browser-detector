@@ -3,7 +3,7 @@ import {Timer} from "./timer";
 import {Utils} from "./utils/utils";
 // import {DeviceIMU} from "./imu";
 import {Preprocessor} from "./preprocessor";
-import Worker from "./glitter.worker.js"
+import Worker from "./glitter.worker";
 
 export class GlitterDetector {
     constructor(codes, targetFps, source, options) {
