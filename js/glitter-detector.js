@@ -27,7 +27,7 @@ export class GlitterDetector {
             imageDecimationDelta: 0.2,
             rangeThreshold: 45,
             quadSigma: 1.0,
-            refineEdges: 1,
+            refineEdges: true,
             minWhiteBlackDiff: 50,
         }
         this.setOptions(options);

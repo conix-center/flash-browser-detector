@@ -100,7 +100,7 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
     };
 
     zarray_t *quads = detect_quads(td, &im);
-    zarray_t *lightanchors = decode_tags(ld, quads, &im);
+    zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
 
     int sz = zarray_size(lightanchors);
 
