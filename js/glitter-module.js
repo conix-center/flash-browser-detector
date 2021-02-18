@@ -7,23 +7,21 @@ export class GlitterModule {
         this.ready = false;
         this.codes = codes;
 
-        this.options = options;
-
         let _this = this;
         GlitterWASM().then(function(Module) {
             console.log("GLITTER WASM module loaded.");
-            _this.onWasmInit(Module);
+            _this.onWasmInit(Module, options);
             if (callback) callback();
         });
     }
 
-    onWasmInit(Module) {
+    onWasmInit(Module, options) {
         this._Module = Module;
 
         this._init = this._Module.cwrap("init", "number", ["number"]);
         this._add_code = this._Module.cwrap("add_code", "number", ["number"]);
 
-        this._set_detector_options = this._Module.cwrap("set_detector_options", "number", ["number", "number", "number"]);
+        this._set_detector_options = this._Module.cwrap("set_detector_options", "number", ["number", "number", "number", "number"]);
         this._set_quad_decimate = this._Module.cwrap("set_quad_decimate", "number", ["number"]);
 
         this._save_grayscale = this._Module.cwrap("save_grayscale", "number", ["number", "number", "number", "number"]);
@@ -31,7 +29,7 @@ export class GlitterModule {
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init() == 0);
-        this.setDetectorOptions(this.options); // set default options
+        this.setDetectorOptions(options); // set default options
 
         for (var i = 0; i < this.codes.length; i++) {
             this._add_code(this.codes[i]);
@@ -68,7 +66,12 @@ export class GlitterModule {
     }
 
     setDetectorOptions(options) {
-        this._set_detector_options(options.rangeThreshold, options.refineEdges, options.minWhiteBlackDiff);
+        this._set_detector_options(
+            options.rangeThreshold,
+            options.amplitudeThreshold,
+            options.refineEdges,
+            options.minWhiteBlackDiff
+        );
     }
 
     setQuadDecimate(factor) {

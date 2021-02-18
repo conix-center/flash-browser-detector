@@ -16,6 +16,7 @@ overlayCanvas.height = glitterSource.options.height;
 var glitterDetector = new Glitter.GlitterDetector(codes, targetFps, glitterSource);
 glitterDetector.setOptions({
     // printPerformance: true,
+    rangeThreshold: 0,
 });
 glitterDetector.init();
 
@@ -34,7 +35,7 @@ function drawTag(tag) {
         overlayCtx.font = "bold 20px Arial";
         overlayCtx.textAlign = "center";
         overlayCtx.fillStyle = "red";
-        overlayCtx.fillText(Glitter.Utils.dec2bin(tag.code), tag.center.x, tag.center.y);
+        overlayCtx.fillText(tag.code, tag.center.x, tag.center.y);
     overlayCtx.stroke();
 }
 
@@ -64,6 +65,7 @@ window.addEventListener("onGlitterInit", (e) => {
 
     document.body.appendChild(e.detail.source);
     document.body.appendChild(overlayCanvas);
+    // document.body.appendChild(glitterDetector.preprocessor.canvas);
 
     updateInfo();
     resize();

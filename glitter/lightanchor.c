@@ -45,6 +45,28 @@ void lightanchor_destroy(lightanchor_t *lightanchor) {
     free(lightanchor);
 }
 
+static void lightanchor_stats(lightanchor_t *la, double max[], double min[]) {
+    max[0] = 0;
+    max[1] = 0;
+    min[0] = MAX_DIST;
+    min[1] = MAX_DIST;
+    for (int i = 0; i < 4; i++)
+    {
+        if (la->p[i][0] > max[0]) {
+            max[0] = la->p[i][0];
+        }
+        if (la->p[i][0] < min[0]) {
+            min[0] = la->p[i][0];
+        }
+        if (la->p[i][1] > max[1]) {
+            max[1] = la->p[i][1];
+        }
+        if (la->p[i][1] < min[1]) {
+            min[1] = la->p[i][1];
+        }
+    }
+}
+
 /** @copydoc lightanchors_destroy */
 int lightanchors_destroy(zarray_t *lightanchors)
 {
@@ -62,40 +84,20 @@ int lightanchors_destroy(zarray_t *lightanchors)
 uint8_t get_brightness(lightanchor_t *l, image_u8_t *im) {
     int avg = 0, n = 0;
 
-    const double p0xd = l->p[0][0], p0yd = l->p[0][1], p1xd = l->p[1][0], p1yd = l->p[1][1];
-    const double p2xd = l->p[2][0], p2yd = l->p[2][1], p3xd = l->p[3][0], p3yd = l->p[3][1];
-    const int p0x = ceil(p0xd - 0.5), p0y = ceil(p0yd - 0.5), p1x = ceil(p1xd - 0.5), p1y = ceil(p1yd - 0.5);
-    const int p2x = ceil(p2xd - 0.5), p2y = ceil(p2yd - 0.5), p3x = ceil(p3xd - 0.5), p3y = ceil(p3yd - 0.5);
+    double max[2], min[2];
+    lightanchor_stats(l, max, min);
 
-    int max_x = 0;
-    max_x = imax(p0x, max_x);
-    max_x = imax(p1x, max_x);
-    max_x = imax(p2x, max_x);
-    max_x = imax(p3x, max_x);
-
-    int min_x = im->width;
-    min_x = imin(p0x, min_x);
-    min_x = imin(p1x, min_x);
-    min_x = imin(p2x, min_x);
-    min_x = imin(p3x, min_x);
-
-    int max_y = 0;
-    max_y = imax(p0y, max_y);
-    max_y = imax(p1y, max_y);
-    max_y = imax(p2y, max_y);
-    max_y = imax(p3y, max_y);
-
-    int min_y = im->height;
-    min_y = imin(p0y, min_y);
-    min_y = imin(p1y, min_y);
-    min_y = imin(p2y, min_y);
-    min_y = imin(p3y, min_y);
+    int maxi[2], mini[2];
+    maxi[0] = (int)ceil(max[0]-0.5);
+    mini[0] = (int)ceil(min[0]-0.5);
+    maxi[1] = (int)ceil(max[1]-0.5);
+    mini[1] = (int)ceil(min[1]-0.5);
 
     zarray_t *quad_poly = g2d_polygon_create_data(l->p, 4);
 
     double p[2];
-    for (int ix = min_x; ix <= max_x; ix+=2) {
-        for (int iy = min_y; iy <= max_y; iy+=2) {
+    for (int ix = mini[0]; ix <= maxi[0]; ix+=2) {
+        for (int iy = mini[1]; iy <= maxi[1]; iy+=2) {
             p[0] = (double)ix;
             p[1] = (double)iy;
             if (g2d_polygon_contains_point(quad_poly, p)) {

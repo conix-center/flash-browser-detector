@@ -39,8 +39,6 @@ int init() {
     if (ld == NULL)
         return 1;
 
-    td->debug = 0;
-
     td->nthreads = 1;
     td->quad_decimate = 1.0;
 
@@ -51,6 +49,9 @@ int init() {
     td->qtp.cos_critical_rad = cos(10 * M_PI / 180);
     td->qtp.deglitch = 0;
 
+
+    td->debug = 0;
+
     return 0;
 }
 
@@ -60,11 +61,12 @@ int add_code(char code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_detector_options(uint8_t range_thres, int refine_edges, int min_white_black_diff) {
+int set_detector_options(int range_thres, int amplitude_thres, int refine_edges, int min_white_black_diff) {
     if (td == NULL)
         return 1;
 
     ld->range_thres = range_thres;
+    ld->amplitude_thres = amplitude_thres;
     td->refine_edges = refine_edges;
     td->qtp.min_white_black_diff = min_white_black_diff;
 

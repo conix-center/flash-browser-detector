@@ -1,9 +1,11 @@
-#ifndef _LIGHTANCHOR_
-#define _LIGHTANCHOR_
+#ifndef _LIGHTANCHOR_H_
+#define _LIGHTANCHOR_H_
 
 #include "apriltag.h"
 #include "common/zarray.h"
 #include "queue_buf.h"
+
+#define MAX_DIST    1000000
 
 /* declare functions that we need as extern */
 extern double value_for_pixel(image_u8_t *im, double px, double py);

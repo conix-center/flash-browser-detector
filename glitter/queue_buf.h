@@ -1,5 +1,5 @@
-#ifndef _QUEUE_BUF_
-#define _QUEUE_BUF_
+#ifndef _QUEUE_BUF_H_
+#define _QUEUE_BUF_H_
 
 #define BUF_SIZE    16
 

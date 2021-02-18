@@ -10,11 +10,11 @@ export class Preprocessor {
         this.canvas.height = this.height;
 
         this.kernel = [
-            0,0,0,0,0,
-            0,0,0,0,0,
-            0,0,1,0,0,
-            0,0,0,0,0,
-            0,0,0,0,0,
+            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,
+            0, 0, 1, 0, 0,
+            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,
         ];
 
         this.gl = GLUtils.createGL(this.canvas, this.width, this.height);

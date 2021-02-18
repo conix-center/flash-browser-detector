@@ -18,8 +18,6 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define MAX_DIST            1000000
-
 lightanchor_detector_t *lightanchor_detector_create()
 {
     lightanchor_detector_t *ld = (lightanchor_detector_t *)calloc(1, sizeof(lightanchor_detector_t));
@@ -210,7 +208,8 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     return quads;
 }
 
-static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *new_tags, image_u8_t *im)
+static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector_t *ld,
+                                   zarray_t *new_tags, image_u8_t *im)
 {
     const double thres_dist = (double)imax(im->width, im->height) / 4;
 
@@ -226,19 +225,23 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
         }
     }
     else {
-        for (int i = 0; i < zarray_size(ld->candidates); i++)
+        for (int i = 0; i < zarray_size(new_tags); i++)
         {
-            lightanchor_t *old_tag, *match_tag = NULL;
-            zarray_get_volatile(ld->candidates, i, &old_tag);
+            lightanchor_t *new_tag, *match_tag = NULL;
+            zarray_get_volatile(new_tags, i, &new_tag);
 
             double min_dist = MAX_DIST;
             // search for closest tag
-            for (int j = 0; j < zarray_size(new_tags); j++)
+            for (int j = 0; j < zarray_size(ld->candidates); j++)
             {
-                lightanchor_t *new_tag;
-                zarray_get_volatile(new_tags, j, &new_tag);
+                lightanchor_t *old_tag;
+                zarray_get_volatile(ld->candidates, j, &old_tag);
 
                 double dist = g2d_distance(old_tag->c, new_tag->c);
+                // double dist = ( g2d_distance(old_tag->p[0], new_tag->p[0]) +
+                //                 g2d_distance(old_tag->p[1], new_tag->p[1]) +
+                //                 g2d_distance(old_tag->p[2], new_tag->p[2]) +
+                //                 g2d_distance(old_tag->p[3], new_tag->p[3]) ) / 4;
                 if (dist < min_dist && dist < thres_dist)
                 {
                     // reject tags with dissimilar shape
@@ -251,25 +254,25 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
                                               g2d_distance(old_tag->p[2], old_tag->c) +
                                               g2d_distance(old_tag->p[3], old_tag->c)) / 4;
                     double dist_center_diff = fabs(dist_center_new - dist_center_old);
-                    if (dist_center_diff < 25)
+                    if (dist_center_diff < 10.0F)
                     {
                         min_dist = dist;
-                        match_tag = new_tag;
+                        match_tag = old_tag;
                     }
                 }
             }
 
             if (match_tag != NULL)
             {
-                lightanchor_t *candidate_prev = old_tag, *candidate_curr = match_tag;
-                if (candidate_curr->min_dist == 0 || min_dist < candidate_curr->min_dist) {
-                    // candidate_prev ==> candidate_curr
+                lightanchor_t *candidate_prev = match_tag, *candidate_curr = new_tag;
 
+                if (candidate_prev->min_dist == 0 || min_dist < candidate_prev->min_dist) {
+                    // candidate_prev ==> candidate_curr
                     candidate_curr->valid = candidate_prev->valid;
                     candidate_curr->match_code = candidate_prev->match_code;
                     candidate_curr->code = candidate_prev->code;
                     candidate_curr->next_code = candidate_prev->next_code;
-                    candidate_curr->min_dist = min_dist;
+                    candidate_prev->min_dist = min_dist;
 
                     qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);
                 }
@@ -287,19 +290,20 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
             qb_stats(&candidate_curr->brightnesses, &max, &min, &mean);
             if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
             {
-                candidate_curr->code = (candidate_curr->code << 1) | (brightness > mean);
+                candidate_curr->code = (candidate_curr->code << 1) |
+                                        (brightness > mean &&
+                                            abs(brightness-mean) > ld->amplitude_thres);
 
                 // for (int i = 0; i < BUF_SIZE; i++)
-                // {
                 //     printf("%u ", candidate_curr->brightnesses.buf[i]);
-                // }
                 // printf("| %u, %u, %u\n", max, min, mean);
 
                 if (decode(ld, candidate_curr)) {
+                    lightanchor_t *det = lightanchor_copy(candidate_curr);
                     if (td->refine_edges) {
-                        refine_edges(td, im, candidate_curr);
+                        refine_edges(td, im, det);
                     }
-                    zarray_add(detections, lightanchor_copy(candidate_curr));
+                    zarray_add(detections, det);
                 }
             }
         }

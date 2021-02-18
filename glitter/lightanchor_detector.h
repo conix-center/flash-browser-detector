@@ -8,8 +8,8 @@
  * @date July, 2020
  */
 
-#ifndef _LIGHTANCHORS_DETECT_
-#define _LIGHTANCHORS_DETECT_
+#ifndef _LIGHTANCHORS_DETECT_H_
+#define _LIGHTANCHORS_DETECT_H_
 
 #include "apriltag.h"
 #include "common/zarray.h"
@@ -24,7 +24,8 @@ extern int quads_destroy(zarray_t *quads);
 typedef struct lightanchor_detector lightanchor_detector_t;
 struct lightanchor_detector
 {
-    uint8_t range_thres; // min amplitude threshold for filtering out non-blinking quads
+    int range_thres; // min amplitude threshold for filtering out non-blinking quads
+    int amplitude_thres; // min amplitude threshold for differentiating a 1 or a 0 bit
     struct ll *codes;
     zarray_t *candidates;
 };
