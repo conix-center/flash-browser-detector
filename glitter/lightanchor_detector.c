@@ -225,17 +225,17 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
         }
     }
     else {
-        for (int i = 0; i < zarray_size(new_tags); i++)
+        for (int i = 0; i < zarray_size(ld->candidates); i++)
         {
-            lightanchor_t *new_tag, *match_tag = NULL;
-            zarray_get_volatile(new_tags, i, &new_tag);
+            lightanchor_t *old_tag, *match_tag = NULL;
+            zarray_get_volatile(ld->candidates, i, &old_tag);
 
             double min_dist = MAX_DIST;
             // search for closest tag
-            for (int j = 0; j < zarray_size(ld->candidates); j++)
+            for (int j = 0; j < zarray_size(new_tags); j++)
             {
-                lightanchor_t *old_tag;
-                zarray_get_volatile(ld->candidates, j, &old_tag);
+                lightanchor_t *new_tag;
+                zarray_get_volatile(new_tags, j, &new_tag);
 
                 double dist = g2d_distance(old_tag->c, new_tag->c);
                 // double dist = ( g2d_distance(old_tag->p[0], new_tag->p[0]) +
@@ -257,22 +257,22 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
                     if (dist_center_diff < 10.0F)
                     {
                         min_dist = dist;
-                        match_tag = old_tag;
+                        match_tag = new_tag;
                     }
                 }
             }
 
             if (match_tag != NULL)
             {
-                lightanchor_t *candidate_prev = match_tag, *candidate_curr = new_tag;
-
-                if (candidate_prev->min_dist == 0 || min_dist < candidate_prev->min_dist) {
+                lightanchor_t *candidate_prev = old_tag, *candidate_curr = match_tag;
+                if (candidate_curr->min_dist == 0 || min_dist < candidate_curr->min_dist)
+                {
                     // candidate_prev ==> candidate_curr
                     candidate_curr->valid = candidate_prev->valid;
                     candidate_curr->match_code = candidate_prev->match_code;
                     candidate_curr->code = candidate_prev->code;
                     candidate_curr->next_code = candidate_prev->next_code;
-                    candidate_prev->min_dist = min_dist;
+                    candidate_curr->min_dist = min_dist;
 
                     qb_copy(&candidate_curr->brightnesses, &candidate_prev->brightnesses);
                 }
