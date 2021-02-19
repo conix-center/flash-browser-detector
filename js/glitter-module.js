@@ -4,6 +4,8 @@ export class GlitterModule {
         this.width = width;
         this.height = height;
 
+        this.options = options;
+
         this.ready = false;
         this.codes = codes;
 
@@ -29,7 +31,7 @@ export class GlitterModule {
         this._detect_tags = this._Module.cwrap("detect_tags", "number", ["number", "number", "number"]);
 
         this.ready = (this._init() == 0);
-        this.setDetectorOptions(options); // set default options
+        this.setDetectorOptions(this.options); // set default options
 
         for (var i = 0; i < this.codes.length; i++) {
             this._add_code(this.codes[i]);
