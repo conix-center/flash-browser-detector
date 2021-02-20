@@ -25,7 +25,6 @@ typedef struct lightanchor_detector lightanchor_detector_t;
 struct lightanchor_detector
 {
     int range_thres; // min amplitude threshold for filtering out non-blinking quads
-    int amplitude_thres; // min amplitude threshold for differentiating a 1 or a 0 bit
     struct ll *codes;
     zarray_t *candidates;
 };

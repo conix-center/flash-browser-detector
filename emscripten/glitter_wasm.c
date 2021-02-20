@@ -61,12 +61,11 @@ int add_code(char code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_detector_options(int range_thres, int amplitude_thres, int refine_edges, int min_white_black_diff) {
+int set_detector_options(int range_thres, int refine_edges, int min_white_black_diff) {
     if (td == NULL)
         return 1;
 
     ld->range_thres = range_thres;
-    ld->amplitude_thres = amplitude_thres;
     td->refine_edges = refine_edges;
     td->qtp.min_white_black_diff = min_white_black_diff;
 

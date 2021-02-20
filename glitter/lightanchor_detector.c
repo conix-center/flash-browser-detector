@@ -290,9 +290,7 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
             qb_stats(&candidate_curr->brightnesses, &max, &min, &mean);
             if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
             {
-                candidate_curr->code = (candidate_curr->code << 1) |
-                                        (brightness > mean &&
-                                            abs(brightness-mean) > ld->amplitude_thres);
+                candidate_curr->code = (candidate_curr->code << 1) | (brightness > mean);
 
                 // for (int i = 0; i < BUF_SIZE; i++)
                 //     printf("%u ", candidate_curr->brightnesses.buf[i]);
@@ -316,7 +314,8 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
 }
 
 /** @copydoc decode_tags */
-zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im)
+zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
+                      zarray_t *quads, image_u8_t *im)
 {
     zarray_t *new_tags = zarray_create(sizeof(lightanchor_t));
 

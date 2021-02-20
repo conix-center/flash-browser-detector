@@ -5,6 +5,8 @@ import {Utils} from "./utils/utils";
 import {Preprocessor} from "./preprocessor";
 import Worker from "./glitter.worker";
 
+var BAD_FRAMES_BEFORE_DECIMATE = 20;
+
 export class GlitterDetector {
     constructor(codes, targetFps, source, options) {
         this.codes = codes;
@@ -25,7 +27,7 @@ export class GlitterDetector {
             decimateImage: true,
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.2,
-            rangeThreshold: 85,
+            rangeThreshold: 30,
             amplitudeThreshold: 10,
             quadSigma: 1.0,
             refineEdges: true,
@@ -63,6 +65,7 @@ export class GlitterDetector {
             codes: this.codes,
             width: this.sourceWidth,
             height: this.sourceHeight,
+            targetFps: this.targetFps,
             options: this.options
         });
 
@@ -72,23 +75,48 @@ export class GlitterDetector {
                 case "loaded": {
                     // this.imu.init();
                     startTick();
-                    const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
+                    const initEvent = new CustomEvent(
+                        "onGlitterInit",
+                        {detail: {source: source}}
+                    );
                     window.dispatchEvent(initEvent);
                     break;
                 }
                 case "result": {
-                    const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: msg.tags}});
+                    const tagEvent = new CustomEvent(
+                        "onGlitterTagsFound",
+                        {detail: {tags: msg.tags}}
+                    );
                     window.dispatchEvent(tagEvent);
+                    break;
+                }
+                case "resize": {
+                    this.decimate();
                     break;
                 }
             }
         }
     }
 
-    decimate(width, height) {
+    decimate() {
+        this.imageDecimate += this.options.imageDecimationDelta;
+        this.imageDecimate = Utils.round3(this.imageDecimate);
+        var width = this.sourceWidth / this.imageDecimate;
+        var height = this.sourceHeight / this.imageDecimate;
+
         this.preprocessor.resize(width, height);
-        // this.glitterModule.resize(width, height);
-        // this.glitterModule.setQuadDecimate(this.imageDecimate);
+        this.worker.postMessage({
+            type: "resize",
+            width: width,
+            height: height,
+            decimate: this.imageDecimate,
+        });
+
+        const calibrateEvent = new CustomEvent(
+                "onGlitterCalibrate",
+                {detail: {decimationFactor: this.imageDecimate}}
+            );
+        window.dispatchEvent(calibrateEvent);
     }
 
     setOptions(options) {
@@ -122,24 +150,17 @@ export class GlitterDetector {
             console.log("[performance]", "Get Pixels:", end-start);
         }
 
-        if (this.options.decimateImage && end-start > this.fpsInterval) {
-            this.numBadFrames++;
-            if (this.numBadFrames > this.targetFps/2 &&
-                this.imageDecimate < this.options.maxImageDecimationFactor) {
+        if (this.options.decimateImage) {
+            if (end-start > this.fpsInterval) {
+                this.numBadFrames++;
+                if (this.numBadFrames > BAD_FRAMES_BEFORE_DECIMATE &&
+                    this.imageDecimate < this.options.maxImageDecimationFactor) {
+                    this.numBadFrames = 0;
+                    this.decimate();
+                }
+            }
+            else {
                 this.numBadFrames = 0;
-
-                this.imageDecimate += this.options.imageDecimationDelta;
-                this.imageDecimate = Utils.round3(this.imageDecimate);
-                this.decimate(
-                        this.sourceWidth/this.imageDecimate,
-                        this.sourceHeight/this.imageDecimate
-                    );
-
-                const calibrateEvent = new CustomEvent(
-                        "onGlitterCalibrate",
-                        {detail: {decimationFactor: this.imageDecimate}}
-                    );
-                window.dispatchEvent(calibrateEvent);
             }
         }
     }
