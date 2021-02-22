@@ -8,8 +8,8 @@
  * @date July, 2020
  */
 
-#ifndef _LIGHTANCHORS_DETECT_
-#define _LIGHTANCHORS_DETECT_
+#ifndef _LIGHTANCHORS_DETECT_H_
+#define _LIGHTANCHORS_DETECT_H_
 
 #include "apriltag.h"
 #include "common/zarray.h"
@@ -24,15 +24,14 @@ extern int quads_destroy(zarray_t *quads);
 typedef struct lightanchor_detector lightanchor_detector_t;
 struct lightanchor_detector
 {
-    uint8_t range_thres; // min amplitude threshold for filtering out non-blinking quads
+    int range_thres; // min amplitude threshold for filtering out non-blinking quads
     struct ll *codes;
     zarray_t *candidates;
-    zarray_t *detections;
 };
 
 lightanchor_detector_t *lightanchor_detector_create();
 int lightanchor_detector_add_code(lightanchor_detector_t *ld, char code);
-zarray_t *decode_tags(lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
+zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
 void lightanchor_detector_destroy(lightanchor_detector_t *ld);
 
 /**

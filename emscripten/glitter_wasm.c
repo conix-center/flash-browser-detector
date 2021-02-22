@@ -39,9 +39,18 @@ int init() {
     if (ld == NULL)
         return 1;
 
-    td->debug = 0;
     td->nthreads = 1;
     td->quad_decimate = 1.0;
+
+    td->qtp.max_nmaxima = 10;
+    td->qtp.min_cluster_pixels = 5;
+
+    td->qtp.max_line_fit_mse = 10.0;
+    td->qtp.cos_critical_rad = cos(10 * M_PI / 180);
+    td->qtp.deglitch = 0;
+
+
+    td->debug = 0;
 
     return 0;
 }
@@ -52,14 +61,12 @@ int add_code(char code) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_detector_options(uint8_t range_thres, float quad_sigma, int refine_edges, int decode_sharpening, int min_white_black_diff) {
+int set_detector_options(int range_thres, int refine_edges, int min_white_black_diff) {
     if (td == NULL)
         return 1;
 
     ld->range_thres = range_thres;
-    td->quad_sigma = quad_sigma;
     td->refine_edges = refine_edges;
-    td->decode_sharpening = decode_sharpening;
     td->qtp.min_white_black_diff = min_white_black_diff;
 
     return 0;
@@ -94,7 +101,7 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
     };
 
     zarray_t *quads = detect_quads(td, &im);
-    zarray_t *lightanchors = decode_tags(ld, quads, &im);
+    zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
 
     int sz = zarray_size(lightanchors);
 
@@ -148,9 +155,14 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
             tag["center"] = center;
 
             const tagEvent = new CustomEvent("onGlitterTagFound", {detail: {tag: tag}});
-            window.dispatchEvent(tagEvent);
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
         },
-            la->code,
+            la->match_code,
             la->p[0][0],
             la->p[0][1],
             la->p[1][0],
@@ -163,6 +175,7 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
             la->c[1]
         );
     }
+    lightanchors_destroy(lightanchors);
 
     return sz;
 }

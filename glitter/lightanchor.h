@@ -1,9 +1,11 @@
-#ifndef _LIGHTANCHOR_
-#define _LIGHTANCHOR_
+#ifndef _LIGHTANCHOR_H_
+#define _LIGHTANCHOR_H_
 
 #include "apriltag.h"
 #include "common/zarray.h"
 #include "queue_buf.h"
+
+#define MAX_DIST    1000000
 
 /* declare functions that we need as extern */
 extern double value_for_pixel(image_u8_t *im, double px, double py);
@@ -13,9 +15,10 @@ typedef struct lightanchor lightanchor_t;
 struct lightanchor
 {
     uint8_t valid;
-    uint8_t brightness;
+    uint8_t match_code;
     uint16_t code;
     uint16_t next_code;
+    double min_dist;
     matd_t *H;
     double c[2];
     double p[4][2];

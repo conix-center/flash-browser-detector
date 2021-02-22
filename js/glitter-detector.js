@@ -1,14 +1,16 @@
 
 import {Timer} from "./timer";
 import {Utils} from "./utils/utils";
-import {DeviceIMU} from "./imu";
-import {GrayScale} from "./grayscale";
-import {GlitterModule} from "./glitter-module";
+// import {DeviceIMU} from "./imu";
+import {Preprocessor} from "./preprocessor";
+import Worker from "./glitter.worker";
+
+var BAD_FRAMES_BEFORE_DECIMATE = 20;
 
 export class GlitterDetector {
     constructor(codes, targetFps, source, options) {
         this.codes = codes;
-        this.targetFps = targetFps; // FPS/Hz
+        this.targetFps = targetFps; // FPS
         this.fpsInterval = 1000 / this.targetFps; // ms
 
         this.source = source;
@@ -18,32 +20,31 @@ export class GlitterDetector {
         this.imageData = null;
         this.imageDecimate = 1.0;
 
+        this.numBadFrames = 0;
+
         this.options = {
             printPerformance: false,
+            decimateImage: true,
             maxImageDecimationFactor: 3,
-            imageDecimationDelta: 0.1,
-            rangeThreshold: 45,
+            imageDecimationDelta: 0.2,
+            rangeThreshold: 30,
+            amplitudeThreshold: 10,
             quadSigma: 1.0,
-            refineEdges: 1,
-            decodeSharpening: 0.25,
+            refineEdges: true,
             minWhiteBlackDiff: 50,
         }
         this.setOptions(options);
 
-        this.imu = new DeviceIMU();
-        this.grayScale = new GrayScale(this.sourceWidth, this.sourceHeight);
-    }
-
-    setOptions(options) {
-        if (options) {
-            this.options = Object.assign(this.options, options);
-        }
+        // this.imu = new DeviceIMU();
+        this.preprocessor = new Preprocessor(this.sourceWidth, this.sourceHeight);
+        this.preprocessor.setKernelSigma(this.options.quadSigma);
+        this.worker = new Worker();
     }
 
     init() {
         this.source.init()
             .then((source) => {
-                this.grayScale.attachElem(source);
+                this.preprocessor.attachElem(source);
                 this.onInit(source);
             })
             .catch((err) => {
@@ -59,21 +60,77 @@ export class GlitterDetector {
             _this.timer.run();
         }
 
-        this.glitterModule = new GlitterModule(this.codes, this.sourceWidth, this.sourceHeight, this.options, startTick);
-        this.imu.init();
+        this.worker.postMessage({
+            type: "init",
+            codes: this.codes,
+            width: this.sourceWidth,
+            height: this.sourceHeight,
+            targetFps: this.targetFps,
+            options: this.options
+        });
 
-        const initEvent = new CustomEvent("onGlitterInit", {detail: {source: source}});
-        window.dispatchEvent(initEvent);
+        this.worker.onmessage = (e) => {
+            const msg = e.data
+            switch (msg.type) {
+                case "loaded": {
+                    // this.imu.init();
+                    startTick();
+                    const initEvent = new CustomEvent(
+                        "onGlitterInit",
+                        {detail: {source: source}}
+                    );
+                    window.dispatchEvent(initEvent);
+                    break;
+                }
+                case "result": {
+                    const tagEvent = new CustomEvent(
+                        "onGlitterTagsFound",
+                        {detail: {tags: msg.tags}}
+                    );
+                    window.dispatchEvent(tagEvent);
+                    break;
+                }
+                case "resize": {
+                    this.decimate();
+                    break;
+                }
+            }
+        }
     }
 
-    decimate(width, height) {
-        this.grayScale.resize(width, height);
-        this.glitterModule.resize(width, height);
-        this.glitterModule.setQuadDecimate(this.imageDecimate);
+    decimate() {
+        this.imageDecimate += this.options.imageDecimationDelta;
+        this.imageDecimate = Utils.round3(this.imageDecimate);
+        var width = this.sourceWidth / this.imageDecimate;
+        var height = this.sourceHeight / this.imageDecimate;
+
+        this.preprocessor.resize(width, height);
+        this.worker.postMessage({
+            type: "resize",
+            width: width,
+            height: height,
+            decimate: this.imageDecimate,
+        });
+
+        const calibrateEvent = new CustomEvent(
+                "onGlitterCalibrate",
+                {detail: {decimationFactor: this.imageDecimate}}
+            );
+        window.dispatchEvent(calibrateEvent);
+    }
+
+    setOptions(options) {
+        if (options) {
+            this.options = Object.assign(this.options, options);
+            this.preprocessor.setKernelSigma(this.options.quadSigma);
+        }
     }
 
     addCode(code) {
-        return this.glitterModule.addCode(code);
+        this.worker.postMessage({
+            type: "add code",
+            code: code
+        });
     }
 
     tick() {
@@ -81,33 +138,30 @@ export class GlitterDetector {
         // console.log(start - this.prev, this.timer.getError());
         this.prev = start;
 
-        this.imageData = this.grayScale.getPixels();
-        this.glitterModule.saveGrayscale(this.imageData);
-
-        const mid = Date.now();
-
-        const tags = this.glitterModule.detect_tags();
+        this.imageData = this.preprocessor.getPixels();
+        this.worker.postMessage({
+            type: "process",
+            imagedata: this.imageData
+        });
 
         const end = Date.now();
 
         if (this.options.printPerformance) {
-            console.log("[performance]", "Get Pixels:", mid-start, "Detect:", end-mid, "Total:", end-start);
+            console.log("[performance]", "Get Pixels:", end-start);
         }
 
-        if (end-start > this.fpsInterval) {
-            if (this.imageDecimate < this.options.maxImageDecimationFactor) {
-                this.imageDecimate += this.options.imageDecimationDelta;
-                this.imageDecimate = Utils.round2(this.imageDecimate);
-                this.decimate(this.sourceWidth/this.imageDecimate, this.sourceHeight/this.imageDecimate)
-
-                const calibrateEvent = new CustomEvent("onGlitterCalibrate", {detail: {decimationFactor: this.imageDecimate}});
-                window.dispatchEvent(calibrateEvent);
+        if (this.options.decimateImage) {
+            if (end-start > this.fpsInterval) {
+                this.numBadFrames++;
+                if (this.numBadFrames > BAD_FRAMES_BEFORE_DECIMATE &&
+                    this.imageDecimate < this.options.maxImageDecimationFactor) {
+                    this.numBadFrames = 0;
+                    this.decimate();
+                }
             }
-        }
-
-        if (tags) {
-            const tagEvent = new CustomEvent("onGlitterTagsFound", {detail: {tags: tags}});
-            window.dispatchEvent(tagEvent);
+            else {
+                this.numBadFrames = 0;
+            }
         }
     }
 }

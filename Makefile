@@ -4,7 +4,7 @@ EMCC 				= emcc
 
 BIN_DIR 			= bin
 OBJ_DIR 			= obj
-WASM_OUTPUT_DIR 	= dist
+WASM_OUTPUT_DIR 	= build
 
 GLITTER_DIR 		= glitter
 APRILTAG_DIR 		= apriltag
@@ -16,19 +16,19 @@ C_FLAGS 			= -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -O3
 CXX_FLAGS			= -g -std=c++11 -Wall -O3
 LD_FLAGS 			= -lpthread -lm
 
-WASM_FLAGS			= -Wall -O3
-WEBPACK_BUILD_DIR 	= build
-WEBPACK_FILE 		= glitter.min.js
-WASM_MODULE_NAME 	= GlitterWASM
+# WEBPACK_BUILD_DIR 	= build
+# WEBPACK_FILE 		= glitter.min.js
 
+WASM_FLAGS			= -Wall -O3
+WASM_MODULE_NAME 	= GlitterWASM
 WASM_LD_FLAGS 		+= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"'
 WASM_LD_FLAGS 		+= -s MODULARIZE=1
-WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
+# WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
 WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
-WASM_LD_FLAGS 		+= -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap", "getValue", "setValue"]'
+WASM_LD_FLAGS 		+= -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap"]'
 WASM_LD_FLAGS 		+= --memory-init-file 0
-# WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
+WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
 WASM_LD_FLAGS 		+= -s WASM=1
 
 OPENCV_C_FLAGS		= `pkg-config --cflags opencv`

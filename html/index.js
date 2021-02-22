@@ -1,9 +1,13 @@
-var codes = [0xaf, 123];
+var codes = [0b10101010, 0b10011010, 0b10100011];
 var targetFps = 30;
 
 var stats = null;
 
 var glitterSource = new Glitter.GlitterSource();
+// glitterSource.setOptions({
+//     width: 1280,
+//     height: 720,
+// });
 
 var overlayCanvas = document.createElement("canvas");
 overlayCanvas.id = "overlay";
@@ -30,12 +34,12 @@ function drawTag(tag) {
         overlayCtx.lineTo(tag.corners[2].x, tag.corners[2].y);
         overlayCtx.lineTo(tag.corners[3].x, tag.corners[3].y);
         overlayCtx.lineTo(tag.corners[0].x, tag.corners[0].y);
-
-        overlayCtx.font = "bold 15px Arial";
-        overlayCtx.textAlign = "center";
-        overlayCtx.fillStyle = "red";
-        overlayCtx.fillText(Glitter.Utils.dec2bin(tag.code), tag.center.x, tag.center.y);
     overlayCtx.stroke();
+
+    overlayCtx.font = "bold 20px Arial";
+    overlayCtx.textAlign = "center";
+    overlayCtx.fillStyle = "red";
+    overlayCtx.fillText(tag.code, tag.center.x, tag.center.y);
 }
 
 function drawTags(tags) {
@@ -63,11 +67,10 @@ window.addEventListener("onGlitterInit", (e) => {
     document.getElementById("stats").appendChild(stats.domElement);
 
     document.body.appendChild(e.detail.source);
-
     document.body.appendChild(overlayCanvas);
+    // document.body.appendChild(glitterDetector.preprocessor.canvas);
 
     updateInfo();
-
     resize();
 });
 
