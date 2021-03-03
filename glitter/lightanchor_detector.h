@@ -13,7 +13,6 @@
 
 #include "apriltag.h"
 #include "common/zarray.h"
-#include "linked_list.h"
 
 /* declare functions that we need as extern */
 extern zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im);
@@ -25,7 +24,7 @@ typedef struct lightanchor_detector lightanchor_detector_t;
 struct lightanchor_detector
 {
     int range_thres; // min amplitude threshold for filtering out non-blinking quads
-    struct ll *codes;
+    zarray_t *codes;
     zarray_t *candidates;
 };
 

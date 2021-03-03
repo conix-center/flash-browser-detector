@@ -9,17 +9,18 @@
         body {
             display: flex;
             justify-content: center;
-            background: white;
+            background: rgb(105, 42, 42);
         }
-        #tag {
+        .light-anchor {
             background: #111;
-            width: 50vmin;
-            height: 50vmin;
-            border: 13vmin;
+            width: 10vmin;
+            height: 10vmin;
+            border: 5vmin;
             border-style: solid;
             border-color: black;
             margin: 75px;
         }
+
         #log {
             position: absolute;
             top: 10px;
@@ -32,7 +33,7 @@
 <body>
     <div id="stats"></div>
     <div id="log">Average Timer Error: 0 ms</div>
-    <div id="tag"></div>
+    <div id="tag" class="light-anchor"></div>
 
     <script type="text/javascript">
         const stats = new Stats();
