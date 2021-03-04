@@ -21,6 +21,8 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
+#define MAX_CENTER_DIST 10.0F
+
 lightanchor_detector_t *lightanchor_detector_create()
 {
     lightanchor_detector_t *ld = (lightanchor_detector_t *)calloc(1, sizeof(lightanchor_detector_t));
@@ -260,7 +262,7 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
                                               g2d_distance(old_tag->p[2], old_tag->c) +
                                               g2d_distance(old_tag->p[3], old_tag->c)) / 4;
                     double dist_center_diff = fabs(dist_center_new - dist_center_old);
-                    if (dist_center_diff < 10.0F)
+                    if (dist_center_diff < MAX_CENTER_DIST)
                     {
                         min_dist = dist;
                         match_tag = new_tag;
@@ -298,9 +300,9 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
             if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
             {
                 candidate_curr->code = (candidate_curr->code << 1) | (brightness > mean);
+                candidate_curr->frames++;
 
                 if (decode(ld, candidate_curr)) {
-                    candidate_curr->frames++;
                     lightanchor_t *det = lightanchor_copy(candidate_curr);
                     if (td->refine_edges) {
                         refine_edges(td, im, det);
