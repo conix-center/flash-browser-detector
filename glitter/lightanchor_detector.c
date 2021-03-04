@@ -21,8 +21,11 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define MAX_CENTER_DIST 2.0F
-#define TTL_FRAMES      8
+#define TTL_FRAMES          8
+
+#define THRES_DIST_SHAPE    50.0F
+#define THRES_DIST_CENTER   20.0F
+#define THRES_SHAPE_TTL     15.0F
 
 lightanchor_detector_t *lightanchor_detector_create()
 {
@@ -220,8 +223,6 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
 static zarray_t *update_candidates(lightanchor_detector_t *ld,
                                    zarray_t *new_tags, image_u8_t *im)
 {
-    const double thres_dist = (double)imax(im->width, im->height) / 4;
-
     zarray_t *detections = zarray_create(sizeof(lightanchor_t));
 
     if (zarray_size(ld->candidates) == 0)
@@ -239,48 +240,53 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
             lightanchor_t *old_tag, *match_tag = NULL;
             zarray_get_volatile(ld->candidates, i, &old_tag);
 
-            double min_dist = MAX_DIST;
+            double dist, dist_shape;
+            double min_dist = MAX_DIST, min_dist_shape = MAX_DIST;
             // search for closest tag
             for (int j = 0; j < zarray_size(new_tags); j++)
             {
                 lightanchor_t *new_tag;
                 zarray_get_volatile(new_tags, j, &new_tag);
 
-                double dist = g2d_distance(old_tag->c, new_tag->c);
                 // double dist = ( g2d_distance(old_tag->p[0], new_tag->p[0]) +
                 //                 g2d_distance(old_tag->p[1], new_tag->p[1]) +
                 //                 g2d_distance(old_tag->p[2], new_tag->p[2]) +
                 //                 g2d_distance(old_tag->p[3], new_tag->p[3]) ) / 4;
-                if (dist < min_dist && dist < thres_dist)
+                dist = g2d_distance(old_tag->c, new_tag->c);
+
+                // reject tags with dissimilar shape
+                // shape is represented as the average distance from each corner to the center
+                // not scale invariant!
+                double dist_shape_new = (g2d_distance(new_tag->p[0], new_tag->c) +
+                                        g2d_distance(new_tag->p[1], new_tag->c) +
+                                        g2d_distance(new_tag->p[2], new_tag->c) +
+                                        g2d_distance(new_tag->p[3], new_tag->c)) / 4;
+                double dist_shape_old = (g2d_distance(old_tag->p[0], old_tag->c) +
+                                        g2d_distance(old_tag->p[1], old_tag->c) +
+                                        g2d_distance(old_tag->p[2], old_tag->c) +
+                                        g2d_distance(old_tag->p[3], old_tag->c)) / 4;
+                dist_shape = fabs(dist_shape_new - dist_shape_old);
+
+                if (dist < min_dist && dist_shape < min_dist_shape &&
+                    dist < THRES_DIST_CENTER && dist_shape < THRES_DIST_SHAPE)
                 {
-                    // reject tags with dissimilar shape
-                    // double dist_center_new = (g2d_distance(new_tag->p[0], new_tag->c) +
-                    //                           g2d_distance(new_tag->p[1], new_tag->c) +
-                    //                           g2d_distance(new_tag->p[2], new_tag->c) +
-                    //                           g2d_distance(new_tag->p[3], new_tag->c)) / 4;
-                    // double dist_center_old = (g2d_distance(old_tag->p[0], old_tag->c) +
-                    //                           g2d_distance(old_tag->p[1], old_tag->c) +
-                    //                           g2d_distance(old_tag->p[2], old_tag->c) +
-                    //                           g2d_distance(old_tag->p[3], old_tag->c)) / 4;
-                    // double dist_center_diff = fabs(dist_center_new - dist_center_old);
-                    // if (dist_center_diff < MAX_CENTER_DIST)
-                    // {
-                        min_dist = dist;
-                        match_tag = new_tag;
-                    // }
+                    min_dist = dist;
+                    min_dist_shape = dist_shape;
+                    match_tag = new_tag;
                 }
             }
 
             if (match_tag != NULL)
             {
-                lightanchor_t *candidate_prev = old_tag, *candidate_curr = match_tag;
-                if (candidate_curr->min_dist == 0 || min_dist < candidate_curr->min_dist)
+                // only the closest match_tag can be matched with a prev tag
+                if (match_tag->min_dist == 0 || min_dist < match_tag->min_dist)
                 {
-                    lightanchor_update(candidate_prev, candidate_curr);
-                    candidate_curr->min_dist = min_dist;
+                    lightanchor_update(old_tag, match_tag);
+                    match_tag->min_dist = min_dist;
                 }
             }
-            else if (old_tag->frames > 0) {
+            // stricter shape distance threshold for tags that have a ttl
+            else if (old_tag->frames > 0 && dist_shape < THRES_SHAPE_TTL) {
                 old_tag->frames--;
                 zarray_add(new_tags, old_tag);
                 zarray_remove_index(ld->candidates, i, 1);
