@@ -9,6 +9,9 @@
 
 lightanchor_t *lightanchor_create(struct quad *quad)
 {
+    if (quad->H == NULL)
+        return NULL;
+
     lightanchor_t *l = calloc(1, sizeof(lightanchor_t));
     l->p[0][0] = quad->p[0][0];
     l->p[0][1] = quad->p[0][1];
@@ -19,13 +22,9 @@ lightanchor_t *lightanchor_create(struct quad *quad)
     l->p[3][0] = quad->p[3][0];
     l->p[3][1] = quad->p[3][1];
 
-    if (quad->H) {
-        l->H = matd_copy(quad->H);
-        homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
-        return l;
-    }
-
-    return NULL;
+    l->H = matd_copy(quad->H);
+    homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
+    return l;
 }
 
 /** @copydoc lightanchor_copy */
@@ -63,18 +62,17 @@ static void lightanchor_stats(lightanchor_t *la, double max[], double min[]) {
     min[1] = MAX_DIST;
     for (int i = 0; i < 4; i++)
     {
-        if (la->p[i][0] > max[0]) {
+        if (la->p[i][0] > max[0])
             max[0] = la->p[i][0];
-        }
-        if (la->p[i][0] < min[0]) {
+
+        if (la->p[i][0] < min[0])
             min[0] = la->p[i][0];
-        }
-        if (la->p[i][1] > max[1]) {
+
+        if (la->p[i][1] > max[1])
             max[1] = la->p[i][1];
-        }
-        if (la->p[i][1] < min[1]) {
+
+        if (la->p[i][1] < min[1])
             min[1] = la->p[i][1];
-        }
     }
 }
 

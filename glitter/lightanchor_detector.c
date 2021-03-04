@@ -21,7 +21,8 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define MAX_CENTER_DIST 10.0F
+#define MAX_CENTER_DIST 2.0F
+#define TTL_FRAMES      8
 
 lightanchor_detector_t *lightanchor_detector_create()
 {
@@ -50,7 +51,7 @@ void lightanchor_detector_destroy(lightanchor_detector_t *ld)
     free(ld);
 }
 
-static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, lightanchor_t *la)
+static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, struct quad *quad)
 {
     double lines[4][4]; // for each line, [Ex Ey nx ny]
 
@@ -58,16 +59,16 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, lightanch
         int a = edge, b = (edge + 1) & 3; // indices of the end points.
 
         // compute the normal to the current line estimate
-        double nx = la->p[b][1] - la->p[a][1];
-        double ny = -la->p[b][0] + la->p[a][0];
+        double nx = quad->p[b][1] - quad->p[a][1];
+        double ny = -quad->p[b][0] + quad->p[a][0];
         double mag = sqrt(nx*nx + ny*ny);
         nx /= mag;
         ny /= mag;
 
-        // if (la->reversed_border) {
-        //     nx = -nx;
-        //     ny = -ny;
-        // }
+        if (quad->reversed_border) {
+            nx = -nx;
+            ny = -ny;
+        }
 
         // we will now fit a NEW line by sampling points near
         // our original line that have large gradients. On really big tags,
@@ -82,8 +83,8 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, lightanch
             // sampling *right* at the corners, since those points are
             // the least reliable.
             double alpha = (1.0 + s) / (nsamples + 1);
-            double x0 = alpha*la->p[a][0] + (1-alpha)*la->p[b][0];
-            double y0 = alpha*la->p[a][1] + (1-alpha)*la->p[b][1];
+            double x0 = alpha*quad->p[a][0] + (1-alpha)*quad->p[b][0];
+            double y0 = alpha*quad->p[a][1] + (1-alpha)*quad->p[b][1];
 
             // search along the normal to this line, looking at the
             // gradients along the way. We're looking for a strong
@@ -104,8 +105,8 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, lightanch
             // XXX tunable step size.
             for (double n = -range; n <= range; n +=  0.25) {
                 // Because of the guaranteed winding order of the
-                // points in the lightanchor, we will start inside the white
-                // portion of the lightanchor and work our way outward.
+                // points in the quad, we will start inside the white
+                // portion of the quad and work our way outward.
                 //
                 // sample to points (x1,y1) and (x2,y2) XXX tunable:
                 // how far +/- to look? Small values compute the
@@ -170,7 +171,7 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, lightanch
         lines[edge][3] = ny;
     }
 
-    // now refit the corners of the lightanchor
+    // now refit the corners of the quad
     for (int i = 0; i < 4; i++) {
 
         // solve for the intersection of lines (i) and (i+1)&3.
@@ -189,11 +190,11 @@ static void refine_edges(apriltag_detector_t *td, image_u8_t *im_orig, lightanch
             double L0 = W00*B0 + W01*B1;
 
             // compute intersection
-            la->p[i][0] = lines[i][0] + L0*A00;
-            la->p[i][1] = lines[i][1] + L0*A10;
+            quad->p[i][0] = lines[i][0] + L0*A00;
+            quad->p[i][1] = lines[i][1] + L0*A10;
         } else {
             // this is a bad sign. We'll just keep the corner we had.
-            // printf("bad det: %15f %15f %15f %15f %15f\n", A00, A11, A10, A01, det);
+//            printf("bad det: %15f %15f %15f %15f %15f\n", A00, A11, A10, A01, det);
         }
     }
 }
@@ -216,7 +217,7 @@ zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig)
     return quads;
 }
 
-static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector_t *ld,
+static zarray_t *update_candidates(lightanchor_detector_t *ld,
                                    zarray_t *new_tags, image_u8_t *im)
 {
     const double thres_dist = (double)imax(im->width, im->height) / 4;
@@ -253,20 +254,20 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
                 if (dist < min_dist && dist < thres_dist)
                 {
                     // reject tags with dissimilar shape
-                    double dist_center_new = (g2d_distance(new_tag->p[0], new_tag->c) +
-                                              g2d_distance(new_tag->p[1], new_tag->c) +
-                                              g2d_distance(new_tag->p[2], new_tag->c) +
-                                              g2d_distance(new_tag->p[3], new_tag->c)) / 4;
-                    double dist_center_old = (g2d_distance(old_tag->p[0], old_tag->c) +
-                                              g2d_distance(old_tag->p[1], old_tag->c) +
-                                              g2d_distance(old_tag->p[2], old_tag->c) +
-                                              g2d_distance(old_tag->p[3], old_tag->c)) / 4;
-                    double dist_center_diff = fabs(dist_center_new - dist_center_old);
-                    if (dist_center_diff < MAX_CENTER_DIST)
-                    {
+                    // double dist_center_new = (g2d_distance(new_tag->p[0], new_tag->c) +
+                    //                           g2d_distance(new_tag->p[1], new_tag->c) +
+                    //                           g2d_distance(new_tag->p[2], new_tag->c) +
+                    //                           g2d_distance(new_tag->p[3], new_tag->c)) / 4;
+                    // double dist_center_old = (g2d_distance(old_tag->p[0], old_tag->c) +
+                    //                           g2d_distance(old_tag->p[1], old_tag->c) +
+                    //                           g2d_distance(old_tag->p[2], old_tag->c) +
+                    //                           g2d_distance(old_tag->p[3], old_tag->c)) / 4;
+                    // double dist_center_diff = fabs(dist_center_new - dist_center_old);
+                    // if (dist_center_diff < MAX_CENTER_DIST)
+                    // {
                         min_dist = dist;
                         match_tag = new_tag;
-                    }
+                    // }
                 }
             }
 
@@ -300,13 +301,10 @@ static zarray_t *update_candidates(apriltag_detector_t *td, lightanchor_detector
             if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
             {
                 candidate_curr->code = (candidate_curr->code << 1) | (brightness > mean);
-                candidate_curr->frames++;
+                candidate_curr->frames = TTL_FRAMES;
 
                 if (decode(ld, candidate_curr)) {
                     lightanchor_t *det = lightanchor_copy(candidate_curr);
-                    if (td->refine_edges) {
-                        refine_edges(td, im, det);
-                    }
                     zarray_add(detections, det);
                 }
             }
@@ -330,6 +328,12 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
         struct quad *quad;
         zarray_get_volatile(quads, i, &quad);
 
+        // refine edges is not dependent upon the tag family, thus
+        // apply this optimization BEFORE the other work.
+        if (td->refine_edges)
+            refine_edges(td, im, quad);
+
+        // make sure the homographies are computed...
         if (quad_update_homographies(quad))
             continue;
 
@@ -340,5 +344,5 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
     quads_destroy(quads);
 
     // return new_tags;
-    return update_candidates(td, ld, new_tags, im);
+    return update_candidates(ld, new_tags, im);
 }
