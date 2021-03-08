@@ -4,22 +4,13 @@
     <meta charset="utf-8">
 
     <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
+    <script type="text/javascript" src="lightanchor.js"></script>
 
     <style type="text/css">
         body {
-            display: flex;
-            justify-content: center;
             background: white;
         }
-        #tag {
-            background: #111;
-            width: 50vmin;
-            height: 50vmin;
-            border: 13vmin;
-            border-style: solid;
-            border-color: black;
-            margin: 75px;
-        }
+
         #log {
             position: absolute;
             top: 10px;
@@ -31,17 +22,9 @@
 </head>
 <body>
     <div id="stats"></div>
-    <div id="log">Average Timer Error: 0 ms</div>
-    <div id="tag"></div>
+    <!-- <div id="log">Average Timer Error: 0 ms</div> -->
 
     <script type="text/javascript">
-        const stats = new Stats();
-        stats.showPanel(0);
-        document.getElementById("stats").appendChild(stats.domElement);
-
-        const tag = document.getElementById("tag");
-        const log = document.getElementById("log");
-
         function dec2bin(dec) {
             return (dec >>> 0).toString(2);
         }
@@ -65,74 +48,37 @@
             return urlParameter;
         }
 
-        function preprocess(code) {
-            let res = 0;
-            for (let i = 0; i < 8; i++) {
-                const currBit = !!(code & (1 << (8-i-1)));
-                const nextIdx = (i + 1) % 8;
-                const nextBit = !!(code & (1 << (8-nextIdx-1)));
-
-                res |= (currBit << (16-2*i-1));
-
-                if (currBit != nextBit) {
-                    if (currBit == 1) {
-                        res |= (0 << (16-2*i-2));
-                    }
-                    // else if (currBit == 0) {
-                    //     res |= (1 << (16-2*i-2));
-                    // }
-                }
-                else {
-                    res |= (currBit << (16-2*i-2));
-                }
-            }
-            return res;
-        }
+        // const stats = new Stats();
+        // stats.showPanel(0);
+        // document.getElementById("stats").appendChild(stats.domElement);
+        // const log = document.getElementById("log");
 
         const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
-        const interval = 1000 / freq; // ms
 
-        const len = 16;
-        let code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaa;
-        code = preprocess(code);
+        const codeLen = 8;
+        const code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaa;
+        const code1 = getUrlParam("code1") ? parseInt(getUrlParam("code1")) : 154;
+        const code2 = getUrlParam("code2") ? parseInt(getUrlParam("code2")) : 163;
 
-        let running = false;
-        let blink;
-        let totalDt = 0; let iters = 0;
-        window.onmouseup = window.ontouchend = function() {
-            if (!running) {
-                let idx = 0;
-                let expected = Date.now() + interval;
-                setTimeout(tick, interval);
-                function tick() {
-                    if (!running) return;
-                    const dt = Date.now() - expected;
-                    if (dt > interval) { // adjust for errors
-                        expected += interval * Math.floor(dt / interval);
-                    }
-                    const startCompute = Date.now();
-                    totalDt += Math.abs(dt); iters++;
-                    log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+        const tags = [];
+        tags.push(new LightAnchor(code, codeLen, freq, "la1", "20%", "10%"));
+        tags.push(new LightAnchor(code1, codeLen, freq, "la", "50%", "50%"));
+        tags.push(new LightAnchor(code2, codeLen, freq, "la1", "70%", "70%"));
 
-                    const bit = Number(!!(code & (1 << (len-idx-1))));
-                    if (bit == 1) {
-                        tag.style.background = "white"
-                    }
-                    else {
-                        tag.style.background = "#111"
-                    }
-                    idx = (idx+1) % len;
-                    stats.update();
-
-                    expected += interval;
-                    const computationTime = Date.now() - startCompute;
-                    setTimeout(tick, Math.max(0, interval - dt - computationTime)); // take into account drift
+        window.onmouseup =
+        window.ontouchend =
+        function() {
+            tags.forEach(tag => {
+                if (!tag.running) {
+                    tag.blink((totalDt, iters) => {
+                        // stats.update();
+                        // log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+                    });
                 }
-            }
-            else {
-                tag.style.background = "#111"
-            }
-            running = !running;
+                else {
+                    tag.stop();
+                }
+            })
         }
     </script>
 </body>

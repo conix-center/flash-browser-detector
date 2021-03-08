@@ -27,7 +27,7 @@ function drawTag(tag) {
     var overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
-        overlayCtx.lineWidth = 5;
+        overlayCtx.lineWidth = 3;
         overlayCtx.strokeStyle = "blue";
         overlayCtx.moveTo(tag.corners[0].x, tag.corners[0].y);
         overlayCtx.lineTo(tag.corners[1].x, tag.corners[1].y);

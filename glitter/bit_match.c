@@ -78,7 +78,7 @@ int decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 #endif
 
     uint16_t code_to_match;
-    if (candidate_curr->valid > 0)
+    if (candidate_curr->valid)
     {
         code_to_match = candidate_curr->next_code;
         uint16_t shifted = cyclic_lsl(code_to_match, 16);
@@ -90,13 +90,12 @@ int decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
         {
             candidate_curr->next_code = cyclic_lsl(code_to_match, 16);
             candidate_curr->valid = 1;
-            return 1;
         }
+        // additional check in case code is matched to shifted version of itself
         else if (match_even_odd(candidate_curr->code, shifted, NULL))
         {
             candidate_curr->next_code = cyclic_lsl(shifted, 16);
-            candidate_curr->valid++;
-            return 1;
+            candidate_curr->valid = 1;
         }
         else {
 #ifdef DEBUG
@@ -117,16 +116,17 @@ int decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
             puts("");
             printf("===============\n");
 #endif
-            candidate_curr->next_code = 0;
             candidate_curr->valid = 0;
-            return 0;
+            // candidate_curr->next_code = cyclic_lsl(code_to_match, 16);
         }
+        return candidate_curr->valid;
     }
     else {
-        struct ll_node *curr = ld->codes->head;
-        for (; curr != NULL; curr = curr->next)
+        for (int i = 0; i < zarray_size(ld->codes); i++)
         {
-            code_to_match = curr->data;
+            glitter_code_t *code;
+            zarray_get_volatile(ld->codes, i, &code);
+            code_to_match = code->doubled_code;
 #ifdef DEBUG
             printf(" "BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN"\n",
                     BYTE_TO_BINARY(code_to_match>>8), BYTE_TO_BINARY(code_to_match));
@@ -143,10 +143,11 @@ int decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr)
 #endif
                 candidate_curr->code = code_to_match;
                 candidate_curr->next_code = cyclic_lsl(code_to_match, 16);
-                candidate_curr->valid++;
+                candidate_curr->valid = 1;
                 return 1;
             }
         }
+        candidate_curr->valid = 0;
         return 0;
     }
 }

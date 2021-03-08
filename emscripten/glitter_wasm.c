@@ -25,19 +25,19 @@ lightanchor_detector_t *ld = NULL;
 
 EMSCRIPTEN_KEEPALIVE
 int init() {
-    tf = tag36h11_create();
+    tf = lightanchor_family_create();
     if (tf == NULL)
-        return 1;
+        return -1;
 
     td = apriltag_detector_create();
     if (td == NULL)
-        return 1;
+        return -1;
 
     apriltag_detector_add_family(td, tf);
 
     ld = lightanchor_detector_create();
     if (ld == NULL)
-        return 1;
+        return -1;
 
     td->nthreads = 1;
     td->quad_decimate = 1.0;
@@ -63,7 +63,7 @@ int add_code(char code) {
 EMSCRIPTEN_KEEPALIVE
 int set_detector_options(int range_thres, int refine_edges, int min_white_black_diff) {
     if (td == NULL)
-        return 1;
+        return -1;
 
     ld->range_thres = range_thres;
     td->refine_edges = refine_edges;
@@ -75,7 +75,7 @@ int set_detector_options(int range_thres, int refine_edges, int min_white_black_
 EMSCRIPTEN_KEEPALIVE
 int set_quad_decimate(float quad_decimate) {
     if (td == NULL)
-        return 1;
+        return -1;
 
     td->quad_decimate = quad_decimate;
 
