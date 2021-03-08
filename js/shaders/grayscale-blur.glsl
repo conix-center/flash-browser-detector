@@ -10,7 +10,7 @@ varying vec2 tex_coords;
 uniform vec2 u_tex_size;
 uniform float u_kernel[25];
 
-const vec4 g = vec4(0.299, 0.587, 0.114, 0.0); // vec4(0.333, 0.333, 0.333, 0.0);
+const vec4 g = vec4(0.333, 0.333, 0.333, 0.0); // vec4(0.299, 0.587, 0.114, 0.0);
 
 void main(void) {
     vec2 pixel = vec2(1.0, 1.0) / u_tex_size;

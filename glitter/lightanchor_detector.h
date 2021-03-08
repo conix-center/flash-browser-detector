@@ -33,6 +33,8 @@ int lightanchor_detector_add_code(lightanchor_detector_t *ld, char code);
 zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
 void lightanchor_detector_destroy(lightanchor_detector_t *ld);
 
+apriltag_family_t *lightanchor_family_create();
+
 /**
  * Use apriltag library to detect quads from an image and
  * return an array of these (struct quad).

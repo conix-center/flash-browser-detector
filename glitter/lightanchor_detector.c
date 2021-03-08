@@ -352,3 +352,18 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
     // return new_tags;
     return update_candidates(ld, new_tags, im);
 }
+
+apriltag_family_t *lightanchor_family_create()
+{
+    apriltag_family_t *tf = calloc(1, sizeof(apriltag_family_t));
+    if (tf == NULL)
+        return NULL;
+
+    tf->name = strdup("lightanchor");
+    // lightanchors can be very small
+    // set dimensions to as low as they can go
+    tf->width_at_border = 0;
+    tf->total_width = 1;
+    tf->reversed_border = false;
+    return tf;
+}
