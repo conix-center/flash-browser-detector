@@ -24,8 +24,24 @@
 #define TTL_FRAMES          8
 
 #define THRES_DIST_SHAPE    50.0F
-#define THRES_DIST_CENTER   20.0F
+#define THRES_DIST_CENTER   10.0F
 #define THRES_SHAPE_TTL     15.0F
+
+apriltag_family_t *lightanchor_family_create()
+{
+    apriltag_family_t *tf = calloc(1, sizeof(apriltag_family_t));
+    if (tf == NULL)
+        return NULL;
+
+    tf->name = strdup("lightanchor");
+    // lightanchors can be very small
+    // set dimensions to as low as they can go
+    tf->width_at_border = 0;
+    tf->total_width = 1;
+    tf->reversed_border = false;
+    return tf;
+}
+
 
 lightanchor_detector_t *lightanchor_detector_create()
 {
@@ -258,13 +274,13 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
                 // shape is represented as the average distance from each corner to the center
                 // not scale invariant!
                 double dist_shape_new = (g2d_distance(new_tag->p[0], new_tag->c) +
-                                        g2d_distance(new_tag->p[1], new_tag->c) +
-                                        g2d_distance(new_tag->p[2], new_tag->c) +
-                                        g2d_distance(new_tag->p[3], new_tag->c)) / 4;
+                                         g2d_distance(new_tag->p[1], new_tag->c) +
+                                         g2d_distance(new_tag->p[2], new_tag->c) +
+                                         g2d_distance(new_tag->p[3], new_tag->c)) / 4;
                 double dist_shape_old = (g2d_distance(old_tag->p[0], old_tag->c) +
-                                        g2d_distance(old_tag->p[1], old_tag->c) +
-                                        g2d_distance(old_tag->p[2], old_tag->c) +
-                                        g2d_distance(old_tag->p[3], old_tag->c)) / 4;
+                                         g2d_distance(old_tag->p[1], old_tag->c) +
+                                         g2d_distance(old_tag->p[2], old_tag->c) +
+                                         g2d_distance(old_tag->p[3], old_tag->c)) / 4;
                 dist_shape = fabs(dist_shape_new - dist_shape_old);
 
                 if (dist < min_dist && dist_shape < min_dist_shape &&
@@ -351,19 +367,4 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
 
     // return new_tags;
     return update_candidates(ld, new_tags, im);
-}
-
-apriltag_family_t *lightanchor_family_create()
-{
-    apriltag_family_t *tf = calloc(1, sizeof(apriltag_family_t));
-    if (tf == NULL)
-        return NULL;
-
-    tf->name = strdup("lightanchor");
-    // lightanchors can be very small
-    // set dimensions to as low as they can go
-    tf->width_at_border = 0;
-    tf->total_width = 1;
-    tf->reversed_border = false;
-    return tf;
 }

@@ -2,6 +2,10 @@ const OFF_COLOR = "#111";
 const ON_COLOR = "#fff";
 const BORDER_COLOR = "#000";
 
+function dec2bin(dec) {
+    return (dec >>> 0).toString(2);
+}
+
 class LightAnchor {
     constructor(code, codeLen, freq, id, x, y) {
         this.code = code;
@@ -20,10 +24,16 @@ class LightAnchor {
     }
 
     createTag(id, x, y) {
+        this.wrapper = document.createElement("div");
+        this.wrapper.id = `${id} wrapper`;
+        this.wrapper.style.justifyContent = "center";
+        this.wrapper.style.justifyText = "center";
+        this.wrapper.style.position = "absolute";
+        document.body.appendChild(this.wrapper);
+
         this.tag = document.createElement("div");
         this.tag.id = id;
 
-        this.tag.style.position = "absolute";
         this.move(x, y);
 
         this.tag.style.width = "10vmin";
@@ -32,20 +42,25 @@ class LightAnchor {
         this.tag.style.borderStyle = "solid";
         this.tag.style.borderColor = BORDER_COLOR;
         this.tag.style.background = OFF_COLOR;
+        this.wrapper.appendChild(this.tag);
 
-        document.body.appendChild(this.tag);
+        this.label = document.createElement("p");
+        this.label.id = `${id} label`;
+        this.label.innerText = `${dec2bin(this.code)} (${this.code})`;
+        this.label.style.fontSize = "x-small";
+        this.wrapper.appendChild(this.label);
     }
 
     move(x, y) {
         if (typeof x == "string")
-            this.tag.style.left = x
+            this.wrapper.style.left = x
         else
-            this.tag.style.left = x + "px";
+            this.wrapper.style.left = x + "px";
 
         if (typeof y == "string")
-            this.tag.style.top = y
+            this.wrapper.style.top = y
         else
-            this.tag.style.top = y + "px";
+            this.wrapper.style.top = y + "px";
     }
 
     blink(callback) {

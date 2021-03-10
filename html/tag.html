@@ -18,20 +18,16 @@
         }
     </style>
 
-    <title>Web GLITTER tag</title>
+    <title>GLITTER Web tag</title>
 </head>
 <body>
     <div id="stats"></div>
-    <!-- <div id="log">Average Timer Error: 0 ms</div> -->
+    <div id="log">Average Timer Error: 0 ms</div>
 
     <script type="text/javascript">
-        function dec2bin(dec) {
-            return (dec >>> 0).toString(2);
-        }
-
         function getUrlVars() {
-            const vars = {};
-            const parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
                 vars[key] = value;
             });
             return vars;
@@ -48,22 +44,23 @@
             return urlParameter;
         }
 
-        // const stats = new Stats();
-        // stats.showPanel(0);
-        // document.getElementById("stats").appendChild(stats.domElement);
-        // const log = document.getElementById("log");
+        var stats = new Stats();
+        stats.showPanel(0);
+        document.getElementById("stats").appendChild(stats.domElement);
+        var log = document.getElementById("log");
 
-        const freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+        var freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
 
-        const codeLen = 8;
-        const code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 0xaa;
-        const code1 = getUrlParam("code1") ? parseInt(getUrlParam("code1")) : 154;
-        const code2 = getUrlParam("code2") ? parseInt(getUrlParam("code2")) : 163;
+        var codeLen = 8;
+        var code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 170;
+        var code1 = getUrlParam("code1") ? parseInt(getUrlParam("code1")) : 154;
+        var code2 = getUrlParam("code2") ? parseInt(getUrlParam("code2")) : 163;
 
-        const tags = [];
+        var tags = [];
         tags.push(new LightAnchor(code, codeLen, freq, "la1", "20%", "10%"));
-        tags.push(new LightAnchor(code1, codeLen, freq, "la", "50%", "50%"));
-        tags.push(new LightAnchor(code2, codeLen, freq, "la1", "70%", "70%"));
+        tags.push(new LightAnchor(code1, codeLen, freq, "la2", "50%", "50%"));
+        tags.push(new LightAnchor(code2, codeLen, freq, "la3", "70%", "70%"));
+        tags.push(new LightAnchor(0xbc, codeLen, freq, "la4", "30%", "50%"));
 
         window.onmouseup =
         window.ontouchend =
@@ -71,8 +68,10 @@
             tags.forEach(tag => {
                 if (!tag.running) {
                     tag.blink((totalDt, iters) => {
-                        // stats.update();
-                        // log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+                        if (tag.id == "la1") {
+                            stats.update();
+                            log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+                        }
                     });
                 }
                 else {
