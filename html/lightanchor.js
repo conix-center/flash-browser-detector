@@ -1,6 +1,6 @@
-const OFF_COLOR = "#111";
-const ON_COLOR = "#fff";
-const BORDER_COLOR = "#000";
+const OFF_COLOR = "#111111";
+const ON_COLOR = "#ffffff";
+const BORDER_COLOR = "#000000";
 
 function dec2bin(dec) {
     return (dec >>> 0).toString(2);
@@ -26,22 +26,21 @@ class LightAnchor {
     createTag(id, x, y) {
         this.wrapper = document.createElement("div");
         this.wrapper.id = `${id} wrapper`;
+        this.wrapper.style.position = "absolute";
         this.wrapper.style.justifyContent = "center";
         this.wrapper.style.justifyText = "center";
-        this.wrapper.style.position = "absolute";
+        this.move(x, y);
         document.body.appendChild(this.wrapper);
 
         this.tag = document.createElement("div");
         this.tag.id = id;
-
-        this.move(x, y);
 
         this.tag.style.width = "10vmin";
         this.tag.style.height = "10vmin";
         this.tag.style.border = "5vmin";
         this.tag.style.borderStyle = "solid";
         this.tag.style.borderColor = BORDER_COLOR;
-        this.tag.style.background = OFF_COLOR;
+        this.tag.style.backgroundColor = OFF_COLOR;
         this.wrapper.appendChild(this.tag);
 
         this.label = document.createElement("p");

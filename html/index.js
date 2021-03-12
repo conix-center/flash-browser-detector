@@ -4,10 +4,10 @@ var targetFps = 30;
 var stats = null;
 
 var glitterSource = new Glitter.GlitterSource();
-// glitterSource.setOptions({
-//     width: 1280,
-//     height: 720,
-// });
+glitterSource.setOptions({
+    // width: 1280,
+    // height: 720,
+});
 
 var overlayCanvas = document.createElement("canvas");
 overlayCanvas.id = "overlay";
