@@ -22,6 +22,7 @@ struct lightanchor
 
     int frames;
 
+    double area;
     double min_dist;
 
     matd_t *H;

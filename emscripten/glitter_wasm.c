@@ -100,8 +100,13 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
         .buf = gray
     };
 
+    // EM_ASM({console.time("detect_quads")});
     zarray_t *quads = detect_quads(td, &im);
+    // EM_ASM({console.timeEnd("detect_quads")});
+
+    // EM_ASM({console.time("decode_tags")});
     zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
+    // EM_ASM({console.timeEnd("decode_tags")});
 
     int sz = zarray_size(lightanchors);
 

@@ -22,6 +22,32 @@ lightanchor_t *lightanchor_create(struct quad *quad)
     l->p[3][0] = quad->p[3][0];
     l->p[3][1] = quad->p[3][1];
 
+    l->area = 0;
+
+    // get area of triangle formed by points 0, 1, 2, 0
+    double length[3], p;
+    for (int i = 0; i < 3; i++) {
+        int idxa = i; // 0, 1, 2,
+        int idxb = (i+1) % 3; // 1, 2, 0
+        length[i] = sqrt(sq(quad->p[idxb][0] - quad->p[idxa][0]) +
+                            sq(quad->p[idxb][1] - quad->p[idxa][1]));
+    }
+    p = (length[0] + length[1] + length[2]) / 2;
+
+    l->area += sqrt(p*(p-length[0])*(p-length[1])*(p-length[2]));
+
+    // get area of triangle formed by points 2, 3, 0, 2
+    for (int i = 0; i < 3; i++) {
+        int idxs[] = { 2, 3, 0, 2 };
+        int idxa = idxs[i];
+        int idxb = idxs[i+1];
+        length[i] = sqrt(sq(quad->p[idxb][0] - quad->p[idxa][0]) +
+                            sq(quad->p[idxb][1] - quad->p[idxa][1]));
+    }
+    p = (length[0] + length[1] + length[2]) / 2;
+
+    l->area += sqrt(p*(p-length[0])*(p-length[1])*(p-length[2]));
+
     l->H = matd_copy(quad->H);
     homography_project(l->H, 0, 0, &l->c[0], &l->c[1]);
     return l;
