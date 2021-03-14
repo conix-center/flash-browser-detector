@@ -7,6 +7,8 @@ var glitterSource = new Glitter.GlitterSource();
 glitterSource.setOptions({
     // width: 1280,
     // height: 720,
+    // width: 720,
+    // height: 540,
 });
 
 var overlayCanvas = document.createElement("canvas");
@@ -19,7 +21,7 @@ overlayCanvas.height = glitterSource.options.height;
 
 var glitterDetector = new Glitter.GlitterDetector(codes, targetFps, glitterSource);
 glitterDetector.setOptions({
-    // printPerformance: true,
+    printPerformance: true,
 });
 glitterDetector.init();
 

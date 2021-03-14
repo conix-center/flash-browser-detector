@@ -42,6 +42,11 @@ apriltag_family_t *lightanchor_family_create()
     return tf;
 }
 
+void lightanchor_family_destroy(apriltag_family_t *lf) {
+    free(lf->name);
+    free(lf);
+}
+
 lightanchor_detector_t *lightanchor_detector_create()
 {
     lightanchor_detector_t *ld =
