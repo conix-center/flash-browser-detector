@@ -72,7 +72,8 @@ int main(int argc, char *argv[])
     td->debug = getopt_get_bool(getopt, "debug");
     td->refine_edges = getopt_get_bool(getopt, "refine-edges");
 
-    lightanchor_detector_t *ld = lightanchor_detector_create(0xaf);
+    lightanchor_detector_t *ld = lightanchor_detector_create();
+    lightanchor_detector_add_code(ld, 0xaf);
 
     int frames = 0;
 
@@ -99,13 +100,13 @@ int main(int argc, char *argv[])
 
         zarray_t *quads = detect_quads(td, &im);
 
-        zarray_t *lightanchors = decode_tags(ld, quads, &im);
+        zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
         // cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
 
         // Draw quad outlines
         for (int i = 0; i < zarray_size(lightanchors); i++) {
             lightanchor_t *lightanchor;
-            zarray_get_volatile(lightanchors, i, &lightanchor);
+            zarray_get(lightanchors, i, &lightanchor);
 
             line(frame, Point(lightanchor->p[0][0], lightanchor->p[0][1]),
                     Point(lightanchor->p[1][0], lightanchor->p[1][1]),

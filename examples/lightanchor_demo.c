@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    lightanchor_detector_t *ld = lightanchor_detector_create(0xaf);
+    lightanchor_detector_t *ld = lightanchor_detector_create();
+    lightanchor_detector_add_code(ld, 0xaf);
 
     apriltag_detector_t *td = apriltag_detector_create();
     apriltag_detector_add_family_bits(td, tf, getopt_get_int(getopt, "hamming"));
@@ -174,7 +175,7 @@ int main(int argc, char *argv[])
 
         zarray_t *quads = detect_quads(td, im);
 
-        zarray_t *lightanchors = decode_tags(ld, quads, im);
+        zarray_t *lightanchors = decode_tags(td, ld, quads, im);
 
         if (!quiet)
             printf("Found %d lightanchors.\n", zarray_size(lightanchors));
@@ -198,7 +199,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < zarray_size(lightanchors); i++)
         {
             lightanchor_t *lightanchor;
-            zarray_get_volatile(lightanchors, i, &lightanchor);
+            zarray_get(lightanchors, i, &lightanchor);
 
             float rgb[3];
             int bias = 100;

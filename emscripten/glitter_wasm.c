@@ -104,8 +104,8 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
     int sz = zarray_size(lightanchors);
 
     for (int i = 0; i < sz; i++) {
-        struct lightanchor *la;
-        zarray_get_volatile(lightanchors, i, &la);
+        lightanchor_t *la;
+        zarray_get(lightanchors, i, &la);
 
         // adjust centers of pixels so that they correspond to the
         // original full-resolution image.
