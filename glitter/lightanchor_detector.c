@@ -271,35 +271,31 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
                 lightanchor_t *new_tag;
                 zarray_get(new_tags, j, &new_tag);
 
-                // reject tags with a high increase in area
-                double area_fact = new_tag->area / old_tag->area;
-                if ((0.9 <= area_fact) && (area_fact <= 1.1)) {
-                    // double dist = ( g2d_distance(old_tag->p[0], new_tag->p[0]) +
-                    //                 g2d_distance(old_tag->p[1], new_tag->p[1]) +
-                    //                 g2d_distance(old_tag->p[2], new_tag->p[2]) +
-                    //                 g2d_distance(old_tag->p[3], new_tag->p[3]) ) / 4;
-                    dist = g2d_distance(old_tag->c, new_tag->c);
+                // double dist = ( g2d_distance(old_tag->p[0], new_tag->p[0]) +
+                //                 g2d_distance(old_tag->p[1], new_tag->p[1]) +
+                //                 g2d_distance(old_tag->p[2], new_tag->p[2]) +
+                //                 g2d_distance(old_tag->p[3], new_tag->p[3]) ) / 4;
+                dist = g2d_distance(old_tag->c, new_tag->c);
 
-                    // reject tags with dissimilar shape
-                    // shape is represented as the average distance from each corner to the center
-                    // not scale invariant!
-                    double dist_shape_new = (g2d_distance(new_tag->p[0], new_tag->c) +
-                                             g2d_distance(new_tag->p[1], new_tag->c) +
-                                             g2d_distance(new_tag->p[2], new_tag->c) +
-                                             g2d_distance(new_tag->p[3], new_tag->c)) / 4;
-                    double dist_shape_old = (g2d_distance(old_tag->p[0], old_tag->c) +
-                                             g2d_distance(old_tag->p[1], old_tag->c) +
-                                             g2d_distance(old_tag->p[2], old_tag->c) +
-                                             g2d_distance(old_tag->p[3], old_tag->c)) / 4;
-                    dist_shape = fabs(dist_shape_new - dist_shape_old);
+                // reject tags with dissimilar shape
+                // shape is represented as the average distance from each corner to the center
+                // not scale invariant!
+                double dist_shape_new = (g2d_distance(new_tag->p[0], new_tag->c) +
+                                            g2d_distance(new_tag->p[1], new_tag->c) +
+                                            g2d_distance(new_tag->p[2], new_tag->c) +
+                                            g2d_distance(new_tag->p[3], new_tag->c)) / 4;
+                double dist_shape_old = (g2d_distance(old_tag->p[0], old_tag->c) +
+                                            g2d_distance(old_tag->p[1], old_tag->c) +
+                                            g2d_distance(old_tag->p[2], old_tag->c) +
+                                            g2d_distance(old_tag->p[3], old_tag->c)) / 4;
+                dist_shape = fabs(dist_shape_new - dist_shape_old);
 
-                    if ((dist < min_dist) && (dist_shape < min_dist_shape) &&
-                        (dist < THRES_DIST_CENTER) && (dist_shape < THRES_DIST_SHAPE))
-                    {
-                        min_dist = dist;
-                        min_dist_shape = dist_shape;
-                        match_tag = new_tag;
-                    }
+                if ((dist < min_dist) && (dist_shape < min_dist_shape) &&
+                    (dist < THRES_DIST_CENTER) && (dist_shape < THRES_DIST_SHAPE))
+                {
+                    min_dist = dist;
+                    min_dist_shape = dist_shape;
+                    match_tag = new_tag;
                 }
             }
 
