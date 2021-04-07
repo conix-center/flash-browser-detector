@@ -5,8 +5,8 @@ var stats = null;
 
 var glitterSource = new Glitter.GlitterSource();
 glitterSource.setOptions({
-    // width: 4096,
-    // height: 2160,
+    // width: 4032,
+    // height: 3024,
     // width: 1920,
     // height: 1080,
     // width: 1280,

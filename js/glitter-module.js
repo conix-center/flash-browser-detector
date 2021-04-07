@@ -4,6 +4,12 @@ export class GlitterModule {
         this.width = width;
         this.height = height;
 
+        this.scope;
+        if ('function' === typeof importScripts)
+            this.scope = self;
+        else
+            this.scope = window;
+
         this.options = options;
 
         this.ready = false;
@@ -43,7 +49,7 @@ export class GlitterModule {
         this.tags = [];
 
         let _this = this;
-        self.addEventListener("onGlitterTagFound", (e) => {
+        this.scope.addEventListener("onGlitterTagFound", (e) => {
             _this.tags.push(e.detail.tag);
         });
     }
