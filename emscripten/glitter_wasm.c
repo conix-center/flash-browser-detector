@@ -24,7 +24,8 @@ apriltag_detector_t *td = NULL;
 lightanchor_detector_t *ld = NULL;
 
 EMSCRIPTEN_KEEPALIVE
-int init() {
+int init()
+{
     lf = lightanchor_family_create();
     if (lf == NULL)
         return -1;
@@ -42,12 +43,15 @@ int init() {
     td->nthreads = 1;
     td->quad_decimate = 1.0;
 
-    td->qtp.max_nmaxima = 10;
-    td->qtp.min_cluster_pixels = 5;
+    td->qtp.max_nmaxima = 8;
+    td->qtp.min_cluster_pixels = 1;
 
     td->qtp.max_line_fit_mse = 10.0;
     td->qtp.cos_critical_rad = cos(10 * M_PI / 180);
     td->qtp.deglitch = 0;
+
+    td->refine_edges = 1;
+    td->decode_sharpening = 0.25;
 
 
     td->debug = 0;
@@ -56,36 +60,40 @@ int init() {
 }
 
 EMSCRIPTEN_KEEPALIVE
-int add_code(char code) {
+int add_code(char code)
+{
     return lightanchor_detector_add_code(ld, code);
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_detector_options(int range_thres, int refine_edges, int min_white_black_diff) {
+int set_detector_options(int range_thres, int min_white_black_diff)
+{
     ld->range_thres = range_thres;
-    td->refine_edges = refine_edges;
     td->qtp.min_white_black_diff = min_white_black_diff;
-
     return 0;
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_quad_decimate(float quad_decimate) {
+int set_quad_decimate(float quad_decimate)
+{
     td->quad_decimate = quad_decimate;
     return 0;
 }
 
 EMSCRIPTEN_KEEPALIVE
-int save_grayscale(uint8_t pixels[], uint8_t gray[], int cols, int rows) {
-    const int len = cols*rows*4;
-    for (int i = 0, j = 0; i < len; i+=4, j++) {
+int save_grayscale(uint8_t pixels[], uint8_t gray[], int cols, int rows)
+{
+    const int len = cols * rows * 4;
+    for (int i = 0, j = 0; i < len; i+=4, j++)
+    {
         gray[j] = pixels[i];
     }
     return 0;
 }
 
 EMSCRIPTEN_KEEPALIVE
-int detect_tags(uint8_t gray[], int cols, int rows) {
+int detect_tags(uint8_t gray[], int cols, int rows)
+{
     image_u8_t im = {
         .width = cols,
         .height = rows,
@@ -103,7 +111,8 @@ int detect_tags(uint8_t gray[], int cols, int rows) {
 
     int sz = zarray_size(lightanchors);
 
-    for (int i = 0; i < sz; i++) {
+    for (int i = 0; i < sz; i++)
+    {
         lightanchor_t *la;
         zarray_get(lightanchors, i, &la);
 

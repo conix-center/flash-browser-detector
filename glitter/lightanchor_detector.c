@@ -39,6 +39,7 @@ apriltag_family_t *lightanchor_family_create()
     tf->width_at_border = 0;
     tf->total_width = 1;
     tf->reversed_border = false;
+
     return tf;
 }
 
