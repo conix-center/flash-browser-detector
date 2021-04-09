@@ -25,23 +25,34 @@ class LightAnchor {
 
     createTag(id, x, y) {
         this.wrapper = document.createElement("div");
-        this.wrapper.id = `${id} wrapper`;
+        this.wrapper.style.width = "35vmin";
+        this.wrapper.style.height = "35vmin";
         this.wrapper.style.position = "absolute";
         this.wrapper.style.justifyContent = "center";
         this.wrapper.style.justifyText = "center";
+        this.wrapper.style.backgroundColor = "white";
         this.move(x, y);
         document.body.appendChild(this.wrapper);
 
+        this.tagWrapper = document.createElement("div");
+        this.tagWrapper.id = `${id} wrapper`;
+        this.tagWrapper.style.position = "absolute";
+        this.tagWrapper.style.justifyContent = "center";
+        this.tagWrapper.style.justifyText = "center";
+        this.tagWrapper.style.left = "50%";
+        this.tagWrapper.style.top = "50%";
+        this.tagWrapper.style.transform = "translate(-50%,-50%)";
+        this.wrapper.appendChild(this.tagWrapper);
+
         this.tag = document.createElement("div");
         this.tag.id = id;
-
         this.tag.style.width = "10vmin";
         this.tag.style.height = "10vmin";
-        this.tag.style.border = "5vmin";
+        this.tag.style.border = "6vmin";
         this.tag.style.borderStyle = "solid";
         this.tag.style.borderColor = BORDER_COLOR;
         this.tag.style.backgroundColor = OFF_COLOR;
-        this.wrapper.appendChild(this.tag);
+        this.tagWrapper.appendChild(this.tag);
 
         this.label = document.createElement("p");
         this.label.id = `${id} label`;
