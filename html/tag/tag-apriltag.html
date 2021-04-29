@@ -8,7 +8,7 @@
 
     <style type="text/css">
         body {
-            background: #333;
+            background: white;
         }
 
         #log {
@@ -23,6 +23,7 @@
 <body>
     <div id="stats"></div>
     <div id="log">Average Timer Error: 0 ms</div>
+    <img id="apriltag" src="./tag36_11_00586.jpg">
 
     <script type="text/javascript">
         function getUrlVars() {
@@ -53,31 +54,30 @@
 
         var codeLen = 8;
         var code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 170;
-        var code1 = getUrlParam("code1") ? parseInt(getUrlParam("code1")) : 154;
-        var code2 = getUrlParam("code2") ? parseInt(getUrlParam("code2")) : 163;
 
-        var tags = [];
-        tags.push(new LightAnchor(code, codeLen, freq, "la1", "20%", "10%"));
-        tags.push(new LightAnchor(code1, codeLen, freq, "la2", "40%", "60%"));
-        tags.push(new LightAnchor(code2, codeLen, freq, "la3", "70%", "30%"));
-        tags.push(new LightAnchor(0xbc, codeLen, freq, "la4", "10%", "50%"));
+        var tag = new LightAnchor(code, codeLen, freq, "la1", "40%", "50%");
+
+        var apriltag = document.getElementById("apriltag");
+        tag.copyDimensionsTo(apriltag);
+        apriltag.style.width = "22vmin";
+        apriltag.style.height = "22vmin";
+        apriltag.style.left = "60%";
+        apriltag.style.top = "50%";
 
         window.onmouseup =
         window.ontouchend =
         function() {
-            tags.forEach(tag => {
-                if (!tag.running) {
-                    tag.blink((totalDt, iters) => {
-                        if (tag.id == "la1") {
-                            stats.update();
-                            log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
-                        }
-                    });
-                }
-                else {
-                    tag.stop();
-                }
-            })
+            if (!tag.running) {
+                tag.blink((totalDt, iters) => {
+                    if (tag.id == "la1") {
+                        stats.update();
+                        log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
+                    }
+                });
+            }
+            else {
+                tag.stop();
+            }
         }
     </script>
 </body>

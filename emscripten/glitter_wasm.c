@@ -129,36 +129,39 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
         }
 
-        EM_ASM({
+        EM_ASM_({
+            var $a = arguments;
+            var i = 0;
+
             const tag = {};
 
-            tag["code"] = $0;
+            tag["code"] = $a[i++];
 
             tag["corners"] = [];
 
             const corner0 = {};
-            corner0["x"] = $1;
-            corner0["y"] = $2;
+            corner0["x"] = $a[i++];
+            corner0["y"] = $a[i++];
             tag["corners"].push(corner0);
 
             const corner1 = {};
-            corner1["x"] = $3;
-            corner1["y"] = $4;
+            corner1["x"] = $a[i++];
+            corner1["y"] = $a[i++];
             tag["corners"].push(corner1);
 
             const corner2 = {};
-            corner2["x"] = $5;
-            corner2["y"] = $6;
+            corner2["x"] = $a[i++];
+            corner2["y"] = $a[i++];
             tag["corners"].push(corner2);
 
             const corner3 = {};
-            corner3["x"] = $7;
-            corner3["y"] = $8;
+            corner3["x"] = $a[i++];
+            corner3["y"] = $a[i++];
             tag["corners"].push(corner3);
 
             const center = {};
-            center["x"] = $9;
-            center["y"] = $10;
+            center["x"] = $a[i++];
+            center["y"] = $a[i++];
             tag["center"] = center;
 
             const tagEvent = new CustomEvent("onGlitterTagFound", {detail: {tag: tag}});

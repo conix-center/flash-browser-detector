@@ -25,12 +25,14 @@ class LightAnchor {
 
     createTag(id, x, y) {
         this.wrapper = document.createElement("div");
+        this.wrapper.id = `${id} tag`;
         this.wrapper.style.width = "35vmin";
         this.wrapper.style.height = "35vmin";
         this.wrapper.style.position = "absolute";
         this.wrapper.style.justifyContent = "center";
         this.wrapper.style.justifyText = "center";
         this.wrapper.style.backgroundColor = "white";
+        this.wrapper.style.transform = "translate(-50%,-50%)";
         this.move(x, y);
         document.body.appendChild(this.wrapper);
 
@@ -48,7 +50,7 @@ class LightAnchor {
         this.tag.id = id;
         this.tag.style.width = "10vmin";
         this.tag.style.height = "10vmin";
-        this.tag.style.border = "6vmin";
+        this.tag.style.border = "17vmin";
         this.tag.style.borderStyle = "solid";
         this.tag.style.borderColor = BORDER_COLOR;
         this.tag.style.backgroundColor = OFF_COLOR;
@@ -58,17 +60,51 @@ class LightAnchor {
         this.label.id = `${id} label`;
         this.label.innerText = `${dec2bin(this.code)} (${this.code})`;
         this.label.style.fontSize = "x-small";
+        this.label.style.position = "absolute";
+        this.label.style.top = "100%";
         this.wrapper.appendChild(this.label);
+    }
+
+    copyDimensionsTo(elem) {
+        elem.style.width = this.wrapper.style.width;
+        elem.style.height = this.wrapper.style.height;
+        elem.style.position = this.wrapper.style.position;
+    }
+
+    setOuterWidth(width) {
+        if (typeof width == "string")
+            width = width;
+        else
+            width = width + "px";
+        this.wrapper.style.width = width;
+        this.wrapper.style.height = width;
+    }
+
+    setInnerWidth(width) {
+        if (typeof width == "string")
+            width = width;
+        else
+            width = width + "px";
+        this.tag.style.width = width;
+        this.tag.style.height = width;
+    }
+
+    setBorderWidth(width) {
+        if (typeof width == "string")
+            width = width;
+        else
+            width = width + "px";
+        this.tag.style.border = width;
     }
 
     move(x, y) {
         if (typeof x == "string")
-            this.wrapper.style.left = x
+            this.wrapper.style.left = x;
         else
             this.wrapper.style.left = x + "px";
 
         if (typeof y == "string")
-            this.wrapper.style.top = y
+            this.wrapper.style.top = y;
         else
             this.wrapper.style.top = y + "px";
     }
