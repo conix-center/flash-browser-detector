@@ -16,14 +16,10 @@ C_FLAGS 			= -g -std=gnu99 -Wall -Wno-unused-parameter -Wno-unused-function -O3
 CXX_FLAGS			= -g -std=c++11 -Wall -O3
 LD_FLAGS 			= -lpthread -lm
 
-# WEBPACK_BUILD_DIR 	= build
-# WEBPACK_FILE 		= glitter.min.js
-
 WASM_FLAGS			= -Wall -O3
 WASM_MODULE_NAME 	= GlitterWASM
 WASM_LD_FLAGS 		+= -s 'EXPORT_NAME="$(WASM_MODULE_NAME)"'
 WASM_LD_FLAGS 		+= -s MODULARIZE=1
-# WASM_LD_FLAGS 		+= --extern-post-js ./$(WEBPACK_BUILD_DIR)/$(WEBPACK_FILE)
 WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
 WASM_LD_FLAGS 		+= -s ENVIRONMENT=worker
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'

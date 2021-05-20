@@ -50,7 +50,7 @@ class LightAnchor {
         this.tag.id = id;
         this.tag.style.width = "10vmin";
         this.tag.style.height = "10vmin";
-        this.tag.style.border = "17vmin";
+        this.tag.style.border = "7vmin";
         this.tag.style.borderStyle = "solid";
         this.tag.style.borderColor = BORDER_COLOR;
         this.tag.style.backgroundColor = OFF_COLOR;

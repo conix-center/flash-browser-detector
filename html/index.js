@@ -51,8 +51,8 @@ function drawTags(tags) {
     var overlayCtx = overlayCanvas.getContext("2d");
     overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-    for (var i = 0; i < tags.length; i++) {
-        drawTag(tags[i]);
+    for (tag of tags) {
+        drawTag(tag);
     }
 }
 
