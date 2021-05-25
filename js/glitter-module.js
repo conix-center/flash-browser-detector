@@ -29,7 +29,7 @@ export class GlitterModule {
         this._init = this._Module.cwrap("init", "number", ["number"]);
         this._add_code = this._Module.cwrap("add_code", "number", ["number"]);
 
-        this._set_detector_options = this._Module.cwrap("set_detector_options", "number", ["number", "number"]);
+        this._set_detector_options = this._Module.cwrap("set_detector_options", "number", ["number", "number", "number", "number", "number", "number"]);
         this._set_quad_decimate = this._Module.cwrap("set_quad_decimate", "number", ["number"]);
 
         this._save_grayscale = this._Module.cwrap("save_grayscale", "number", ["number", "number", "number", "number"]);
@@ -76,7 +76,11 @@ export class GlitterModule {
     setDetectorOptions(options) {
         this._set_detector_options(
             options.rangeThreshold,
-            options.minWhiteBlackDiff
+            options.minWhiteBlackDiff,
+            options.ttlFrames,
+            options.thresDistShape,
+            options.thresDistShapeTTL,
+            options.thresDistCenter
         );
     }
 

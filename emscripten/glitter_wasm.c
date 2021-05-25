@@ -53,8 +53,13 @@ int init()
     td->refine_edges = 1;
     td->decode_sharpening = 0.25;
 
-
     td->debug = 0;
+
+    ld->ttl_frames = 8;
+
+    ld->thres_dist_shape = 50.0;
+    ld->thres_dist_shape_ttl = 20.0;
+    ld->thres_dist_center = 25.0;
 
     return 0;
 }
@@ -66,10 +71,15 @@ int add_code(char code)
 }
 
 EMSCRIPTEN_KEEPALIVE
-int set_detector_options(int range_thres, int min_white_black_diff)
+int set_detector_options(int range_thres, int min_white_black_diff, int ttl_frames,
+                        double thres_dist_shape, double thres_dist_shape_ttl, double thres_dist_center)
 {
     ld->range_thres = range_thres;
     td->qtp.min_white_black_diff = min_white_black_diff;
+    ld->ttl_frames = ttl_frames;
+    ld->thres_dist_shape = thres_dist_shape;
+    ld->thres_dist_shape_ttl = thres_dist_shape_ttl;
+    ld->thres_dist_center = thres_dist_center;
     return 0;
 }
 

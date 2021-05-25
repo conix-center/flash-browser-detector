@@ -21,12 +21,6 @@
 #include "bit_match.h"
 #include "queue_buf.h"
 
-#define TTL_FRAMES          8
-
-#define THRES_DIST_SHAPE    50.0F
-#define THRES_DIST_CENTER   25.0F
-#define THRES_SHAPE_TTL     50.0F
-
 apriltag_family_t *lightanchor_family_create()
 {
     apriltag_family_t *tf = calloc(1, sizeof(apriltag_family_t));
@@ -292,7 +286,7 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
                 dist_shape = fabs(dist_shape_new - dist_shape_old);
 
                 if ((dist < min_dist) && (dist_shape < min_dist_shape) &&
-                    (dist < THRES_DIST_CENTER) && (dist_shape < THRES_DIST_SHAPE))
+                    (dist < ld->thres_dist_center) && (dist_shape < ld->thres_dist_shape))
                 {
                     min_dist = dist;
                     min_dist_shape = dist_shape;
@@ -311,7 +305,7 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
             }
             // stricter shape distance threshold for tags that have a ttl
             else if ((old_tag->frames > 0) &&
-                     (dist_shape != -1) && (dist_shape < THRES_SHAPE_TTL)) {
+                     (dist_shape != -1) && (dist_shape < ld->thres_dist_shape_ttl)) {
                 old_tag->frames--;
                 zarray_add(new_tags, &old_tag);
                 zarray_remove_index(ld->candidates, i, 1);
@@ -332,7 +326,7 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
             if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
             {
                 candidate_curr->code = (candidate_curr->code << 1) | (brightness > mean);
-                candidate_curr->frames = TTL_FRAMES;
+                candidate_curr->frames = ld->ttl_frames;
 
                 if (decode(ld, candidate_curr)) {
                     lightanchor_t *det = lightanchor_copy(candidate_curr);
