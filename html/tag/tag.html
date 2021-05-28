@@ -61,7 +61,9 @@
         window.ontouchend =
         function() {
             if (!tag.running) {
-                tag.blink();
+                tag.blink((totalDt, iters) => {
+                    stats.update();
+                });
             }
             else {
                 tag.stop();

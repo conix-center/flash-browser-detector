@@ -153,19 +153,19 @@ class LightAnchor {
         for (let i = 0; i < 8; i++) {
             const currBit = !!(code & (1 << (8-i-1)));
             const nextIdx = (i + 1) % 8;
-            const nextBit = !!(code & (1 << (8-nextIdx-1)));
+            // const nextBit = !!(code & (1 << (8-nextIdx-1)));
 
             res |= (currBit << (16-2*i-1));
 
-            if (currBit != nextBit) {
-                if (currBit == 1)
-                    res |= (0 << (16-2*i-2));
-                // else if (currBit == 0)
-                //     res |= (1 << (16-2*i-2));
-            }
-            else {
-                res |= (currBit << (16-2*i-2));
-            }
+            // if (currBit != nextBit) {
+            //     if (currBit == 1)
+            //         res |= (0 << (16-2*i-2));
+            //     // else if (currBit == 0)
+            //     //     res |= (1 << (16-2*i-2));
+            // }
+            // else {
+            //     res |= (currBit << (16-2*i-2));
+            // }
         }
         return res;
     }
