@@ -10,19 +10,12 @@
         body {
             background: white;
         }
-
-        #log {
-            position: absolute;
-            top: 10px;
-            right: 25px;
-        }
     </style>
 
-    <title>GLITTER Web tags</title>
+    <title>FLASH Web tags</title>
 </head>
 <body>
     <div id="stats"></div>
-    <div id="log">Average Timer Error: 0 ms</div>
 
     <script type="text/javascript">
         function getUrlVars() {
@@ -47,7 +40,6 @@
         var stats = new Stats();
         stats.showPanel(0);
         document.getElementById("stats").appendChild(stats.domElement);
-        var log = document.getElementById("log");
 
         var freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
 
@@ -60,7 +52,6 @@
         tags.push(new LightAnchor(code, codeLen, freq, "la1", "20%", "30%"));
         tags.push(new LightAnchor(code1, codeLen, freq, "la2", "40%", "60%"));
         tags.push(new LightAnchor(code2, codeLen, freq, "la3", "70%", "30%"));
-        tags.push(new LightAnchor(0xbc, codeLen, freq, "la4", "10%", "60%"));
 
         window.onmouseup =
         window.ontouchend =
@@ -70,7 +61,6 @@
                     tag.blink((totalDt, iters) => {
                         if (tag.id == "la1") {
                             stats.update();
-                            log.innerHTML = `Average Timer Error: ${(totalDt/iters).toFixed(2)} ms`;
                         }
                     });
                 }

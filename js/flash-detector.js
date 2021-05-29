@@ -3,11 +3,11 @@ import {Timer} from "./timer";
 import {Utils} from "./utils/utils";
 // import {DeviceIMU} from "./imu";
 import {Preprocessor} from "./preprocessor";
-import Worker from "./glitter.worker";
+import Worker from "./flash.worker";
 
 var BAD_FRAMES_BEFORE_DECIMATE = 20;
 
-export class GlitterDetector {
+export class FlashDetector {
     constructor(codes, targetFps, source, options) {
         this.codes = codes;
         this.targetFps = targetFps; // FPS
@@ -78,7 +78,7 @@ export class GlitterDetector {
                     // this.imu.init();
                     startTick();
                     const initEvent = new CustomEvent(
-                        "onGlitterInit",
+                        "onFlashInit",
                         {detail: {source: source}}
                     );
                     window.dispatchEvent(initEvent);
@@ -86,7 +86,7 @@ export class GlitterDetector {
                 }
                 case "result": {
                     const tagEvent = new CustomEvent(
-                        "onGlitterTagsFound",
+                        "onFlashTagsFound",
                         {detail: {tags: msg.tags}}
                     );
                     window.dispatchEvent(tagEvent);
@@ -115,7 +115,7 @@ export class GlitterDetector {
         });
 
         const calibrateEvent = new CustomEvent(
-                "onGlitterCalibrate",
+                "onFlashCalibrate",
                 {detail: {decimationFactor: this.imageDecimate}}
             );
         window.dispatchEvent(calibrateEvent);
@@ -153,7 +153,7 @@ export class GlitterDetector {
         }
 
         const tickEvent = new CustomEvent(
-            "onGlitterTick",
+            "onFlashTick",
             {detail: {}}
         );
         window.dispatchEvent(tickEvent);
