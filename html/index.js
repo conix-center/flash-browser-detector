@@ -9,8 +9,8 @@ glitterSource.setOptions({
     // height: 3024,
     // width: 1920,
     // height: 1080,
-    // width: 1280,
-    // height: 720,
+    width: 1280,
+    height: 720,
 });
 
 var overlayCanvas = document.createElement("canvas");
@@ -80,7 +80,8 @@ window.addEventListener("onGlitterInit", (e) => {
 });
 
 window.addEventListener("onGlitterTagsFound", (e) => {
-    drawTags(e.detail.tags);
+    const tags = e.detail.tags;
+    drawTags(tags);
     stats.update();
 });
 

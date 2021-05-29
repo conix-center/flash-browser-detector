@@ -7,7 +7,7 @@ function dec2bin(dec) {
 }
 
 class LightAnchor {
-    constructor(code, codeLen, freq, id, x, y) {
+    constructor(code, codeLen, freq, id, x, y, border) {
         this.code = code;
         this.codeLen = codeLen;
 
@@ -20,10 +20,10 @@ class LightAnchor {
         this.running = false;
 
         this.id = id;
-        this.createTag(this.id, x, y);
+        this.createTag(this.id, x, y, border);
     }
 
-    createTag(id, x, y) {
+    createTag(id, x, y, border) {
         this.wrapper = document.createElement("div");
         this.wrapper.id = `${id} tag`;
         this.wrapper.style.width = "35vmin";
@@ -50,7 +50,7 @@ class LightAnchor {
         this.tag.id = id;
         this.tag.style.width = "10vmin";
         this.tag.style.height = "10vmin";
-        this.tag.style.border = "7vmin";
+        this.tag.style.border = border ? border : "7vmin";
         this.tag.style.borderStyle = "solid";
         this.tag.style.borderColor = BORDER_COLOR;
         this.tag.style.backgroundColor = OFF_COLOR;

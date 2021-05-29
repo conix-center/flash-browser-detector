@@ -28,7 +28,7 @@ export class GlitterDetector {
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.2,
             rangeThreshold: 20,
-            quadSigma: 0.2,
+            quadSigma: 0.8,
             minWhiteBlackDiff: 50,
             ttlFrames: 8,
             thresDistShape: 50.0,
