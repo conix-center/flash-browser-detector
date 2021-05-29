@@ -139,7 +139,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
         }
 
-        EM_ASM_({
+        EM_ASM_INT({
             var $a = arguments;
             var i = 0;
 
