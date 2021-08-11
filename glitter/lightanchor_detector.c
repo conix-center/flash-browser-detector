@@ -18,7 +18,7 @@
 
 #include "lightanchor.h"
 #include "lightanchor_detector.h"
-#include "bit_match.h"
+#include "decoder.h"
 #include "queue_buf.h"
 
 apriltag_family_t *lightanchor_family_create()
