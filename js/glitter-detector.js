@@ -29,7 +29,7 @@ export class GlitterDetector {
             imageDecimationDelta: 0.2,
             rangeThreshold: 20,
             quadSigma: 0.8,
-            minWhiteBlackDiff: 50,
+            minWhiteBlackDiff: 100,
             ttlFrames: 8,
             thresDistShape: 50.0,
             thresDistShapeTTL: 20.0,
