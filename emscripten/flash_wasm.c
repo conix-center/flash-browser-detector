@@ -178,7 +178,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             center["y"] = $a[i++];
             tag["center"] = center;
 
-            const tagEvent = new CustomEvent("onGlitterTagFound", {detail: {tag: tag}});
+            const tagEvent = new CustomEvent("onFlashTagFound", {detail: {tag: tag}});
             var scope;
             if ('function' === typeof importScripts)
                 scope = self;

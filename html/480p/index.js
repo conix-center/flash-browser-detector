@@ -9,8 +9,8 @@ flashSource.setOptions({
     // height: 3024,
     // width: 1920,
     // height: 1080,
-    width: 1280,
-    height: 720,
+    // width: 1280,
+    // height: 720,
 });
 
 var overlayCanvas = document.createElement("canvas");
@@ -80,8 +80,7 @@ window.addEventListener("onFlashInit", (e) => {
 });
 
 window.addEventListener("onFlashTagsFound", (e) => {
-    const tags = e.detail.tags;
-    drawTags(tags);
+    drawTags(e.detail.tags);
     stats.update();
 });
 

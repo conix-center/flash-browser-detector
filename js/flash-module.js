@@ -1,5 +1,6 @@
-import GlitterWASM from "../build/glitter_wasm";
-export class GlitterModule {
+import FlashWASM from "../build/flash_wasm";
+
+export class FlashModule {
     constructor(codes, width, height, options, callback) {
         this.width = width;
         this.height = height;
@@ -16,8 +17,8 @@ export class GlitterModule {
         this.codes = codes;
 
         let _this = this;
-        GlitterWASM().then(function(Module) {
-            console.log("GLITTER WASM module loaded.");
+        FlashWASM().then(function(Module) {
+            console.log("FLASH WASM module loaded.");
             _this.onWasmInit(Module, options);
             if (callback) callback();
         });
@@ -49,7 +50,7 @@ export class GlitterModule {
         this.tags = [];
 
         let _this = this;
-        this.scope.addEventListener("onGlitterTagFound", (e) => {
+        this.scope.addEventListener("onFlashTagFound", (e) => {
             _this.tags.push(e.detail.tag);
         });
     }

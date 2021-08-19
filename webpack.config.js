@@ -6,8 +6,8 @@ module.exports = (env, argv) => ({
   entry: './js/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: argv.mode == 'development' ? 'glitter.js' : 'glitter.min.js',
-    library: 'Glitter',
+    filename: argv.mode == 'development' ? 'flash.js' : 'flash.min.js',
+    library: 'Flash',
     libraryTarget: 'umd',
     globalObject: 'typeof self !== \'undefined\' ? self : this',
   },

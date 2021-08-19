@@ -11,7 +11,7 @@ export class DeviceIMU {
     init() {
         if (DeviceOrientationEvent !== undefined && typeof DeviceOrientationEvent.requestPermission === "function") {
             Swal.fire({
-                title: "GLITTER requires access to your device orientation and motion sensors.",
+                title: "FLASH requires access to your device orientation and motion sensors.",
                 icon: "warning",
                 showConfirmButton: true,
                 showCancelButton: true,

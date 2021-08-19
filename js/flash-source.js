@@ -1,4 +1,4 @@
-export class GlitterSource {
+export class FlashSource {
     constructor(options) {
         this.options = {
             width: 640,

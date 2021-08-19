@@ -1,4 +1,4 @@
-import {GlitterModule} from './glitter-module';
+import {FlashModule} from './flash-module';
 
 onmessage = (e) => {
     const msg = e.data;
@@ -26,7 +26,7 @@ onmessage = (e) => {
 var BAD_FRAMES_BEFORE_DECIMATE = 20;
 
 var targetFps = null, fpsInterval = null;
-var glitterModule = null;
+var flashModule = null;
 var next = null;
 var numBadFrames = 0;
 
@@ -35,7 +35,7 @@ function init(msg) {
         postMessage({type: "loaded"});
     }
 
-    glitterModule = new GlitterModule(
+    flashModule = new FlashModule(
         msg.codes,
         msg.width,
         msg.height,
@@ -47,33 +47,33 @@ function init(msg) {
 }
 
 function addCode(code) {
-    if (glitterModule) {
-        glitterModule.addCode(code);
+    if (flashModule) {
+        flashModule.addCode(code);
     }
 }
 
 function resize(width, height, decimate) {
-    if (glitterModule) {
-        glitterModule.resize(width, height);
-        glitterModule.setQuadDecimate(decimate);
+    if (flashModule) {
+        flashModule.resize(width, height);
+        flashModule.setQuadDecimate(decimate);
     }
 }
 
 function process() {
-    if (glitterModule) {
+    if (flashModule) {
         const start = Date.now();
 
-        glitterModule.saveGrayscale(next);
-        const tags = glitterModule.detectTags();
+        flashModule.saveGrayscale(next);
+        const tags = flashModule.detectTags();
         postMessage({type: "result", tags: tags});
 
         const end = Date.now();
 
-        if (glitterModule.options.printPerformance) {
+        if (flashModule.options.printPerformance) {
             console.log("[performance]", "Detect:", end-start);
         }
 
-        if (glitterModule.options.decimateImage) {
+        if (flashModule.options.decimateImage) {
             if (end-start > fpsInterval) {
                 numBadFrames++;
                 if (numBadFrames > BAD_FRAMES_BEFORE_DECIMATE) {

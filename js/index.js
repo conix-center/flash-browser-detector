@@ -1,7 +1,7 @@
-import {GlitterDetector} from "./glitter-detector"
-import {GlitterSource} from "./glitter-source"
+import {FlashDetector} from "./flash-detector"
+import {FlashSource} from "./flash-source"
 import {Utils} from "./utils/utils";
 
 export {
-    GlitterDetector, GlitterSource, Utils
+    FlashDetector, FlashSource, Utils
 }
