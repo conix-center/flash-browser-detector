@@ -10,7 +10,7 @@
   "author": "Edward Lu (edwardlu2018)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/conix-center/glitter-browser-detector"
+    "url": "https://github.com/conix-center/flash-browser-detector"
   },
   "license": "ISC",
   "browserslist": [
