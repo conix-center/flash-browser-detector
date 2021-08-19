@@ -1,6 +1,6 @@
-# GLITTER
+# FLASH
 
-The GLITTER detector detects modulated LEDs to anchor AR content as described [here](http://users.ece.cmu.edu/~agr/resources/publications/ipsn_20_glitter.pdf).
+The FLASH detector detects modulated LEDs to anchor AR content as described [here](http://users.ece.cmu.edu/~agr/resources/publications/ipsn_20_glitter.pdf).
 This repository will lead to a more lightweight implementation, able to run in a browser, using WebAssembly.
 
 Based on [apriltag](https://github.com/AprilRobotics/apriltag).

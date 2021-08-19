@@ -79,7 +79,7 @@ window.addEventListener("onFlashInit", (e) => {
     resize();
 });
 
-window.addEventListener("onGlitterTagsFound", (e) => {
+window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
     drawTags(tags);
     stats.update();
