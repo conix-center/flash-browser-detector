@@ -23,7 +23,21 @@ extern int quads_destroy(zarray_t *quads);
 typedef struct lightanchor_detector lightanchor_detector_t;
 struct lightanchor_detector
 {
-    int range_thres; // min amplitude threshold for filtering out non-blinking quads
+    // min amplitude threshold for filtering out non-blinking quads
+    int range_thres;
+
+    // number of frames to live for interpolation
+    int ttl_frames;
+
+    // threshold for shape difference
+    double thres_dist_shape;
+
+    // threshold for shape difference for ttl quads
+    double thres_dist_shape_ttl;
+
+    // threshold for center difference between frames
+    double thres_dist_center;
+
     zarray_t *codes;
     zarray_t *candidates;
 };

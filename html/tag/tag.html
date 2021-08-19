@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
+    <script type="text/javascript" src="lightanchor.js"></script>
+
+    <style type="text/css">
+        body {
+            background: white;
+        }
+
+        #log {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+        }
+    </style>
+
+    <title>GLITTER Web tag</title>
+</head>
+<body>
+    <div id="stats"></div>
+
+    <script type="text/javascript">
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
+                vars[key] = value;
+            });
+            return vars;
+        }
+
+        function getUrlParam(parameter, defaultValue) {
+            let urlParameter = defaultValue;
+            if (window.location.href.indexOf(parameter) > -1) {
+                urlParameter = getUrlVars()[parameter];
+            }
+            if (urlParameter === "") {
+                return defaultValue;
+            }
+            return urlParameter;
+        }
+
+        var stats = new Stats();
+        stats.showPanel(0);
+        document.getElementById("stats").appendChild(stats.domElement);
+        var log = document.getElementById("log");
+
+        var freq = getUrlParam("freq") ? parseInt(getUrlParam("freq")) : 30;
+
+        var codeLen = 8;
+        var code = getUrlParam("code") ? parseInt(getUrlParam("code")) : 170;
+
+        var tag = new LightAnchor(code, codeLen, freq, "la1", "50%", "50%", "17vmin");
+        tag.setOuterWidth("100vmin");
+        tag.setInnerWidth("45vmin");
+
+        window.onmouseup =
+        window.ontouchend =
+        function() {
+            if (!tag.running) {
+                tag.blink((totalDt, iters) => {
+                    stats.update();
+                });
+            }
+            else {
+                tag.stop();
+            }
+        }
+    </script>
+</body>
+</html>

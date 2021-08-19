@@ -36,6 +36,5 @@
     "webpack-cli": "^3.3.11",
     "worker-loader": "^3.0.4"
   },
-  "dependencies": {},
   "description": ""
 }

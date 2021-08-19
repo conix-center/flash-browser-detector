@@ -74,7 +74,7 @@ function process() {
         }
 
         if (glitterModule.options.decimateImage) {
-            if (end-start > 2*fpsInterval) {
+            if (end-start > fpsInterval) {
                 numBadFrames++;
                 if (numBadFrames > BAD_FRAMES_BEFORE_DECIMATE) {
                     numBadFrames = 0;

@@ -6,39 +6,28 @@ export class Timer {
     }
 
     run() {
-        this.running = true;
-        this.totalDt = 0; this.iters = 0;
+        const _this = this;
+        const start = performance.now();
 
-        this.expected = Date.now() + this.interval;
-        setTimeout(tick.bind(this), this.interval);
-        function tick() {
-            if (!this.running) return;
-            const dt = Date.now() - this.expected; // calculate drift
-            if (dt > this.interval) { // adjust for errors
-                this.expected += this.interval * Math.floor(dt / this.interval);
-            }
-
-            const startCompute = Date.now();
-            this.totalDt += Math.abs(dt); this.iters++;
-
-            this.callback();
-
-            this.expected += this.interval;
-            const computationTime = Date.now() - startCompute;
-            setTimeout(tick.bind(this), Math.max(0, this.interval - dt - computationTime)); // take into account drift
+        _this.running = true;
+        function frame(time) {
+            if (!_this.running) return;
+            _this.callback(time);
+            scheduleFrame(time);
         }
+
+        function scheduleFrame(time) {
+            const elapsed = time - start;
+            const roundedElapsed = Math.round(elapsed / _this.interval) * _this.interval;
+            const targetNext = start + roundedElapsed + _this.interval;
+            const delay = targetNext - performance.now();
+            setTimeout(() => requestAnimationFrame(frame), delay);
+        }
+
+        scheduleFrame(start);
     }
 
     stop() {
         this.running = false;
-    }
-
-    getError() {
-        if (this.iters > 0) {
-            return Math.abs(this.totalDt / this.iters);
-        }
-        else {
-            return -1;
-        }
     }
 }

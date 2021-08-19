@@ -4,10 +4,14 @@ var targetFps = 30;
 var stats = null;
 
 var glitterSource = new Glitter.GlitterSource();
-// glitterSource.setOptions({
-//     width: 1280,
-//     height: 720,
-// });
+glitterSource.setOptions({
+    // width: 4032,
+    // height: 3024,
+    // width: 1920,
+    // height: 1080,
+    width: 1280,
+    height: 720,
+});
 
 var overlayCanvas = document.createElement("canvas");
 overlayCanvas.id = "overlay";
@@ -20,6 +24,7 @@ overlayCanvas.height = glitterSource.options.height;
 var glitterDetector = new Glitter.GlitterDetector(codes, targetFps, glitterSource);
 glitterDetector.setOptions({
     // printPerformance: true,
+    decimateImage: false,
 });
 glitterDetector.init();
 
@@ -46,8 +51,8 @@ function drawTags(tags) {
     var overlayCtx = overlayCanvas.getContext("2d");
     overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
-    for (var i = 0; i < tags.length; i++) {
-        drawTag(tags[i]);
+    for (tag of tags) {
+        drawTag(tag);
     }
 }
 
@@ -75,7 +80,8 @@ window.addEventListener("onGlitterInit", (e) => {
 });
 
 window.addEventListener("onGlitterTagsFound", (e) => {
-    drawTags(e.detail.tags);
+    const tags = e.detail.tags;
+    drawTags(tags);
     stats.update();
 });
 

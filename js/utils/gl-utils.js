@@ -28,6 +28,11 @@ export class GLUtils {
         gl.shaderSource(shader, shaderProg);
         gl.compileShader(shader);
 
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
         return shader;
     }
 
