@@ -8,6 +8,7 @@
 #include <emscripten/emscripten.h>
 
 #include "apriltag.h"
+#include "apriltag_pose.h"
 #include "tag36h11.h"
 
 #include "common/getopt.h"
@@ -19,9 +20,12 @@
 #include "lightanchor.h"
 #include "lightanchor_detector.h"
 
-apriltag_family_t *lf = NULL;
-apriltag_detector_t *td = NULL;
-lightanchor_detector_t *ld = NULL;
+// defaults set for 2020 ipad, with 1280x720 images
+// static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
+
+static apriltag_family_t *lf = NULL;
+static apriltag_detector_t *td = NULL;
+static lightanchor_detector_t *ld = NULL;
 
 EMSCRIPTEN_KEEPALIVE
 int init()
@@ -194,7 +198,18 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[0],
             la->c[1]
         );
+
+        // apriltag_detection_t det;
+        // det.H = matd_copy(la->H);
+        // memcpy(det.c, la->c, sizeof(det.c));
+        // memcpy(det.p, la->p, sizeof(det.p));
+        // g_det_pose_info.det = &det;
+
+        // double err1, err2;
+        // apriltag_pose_t pose1, pose2;
+        // estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
     }
+
     lightanchors_destroy(lightanchors);
 
     return sz;

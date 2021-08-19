@@ -1,5 +1,5 @@
-#ifndef _BIT_MATCH_H_
-#define _BIT_MATCH_H_
+#ifndef _DECODER_H_
+#define _DECODER_H_
 
 #include "apriltag.h"
 #include "common/zarray.h"
