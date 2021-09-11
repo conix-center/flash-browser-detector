@@ -22,9 +22,9 @@ typedef struct {
     uint16_t doubled_code;
 } glitter_code_t;
 
+// size_t hamming_dist(size_t a, size_t b);
 uint16_t double_bits(uint8_t bits);
 uint8_t undouble_bits(uint16_t bits);
-// size_t hamming_dist(size_t a, size_t b);
-int decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr);
+int lightanchor_decode(lightanchor_detector_t *ld, lightanchor_t *candidate_curr);
 
 #endif

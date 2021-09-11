@@ -13,6 +13,7 @@
 #include "common/g2d.h"
 #include "common/math_util.h"
 #include "common/matd.h"
+#include "apriltag_math.h"
 
 #include "apriltag.h"
 
@@ -21,6 +22,18 @@
 #include "decoder.h"
 #include "queue_buf.h"
 
+struct graymodel
+{
+    double A[3][3];
+    double B[3];
+    double C[3];
+};
+
+extern void graymodel_init(struct graymodel *gm);
+extern void graymodel_add(struct graymodel *gm, double x, double y, double gray);
+extern void graymodel_solve(struct graymodel *gm);
+extern double graymodel_interpolate(struct graymodel *gm, double x, double y);
+
 apriltag_family_t *lightanchor_family_create()
 {
     apriltag_family_t *tf = calloc(1, sizeof(apriltag_family_t));
@@ -28,10 +41,10 @@ apriltag_family_t *lightanchor_family_create()
         return NULL;
 
     tf->name = strdup("lightanchor");
-    // lightanchors can be very small
-    // set dimensions to as low as they can go
-    tf->width_at_border = 0;
-    tf->total_width = 1;
+
+    // same as tag36h11
+    tf->width_at_border = 8;
+    tf->total_width = 10;
     tf->reversed_border = false;
 
     return tf;
@@ -276,13 +289,13 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
                 // shape is represented as the average distance from each corner to the center
                 // not scale invariant!
                 double dist_shape_new = (g2d_distance(new_tag->p[0], new_tag->c) +
-                                            g2d_distance(new_tag->p[1], new_tag->c) +
-                                            g2d_distance(new_tag->p[2], new_tag->c) +
-                                            g2d_distance(new_tag->p[3], new_tag->c)) / 4;
+                                         g2d_distance(new_tag->p[1], new_tag->c) +
+                                         g2d_distance(new_tag->p[2], new_tag->c) +
+                                         g2d_distance(new_tag->p[3], new_tag->c)) / 4;
                 double dist_shape_old = (g2d_distance(old_tag->p[0], old_tag->c) +
-                                            g2d_distance(old_tag->p[1], old_tag->c) +
-                                            g2d_distance(old_tag->p[2], old_tag->c) +
-                                            g2d_distance(old_tag->p[3], old_tag->c)) / 4;
+                                         g2d_distance(old_tag->p[1], old_tag->c) +
+                                         g2d_distance(old_tag->p[2], old_tag->c) +
+                                         g2d_distance(old_tag->p[3], old_tag->c)) / 4;
                 dist_shape = fabs(dist_shape_new - dist_shape_old);
 
                 if ((dist < min_dist) && (dist_shape < min_dist_shape) &&
@@ -305,7 +318,8 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
             }
             // stricter shape distance threshold for tags that have a ttl
             else if ((old_tag->frames > 0) &&
-                     (dist_shape != -1) && (dist_shape < ld->thres_dist_shape_ttl)) {
+                     (dist_shape != -1) &&
+                     (dist_shape < ld->thres_dist_shape_ttl)) {
                 old_tag->frames--;
                 zarray_add(new_tags, &old_tag);
                 zarray_remove_index(ld->candidates, i, 1);
@@ -319,16 +333,16 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
             zarray_get(new_tags, i, &candidate_curr);
 
             uint8_t max, min, mean;
-            uint8_t brightness = extract_brightness(candidate_curr, im);
+            uint8_t brightness = lightanchor_intensity(candidate_curr, im);
             qb_add(&candidate_curr->brightnesses, brightness);
             qb_stats(&candidate_curr->brightnesses, &max, &min, &mean);
 
-            if (qb_full(&candidate_curr->brightnesses) && (max - min) > ld->range_thres)
+            if (qb_full(&candidate_curr->brightnesses) && ((max - min) > ld->range_thres))
             {
                 candidate_curr->code = (candidate_curr->code << 1) | (brightness > mean);
                 candidate_curr->frames = ld->ttl_frames;
 
-                if (decode(ld, candidate_curr)) {
+                if (lightanchor_decode(ld, candidate_curr)) {
                     lightanchor_t *det = lightanchor_copy(candidate_curr);
                     zarray_add(detections, &det);
                 }
@@ -342,15 +356,111 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
     return detections;
 }
 
+int quad_verify(apriltag_detector_t* td, apriltag_family_t *family, image_u8_t *im, struct quad *quad) {
+    float patterns[] = {
+        // left white column
+        -0.5, 0.5,
+        0, 1,
+        1,
+
+        // left black column
+        0.5, 0.5,
+        0, 1,
+        0,
+
+        // right white column
+        family->width_at_border + 0.5, .5,
+        0, 1,
+        1,
+
+        // right black column
+        family->width_at_border - 0.5, .5,
+        0, 1,
+        0,
+
+        // top white row
+        0.5, -0.5,
+        1, 0,
+        1,
+
+        // top black row
+        0.5, 0.5,
+        1, 0,
+        0,
+
+        // bottom white row
+        0.5, family->width_at_border + 0.5,
+        1, 0,
+        1,
+
+        // bottom black row
+        0.5, family->width_at_border - 0.5,
+        1, 0,
+        0
+
+        // XXX double-counts the corners.
+    };
+
+    struct graymodel whitemodel, blackmodel;
+    graymodel_init(&whitemodel);
+    graymodel_init(&blackmodel);
+
+    for (int pattern_idx = 0; pattern_idx < sizeof(patterns)/(5*sizeof(float)); pattern_idx ++) {
+        float *pattern = &patterns[pattern_idx * 5];
+
+        int is_white = pattern[4];
+
+        for (int i = 0; i < family->width_at_border; i++) {
+            double tagx01 = (pattern[0] + i*pattern[2]) / (family->width_at_border);
+            double tagy01 = (pattern[1] + i*pattern[3]) / (family->width_at_border);
+
+            double tagx = 2*(tagx01-0.5);
+            double tagy = 2*(tagy01-0.5);
+
+            double px, py;
+            homography_project(quad->H, tagx, tagy, &px, &py);
+
+            // don't round
+            int ix = px;
+            int iy = py;
+            if (ix < 0 || iy < 0 || ix >= im->width || iy >= im->height)
+                continue;
+
+            int v = im->buf[iy*im->stride + ix];
+
+            if (is_white)
+                graymodel_add(&whitemodel, tagx, tagy, v);
+            else
+                graymodel_add(&blackmodel, tagx, tagy, v);
+        }
+    }
+
+    if (family->width_at_border > 1) {
+        graymodel_solve(&whitemodel);
+        graymodel_solve(&blackmodel);
+    } else {
+        graymodel_solve(&whitemodel);
+        blackmodel.C[0] = 0;
+        blackmodel.C[1] = 0;
+        blackmodel.C[2] = blackmodel.B[2]/4;
+    }
+
+    if ((graymodel_interpolate(&whitemodel, 0, 0) - graymodel_interpolate(&blackmodel, 0, 0) < 0) != family->reversed_border) {
+        return -1;
+    }
+
+    return 0;
+}
+
 zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
                       zarray_t *quads, image_u8_t *im)
 {
     zarray_t *new_tags = zarray_create(sizeof(lightanchor_t *));
 
-    for (int i = 0; i < zarray_size(quads); i++)
+    for (int quadidx = 0; quadidx < zarray_size(quads); quadidx++)
     {
         struct quad *quad;
-        zarray_get_volatile(quads, i, &quad);
+        zarray_get_volatile(quads, quadidx, &quad);
 
         // refine edges is not dependent upon the tag family, thus
         // apply this optimization BEFORE the other work.
@@ -359,6 +469,22 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
 
         // make sure the homographies are computed...
         if (quad_update_homographies(quad))
+            continue;
+
+        int status = 0;
+        for (int famidx = 0; famidx < zarray_size(td->tag_families); famidx++) {
+            apriltag_family_t *family;
+            zarray_get(td->tag_families, famidx, &family);
+
+            if (family->reversed_border != quad->reversed_border) {
+                continue;
+            }
+
+            if ((status = quad_verify(td, family, im, quad)))
+                break;
+        }
+
+        if (status)
             continue;
 
         lightanchor_t *lightanchor;

@@ -47,8 +47,8 @@ int init()
     td->nthreads = 1;
     td->quad_decimate = 1.0;
 
-    td->qtp.max_nmaxima = 8;
-    td->qtp.min_cluster_pixels = 1;
+    td->qtp.max_nmaxima = 5;
+    td->qtp.min_cluster_pixels = 0;
 
     td->qtp.max_line_fit_mse = 10.0;
     td->qtp.cos_critical_rad = cos(10 * M_PI / 180);
