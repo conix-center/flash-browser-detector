@@ -56,60 +56,22 @@ void lightanchor_update(lightanchor_t *src, lightanchor_t *dest) {
     qb_copy(&dest->brightnesses, &src->brightnesses);
 }
 
-static void lightanchor_stats(lightanchor_t *la, double max[], double min[]) {
-    max[0] = 0;
-    max[1] = 0;
-    min[0] = MAX_DIST;
-    min[1] = MAX_DIST;
-    for (int i = 0; i < 4; i++)
-    {
-        if (la->p[i][0] > max[0])
-            max[0] = la->p[i][0];
+uint8_t lightanchor_intensity(lightanchor_t *la, image_u8_t *im) {
+    int n = 0;
+    double avg = 0;
 
-        if (la->p[i][0] < min[0])
-            min[0] = la->p[i][0];
-
-        if (la->p[i][1] > max[1])
-            max[1] = la->p[i][1];
-
-        if (la->p[i][1] < min[1])
-            min[1] = la->p[i][1];
-    }
-}
-
-uint8_t extract_brightness(lightanchor_t *la, image_u8_t *im) {
-    int avg = 0, n = 0;
-
-    double max[2], min[2];
-    lightanchor_stats(la, max, min);
-
-    int maxi[2], mini[2];
-    maxi[0] = (int)ceil(max[0]-0.5);
-    mini[0] = (int)ceil(min[0]-0.5);
-    maxi[1] = (int)ceil(max[1]-0.5);
-    mini[1] = (int)ceil(min[1]-0.5);
-
-    zarray_t *quad_poly = g2d_polygon_create_data(la->p, 4);
-
-    double p[2];
-    for (int ix = mini[0]; ix <= maxi[0]; ix++) {
-        for (int iy = mini[1]; iy <= maxi[1]; iy++) {
-            p[0] = (double)ix;
-            p[1] = (double)iy;
-            if (g2d_polygon_contains_point(quad_poly, p)) {
-                avg += value_for_pixel(im, ix, iy);
-                n++;
-            }
+    // quad goes from [-1, 1] in x and y direction
+    // find approximate average brightness of entire quad
+    double px, py;
+    for (double ix = -1; ix <= 1; ix+=0.1) {
+        for (double iy = -1; iy <= 1; iy+=0.1) {
+            homography_project(la->H, ix, iy, &px, &py);
+            avg += value_for_pixel(im, px, py);
+            n++;
         }
     }
 
-    uint8_t res = 0;
-    if (n > 0) {
-        res = (uint8_t)(avg / n);
-    }
-
-    zarray_destroy(quad_poly);
-    return res;
+    return (avg / n);
 }
 
 /** @copydoc lightanchors_destroy */

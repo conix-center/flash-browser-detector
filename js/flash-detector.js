@@ -28,7 +28,7 @@ export class FlashDetector {
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.2,
             rangeThreshold: 20,
-            quadSigma: 0.8,
+            quadSigma: 1.0,
             minWhiteBlackDiff: 100,
             ttlFrames: 8,
             thresDistShape: 50.0,

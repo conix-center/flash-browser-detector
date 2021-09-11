@@ -60,8 +60,7 @@ function updateInfo() {
     var info = document.getElementById("info");
     info.style.zIndex = "1";
     info.innerText = "Detecting Codes:\n";
-    for(var i = 0; i < this.codes.length; i++) {
-        var code = this.codes[i];
+    for (code of this.codes) {
         info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
     }
 }

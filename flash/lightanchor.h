@@ -37,7 +37,7 @@ lightanchor_t *lightanchor_copy(lightanchor_t *lightanchor);
 void lightanchor_update(lightanchor_t *src, lightanchor_t *dest);
 void lightanchor_destroy(lightanchor_t *lightanchor);
 int lightanchors_destroy(zarray_t *lightanchors);
-uint8_t extract_brightness(lightanchor_t *l, image_u8_t *im);
+uint8_t lightanchor_intensity(lightanchor_t *l, image_u8_t *im);
 int quads_destroy(zarray_t *quads);
 
 #endif
