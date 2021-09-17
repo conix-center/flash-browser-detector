@@ -21,7 +21,7 @@
 #include "lightanchor_detector.h"
 
 // defaults set for 2020 ipad, with 1280x720 images
-// static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
+static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
 
 static apriltag_family_t *lf = NULL;
 static apriltag_detector_t *td = NULL;
@@ -199,15 +199,49 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1]
         );
 
-        // apriltag_detection_t det;
-        // det.H = matd_copy(la->H);
-        // memcpy(det.c, la->c, sizeof(det.c));
-        // memcpy(det.p, la->p, sizeof(det.p));
-        // g_det_pose_info.det = &det;
+        EM_ASM_INT({
+            var $a = arguments;
+            var i = 0;
 
-        // double err1, err2;
-        // apriltag_pose_t pose1, pose2;
-        // estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
+            const H = [];
+            H[0] = $a[i++];
+            H[1] = $a[i++];
+            H[2] = $a[i++];
+            H[3] = $a[i++];
+            H[4] = $a[i++];
+            H[5] = $a[i++];
+            H[6] = $a[i++];
+            H[7] = $a[i++];
+            H[8] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashHomoFound", {detail: {H: H}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            MATD_EL(la->H,0,0),
+            MATD_EL(la->H,0,1),
+            MATD_EL(la->H,0,2),
+            MATD_EL(la->H,1,0),
+            MATD_EL(la->H,1,1),
+            MATD_EL(la->H,1,2),
+            MATD_EL(la->H,2,0),
+            MATD_EL(la->H,2,1),
+            MATD_EL(la->H,2,2)
+        );
+
+        apriltag_detection_t det;
+        det.H = matd_copy(la->H);
+        memcpy(det.c, la->c, sizeof(det.c));
+        memcpy(det.p, la->p, sizeof(det.p));
+        g_det_pose_info.det = &det;
+
+        double err1, err2;
+        apriltag_pose_t pose1, pose2;
+        estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
     }
 
     lightanchors_destroy(lightanchors);

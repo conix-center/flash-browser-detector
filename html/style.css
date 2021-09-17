@@ -15,3 +15,11 @@ body {
     margin: 0px;
     border-radius: 5px;
 }
+
+#arElem {
+    width: 10px;
+    height: 10px;
+    background-color: yellow;
+    border: 1px solid black;
+    z-index: 9999;
+}
