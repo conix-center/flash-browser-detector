@@ -344,6 +344,21 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
 
                 if (lightanchor_decode(ld, candidate_curr)) {
                     lightanchor_t *det = lightanchor_copy(candidate_curr);
+                    // [-1, -1], [1, -1], [1, 1], [-1, 1], Desired points
+                    // [-1, 1], [1, 1], [1, -1], [-1, -1], FLIP Y
+                    // adjust the points in det->p so that they correspond to
+                    // counter-clockwise around the quad, starting at -1,-1.
+                    for (int i = 0; i < 4; i++) {
+                        int tcx = (i == 1 || i == 2) ? 1 : -1;
+                        int tcy = (i < 2) ? 1 : -1;
+
+                        double p[2];
+
+                        homography_project(det->H, tcx, tcy, &p[0], &p[1]);
+
+                        det->p[i][0] = p[0];
+                        det->p[i][1] = p[1];
+                    }
                     zarray_add(detections, &det);
                 }
             }

@@ -21,7 +21,7 @@
 #include "lightanchor_detector.h"
 
 // defaults set for 2020 ipad, with 1280x720 images
-// static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
+static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
 
 static apriltag_family_t *lf = NULL;
 static apriltag_detector_t *td = NULL;
@@ -199,15 +199,71 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1]
         );
 
-        // apriltag_detection_t det;
-        // det.H = matd_copy(la->H);
-        // memcpy(det.c, la->c, sizeof(det.c));
-        // memcpy(det.p, la->p, sizeof(det.p));
-        // g_det_pose_info.det = &det;
+        apriltag_detection_t det;
+        det.H = matd_copy(la->H);
+        memcpy(det.c, la->c, sizeof(det.c));
+        memcpy(det.p, la->p, sizeof(det.p));
+        g_det_pose_info.det = &det;
 
-        // double err1, err2;
-        // apriltag_pose_t pose1, pose2;
-        // estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
+        double err1, err2;
+        apriltag_pose_t pose1, pose2;
+        estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
+
+        EM_ASM_INT({
+            var $a = arguments;
+            var i = 0;
+
+            const rot = [];
+            rot[0] = $a[i++];
+            rot[1] = $a[i++];
+            rot[2] = $a[i++];
+            rot[3] = $a[i++];
+            rot[4] = $a[i++];
+            rot[5] = $a[i++];
+            rot[6] = $a[i++];
+            rot[7] = $a[i++];
+            rot[8] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashRotFound", {detail: {R: rot}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            MATD_EL(pose1.R,0,0),
+            MATD_EL(pose1.R,0,1),
+            MATD_EL(pose1.R,0,2),
+            MATD_EL(pose1.R,1,0),
+            MATD_EL(pose1.R,1,1),
+            MATD_EL(pose1.R,1,2),
+            MATD_EL(pose1.R,2,0),
+            MATD_EL(pose1.R,2,1),
+            MATD_EL(pose1.R,2,2)
+        );
+
+        EM_ASM_INT({
+            var $a = arguments;
+            var i = 0;
+
+            const trans = [];
+            trans[0] = $a[i++];
+            trans[1] = $a[i++];
+            trans[2] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashTransFound", {detail: {T: trans}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            MATD_EL(pose1.t,0,0),
+            MATD_EL(pose1.t,0,1),
+            MATD_EL(pose1.t,0,2)
+        );
     }
 
     lightanchors_destroy(lightanchors);

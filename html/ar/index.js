@@ -3,7 +3,16 @@ var targetFps = 30;
 
 var stats = null;
 
-var scene, camera, renderer;
+var scene, camera, renderer, root;
+
+var dtagMatrix = new THREE.Matrix4();
+var FLIPMATRIX = new THREE.Matrix4();
+FLIPMATRIX.set(
+    1, 0, 0, 0,
+    0, -1, 0, 0,
+    0, 0, -1, 0,
+    0, 0, 0, 1,
+);
 
 var flashSource = new Flash.FlashSource();
 flashSource.setOptions({
@@ -30,31 +39,23 @@ flashDetector.setOptions({
 });
 flashDetector.init();
 
-function drawTag(tag) {
-    var overlayCtx = overlayCanvas.getContext("2d");
-
-    overlayCtx.beginPath();
-        overlayCtx.lineWidth = 3;
-        overlayCtx.strokeStyle = "blue";
-        overlayCtx.moveTo(tag.corners[0].x, tag.corners[0].y);
-        overlayCtx.lineTo(tag.corners[1].x, tag.corners[1].y);
-        overlayCtx.lineTo(tag.corners[2].x, tag.corners[2].y);
-        overlayCtx.lineTo(tag.corners[3].x, tag.corners[3].y);
-        overlayCtx.lineTo(tag.corners[0].x, tag.corners[0].y);
-    overlayCtx.stroke();
-
-    overlayCtx.font = "bold 20px Arial";
-    overlayCtx.textAlign = "center";
-    overlayCtx.fillStyle = "red";
-    overlayCtx.fillText(tag.code, tag.center.x, tag.center.y);
-}
+function setMatrix(matrix, value) {
+    const array = [];
+    for (const key in value) {
+      array[key] = value[key]
+    }
+    if (typeof matrix.elements.set === 'function') {
+      matrix.elements.set(array)
+    } else {
+      matrix.elements = [].slice.call(array)
+    }
+};
 
 function drawTags(tags) {
-    var overlayCtx = overlayCanvas.getContext("2d");
-    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
+    if (!root) return;
     for (tag of tags) {
-        drawTag(tag);
+        const mat = getPose(tag.R, tag.T);
+        setMatrix(root.matrix, mat);
     }
 }
 
@@ -65,6 +66,20 @@ function updateInfo() {
     for (code of this.codes) {
         info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
     }
+}
+
+function getPose(r, t) {
+    dtagMatrix.set(
+        r[0], r[3], r[6], t[0],
+        r[1], r[4], r[7], t[1],
+        r[2], r[5], r[8], t[2],
+        0   , 0   , 0   , 1
+    );
+
+    dtagMatrix.premultiply(FLIPMATRIX);
+    dtagMatrix.multiply(FLIPMATRIX);
+
+    return dtagMatrix.elements;
 }
 
 window.addEventListener("onFlashInit", (e) => {
@@ -97,23 +112,24 @@ window.addEventListener("onFlashInit", (e) => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
+    const light = new THREE.AmbientLight(0xffffff)
+    scene.add(light);
+
     var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+    var material = new THREE.MeshLambertMaterial({color: 0x0000aa});
     var cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
 
-    camera.position.z = 5;
+    root = new THREE.Object3D();
+    root.matrixAutoUpdate = false;
+    root.add(cube);
 
-    var animate = function () {
-        requestAnimationFrame(animate);
+    scene.add(root);
 
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
-
+    var tick = function () {
         renderer.render(scene, camera);
+        requestAnimationFrame(tick);
     };
-
-    animate();
+    tick();
 
     updateInfo();
     resize();
@@ -121,7 +137,7 @@ window.addEventListener("onFlashInit", (e) => {
 
 window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
-    // drawTags(tags);
+    drawTags(tags);
     stats.update();
 });
 
