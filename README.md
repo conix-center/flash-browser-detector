@@ -4,7 +4,7 @@ FLASH is a system for delivering AR content to large public spaces like concert 
 
 ![lecture hall](images/lecture_hall.png)
 
-The FLASH detector detects modulated LEDs to anchor AR content as described [here](http://users.ece.cmu.edu/~agr/resources/publications/FLASH_ISMAR_21.pdf).
+The FLASH detector detects modulated LEDs to anchor AR content as described [here](http://users.ece.cmu.edu/~agr/resources/publications/FLASH_ISMAR_2021.pdf).
 This repository will lead to a more lightweight implementation, able to run in a browser, using WebAssembly.
 
 ![stadium](images/stadium.png)
