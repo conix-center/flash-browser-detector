@@ -3,7 +3,7 @@ var targetFps = 30;
 
 var stats = null;
 
-var scene, camera, renderer, root;
+var scene, camera, renderer;
 
 var dtagMatrix = new THREE.Matrix4();
 var FLIPMATRIX = new THREE.Matrix4();
@@ -12,6 +12,14 @@ FLIPMATRIX.set(
     0, -1, 0, 0,
     0, 0, -1, 0,
     0, 0, 0, 1,
+);
+
+let originMatrix = new THREE.Matrix4();
+originMatrix.set(
+    1,  0, 0, 0,
+    0,  0, 1, 0,
+    0, -1, 0, 0,
+    0,  0, 0, 1,
 );
 
 var flashSource = new Flash.FlashSource();
@@ -39,23 +47,11 @@ flashDetector.setOptions({
 });
 flashDetector.init();
 
-function setMatrix(matrix, value) {
-    const array = [];
-    for (const key in value) {
-      array[key] = value[key]
-    }
-    if (typeof matrix.elements.set === 'function') {
-      matrix.elements.set(array)
-    } else {
-      matrix.elements = [].slice.call(array)
-    }
-};
-
 function drawTags(tags) {
-    if (!root) return;
     for (tag of tags) {
-        const mat = getPose(tag.R, tag.T);
-        setMatrix(root.matrix, mat);
+        const pose = getPose(tag.R, tag.T);
+        camera.quaternion.setFromRotationMatrix(pose);
+        camera.position.setFromMatrixPosition(pose);
     }
 }
 
@@ -79,7 +75,12 @@ function getPose(r, t) {
     dtagMatrix.premultiply(FLIPMATRIX);
     dtagMatrix.multiply(FLIPMATRIX);
 
-    return dtagMatrix.elements;
+    var res = new THREE.Matrix4();
+    dtagMatrix.copy(dtagMatrix).invert();
+    res.identity();
+    res.multiplyMatrices(originMatrix, dtagMatrix);
+
+    return res;
 }
 
 window.addEventListener("onFlashInit", (e) => {
@@ -91,11 +92,10 @@ window.addEventListener("onFlashInit", (e) => {
     document.body.appendChild(overlayCanvas);
     // document.body.appendChild(flashDetector.preprocessor.canvas);
 
-    let fov = 0.8 * 180 / Math.PI;
     let ratio = window.innerWidth / window.innerHeight;
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(fov, ratio, 0.01, 1000);
+    camera = new THREE.PerspectiveCamera(75, ratio, 0.01, 1000);
 
     renderer = new THREE.WebGLRenderer({
         canvas: document.getElementById("overlay"),
@@ -115,12 +115,24 @@ window.addEventListener("onFlashInit", (e) => {
     const light = new THREE.AmbientLight(0xffffff)
     scene.add(light);
 
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshLambertMaterial({color: 0x0000aa});
-    var cube = new THREE.Mesh(geometry, material);
+    const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    const edges = new THREE.EdgesGeometry( geometry );
+    const cube = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xff0000 } ) );
 
-    root = new THREE.Object3D();
-    root.matrixAutoUpdate = false;
+    camera.position.y = 5;
+    camera.position.z = 5;
+
+    let rotMat = new THREE.Matrix4();
+    rotMat.set(
+        1, 0, 0, 0,
+        0, 0.707, 0.707, 0,
+        0, -0.707, 0.707, 0,
+        0, 0, 0, 1,
+    );
+    camera.quaternion.setFromRotationMatrix(rotMat);
+
+    let root = new THREE.Object3D();
+    // root.matrixAutoUpdate = false;
     root.add(cube);
 
     scene.add(root);
