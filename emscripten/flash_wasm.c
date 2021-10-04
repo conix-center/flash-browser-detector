@@ -242,6 +242,74 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         double err1, err2;
         apriltag_pose_t pose1, pose2;
         estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
+
+        EM_ASM_INT({
+            var $a = arguments;
+            var i = 0;
+
+            const rot = [];
+            rot[0] = $a[i++];
+            rot[1] = $a[i++];
+            rot[2] = $a[i++];
+            rot[3] = $a[i++];
+            rot[4] = $a[i++];
+            rot[5] = $a[i++];
+            rot[6] = $a[i++];
+            rot[7] = $a[i++];
+            rot[8] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashRotFound", {detail: {R: rot}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            MATD_EL(pose1.R,0,0),
+            MATD_EL(pose1.R,0,1),
+            MATD_EL(pose1.R,0,2),
+            MATD_EL(pose1.R,1,0),
+            MATD_EL(pose1.R,1,1),
+            MATD_EL(pose1.R,1,2),
+            MATD_EL(pose1.R,2,0),
+            MATD_EL(pose1.R,2,1),
+            MATD_EL(pose1.R,2,2)
+        );
+
+        EM_ASM_INT({
+            var $a = arguments;
+            var i = 0;
+
+            const trans = [];
+            trans[0] = $a[i++];
+            trans[1] = $a[i++];
+            trans[2] = $a[i++];
+            trans[3] = $a[i++];
+            trans[4] = $a[i++];
+            trans[5] = $a[i++];
+            trans[6] = $a[i++];
+            trans[7] = $a[i++];
+            trans[8] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashTransFound", {detail: {T: trans}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            MATD_EL(pose1.t,0,0),
+            MATD_EL(pose1.t,0,1),
+            MATD_EL(pose1.t,0,2),
+            MATD_EL(pose1.t,1,0),
+            MATD_EL(pose1.t,1,1),
+            MATD_EL(pose1.t,1,2),
+            MATD_EL(pose1.t,2,0),
+            MATD_EL(pose1.t,2,1),
+            MATD_EL(pose1.t,2,2)
+        );
     }
 
     lightanchors_destroy(lightanchors);
