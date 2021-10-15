@@ -40,14 +40,14 @@ export class Preprocessor {
         this.imageData = new Uint8Array(this.width * this.height * 4);
     }
 
-    getPixels() {
+    async getPixels() {
         if (!this.source) return null;
 
         GLUtils.bindElem(this.gl, this.source);
         GLUtils.draw(this.gl);
         if (this.supportsWebGL2) {
             const pbo = this.gl.isBuffer(this._pbo) ? this._pbo : (this._pbo = GLUtils.createBuffer(this.gl));
-            GLUtils.readPixelsAsync(
+            await GLUtils.readPixelsAsync(
                 this.gl, pbo,
                 this.width, this.height,
                 this.imageData

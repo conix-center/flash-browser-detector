@@ -135,12 +135,12 @@ export class FlashDetector {
         });
     }
 
-    tick() {
+    async tick() {
         const start = Date.now();
         // console.log(start - this.prev, this.timer.getError());
         this.prev = start;
 
-        this.imageData = this.preprocessor.getPixels();
+        this.imageData = await this.preprocessor.getPixels();
         this.worker.postMessage({
             type: "process",
             imagedata: this.imageData
