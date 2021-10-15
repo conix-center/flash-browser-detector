@@ -122,10 +122,11 @@ export class GLUtils {
     }
 
     static readPixels(gl, width, height, buffer) {
-        gl.readPixels(
-            0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
     }
 
+    // adopted from:
+    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     static readPixelsAsync(gl, pbo, width, height, buffer) {
         // bind the PBO
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo);
@@ -142,10 +143,12 @@ export class GLUtils {
             gl, pbo,
             gl.PIXEL_PACK_BUFFER, 0, buffer, 0, 0
         ).catch(err => {
-            throw new IllegalOperationError("Can't read pixels", err);
+            throw new Error("Can't read pixels", err);
         });
     }
 
+    // adopted from:
+    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     static getBufferSubDataAsync(gl, glBuffer, target, srcByteOffset, destBuffer, destOffset = 0, length = 0) {
         const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
 
@@ -159,18 +162,22 @@ export class GLUtils {
             gl.bindBuffer(target, null);
             return 0; // disable timers
         }).catch(err => {
-            throw new IllegalOperationError(`Can't getBufferSubDataAsync(): error in clientWaitAsync()`, err);
+            throw new Error(`Can't getBufferSubDataAsync(): error in clientWaitAsync()`, err);
         }).finally(() => {
             gl.deleteSync(sync);
         });
     }
 
+    // adopted from:
+    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     static clientWaitAsync(gl, sync, flags = 0) {
         return new Promise((resolve, reject) => {
             GLUtils._checkStatus(gl, sync, flags, resolve, reject);
         });
     }
 
+    // adopted from:
+    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     static _checkStatus(gl, sync, flags, resolve, reject) {
         const status = gl.clientWaitSync(sync, flags, 0);
         if(status == gl.TIMEOUT_EXPIRED) {
