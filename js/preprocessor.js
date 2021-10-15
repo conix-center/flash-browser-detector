@@ -18,6 +18,7 @@ export class Preprocessor {
         ];
 
         this.gl = GLUtils.createGL(this.canvas, this.width, this.height);
+        this.supportsWebGL2 = GLUtils.supportsWebGL2(this.canvas)
 
         const flipProg = require("./shaders/flip-image.glsl");
         const grayProg = require("./shaders/grayscale-blur.glsl");
@@ -40,15 +41,26 @@ export class Preprocessor {
     }
 
     getPixels() {
-        if (this.source) {
-            GLUtils.bindElem(this.gl, this.source);
-            GLUtils.draw(this.gl);
-            GLUtils.readPixels(this.gl, this.width, this.height, this.imageData);
-            return this.imageData;
+        if (!this.source) return null;
+
+        GLUtils.bindElem(this.gl, this.source);
+        GLUtils.draw(this.gl);
+        if (this.supportsWebGL2) {
+            const pbo = this.gl.isBuffer(this._pbo) ? this._pbo : (this._pbo = GLUtils.createBuffer(this.gl));
+            GLUtils.readPixelsAsync(
+                this.gl, pbo,
+                this.width, this.height,
+                this.imageData
+            );
         }
         else {
-            return null;
+            GLUtils.readPixels(
+                this.gl, this.pbo,
+                this.width, this.height,
+                this.imageData
+            );
         }
+        return this.imageData;
     }
 
     setKernelSigma(sigma) {
