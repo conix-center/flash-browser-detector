@@ -1,3 +1,6 @@
+precision highp int;
+precision mediump float;
+
 attribute vec2 position;
 varying vec2 tex_coords;
 

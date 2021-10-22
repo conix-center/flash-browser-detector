@@ -31,10 +31,10 @@ export class Preprocessor {
         this._gl.vertexAttribPointer(this._positionLocation, 2, this._gl.FLOAT, false, 0, 0);
         this._gl.enableVertexAttribArray(this._positionLocation);
 
-        this._textureSizeLocation = this._gl.getUniformLocation(program, "u_tex_size");
+        this._textureSizeLocation = this._gl.getUniformLocation(program, "tex_size");
         this._gl.uniform2f(this._textureSizeLocation, this.width, this.height);
 
-        this._kernelLocation = this._gl.getUniformLocation(program, "u_kernel[0]");
+        this._kernelLocation = this._gl.getUniformLocation(program, "kernel[0]");
 
         this._texture = GLUtils.createTexture(this._gl, this.width, this.height);
         GLUtils.bindTexture(this._gl, this._texture);
