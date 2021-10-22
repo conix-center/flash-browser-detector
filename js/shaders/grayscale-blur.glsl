@@ -1,19 +1,23 @@
+#version 300 es
+
 precision highp int;
 precision mediump float;
+precision mediump sampler2D;
+
+out vec4 color;
+in vec2 texCoord;
+uniform vec2 texSize;
 
 uniform sampler2D image;
-varying vec2 tex_coords;
-
-uniform vec2 tex_size;
 uniform float kernel[25];
 
-#define S(x,y,k) result += texture2D(image, tex_coords + pixel * vec2(x,y)) * kernel[k]
+#define pixelAtOffset(img, offset) textureLodOffset((img), texCoord, 0.0f, (offset))
+#define S(x,y,k) result += pixelAtOffset(image, ivec2((x),(y))) * kernel[k]
 
-const vec4 g = vec4(0.299, 0.587, 0.114, 0.0); // vec4(0.333, 0.333, 0.333, 0.0);
+const vec4 g = vec4(0.299f, 0.587f, 0.114f, 0.0f); // vec4(0.333f, 0.333f, 0.333f, 0.0);
 
 void main(void) {
-    vec2 pixel = vec2(1.0, 1.0) / tex_size;
-    vec4 result = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 result = vec4(0.0f);
 
     S(-2,-2, 24);
     S(-2,-1, 23);
@@ -42,5 +46,5 @@ void main(void) {
     S( 2, 2, 0);
 
     float gray = dot(result, g);
-    gl_FragColor = vec4(gray, gray, gray, 1.0);
+    color = vec4(gray, gray, gray, 1.0f);
 }

@@ -1,22 +1,67 @@
 export class GLUtils {
-    static createGL(canvas, width, height) {
-        const gl = canvas.getContext("webgl2") ||
-                   canvas.getContext("webgl") ||
-                   canvas.getContext("experimental-webgl");;
-        gl.viewport(0, 0, width, height);
+    static createGL(canvas) {
+        if (!GLUtils.supportsWebGL2(canvas)) {
+            alert("FLASH requires WebGL 2.0!");
+            throw new Error("FLASH requires WebGL 2.0!");
+        }
+
+        const gl = canvas.getContext('webgl2', {
+            premultipliedAlpha: false,
+            preserveDrawingBuffer: false,
+            alpha: true,
+            antialias: false,
+            depth: false,
+            stencil: false,
+        });
+
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-        const vertices = new Float32Array([
+
+        const position = gl.createBuffer();
+        const texCoord = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, position);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            // clip coordinates (CCW)
             -1, -1,
-            -1,  1,
-             1,  1,
-            -1, -1,
-             1,  1,
-             1, -1,
-        ]);
-        const buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            1, -1,
+            -1, 1,
+
+            -1, 1,
+            1, -1,
+            1, 1,
+        ]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0,        // attribute location
+                               2,        // 2 components per vertex (x,y)
+                               gl.FLOAT, // type
+                               false,    // don't normalize
+                               0,        // default stride (tightly packed)
+                               0);       // offset
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, texCoord);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            // texture coordinates (CCW)
+            0, 0,
+            1, 0,
+            0, 1,
+
+            0, 1,
+            1, 0,
+            1, 1,
+        ]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1,        // attribute location
+                               2,        // 2 components per vertex (x,y)
+                               gl.FLOAT, // type
+                               false,    // don't normalize
+                               0,        // default stride (tightly packed)
+                               0);       // offset
+
+        // unbind
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        gl.bindVertexArray(null);
+
         return gl;
     }
 
@@ -117,7 +162,8 @@ export class GLUtils {
         gl.deleteFramebuffer(fbo);
     }
 
-    static draw(gl, fbo) {
+    static draw(gl, width, height) {
+        gl.viewport(0, 0, width, height);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 

@@ -19,20 +19,15 @@ export class Preprocessor {
             0, 0, 0, 0, 0,
         ];
 
-        this._gl = GLUtils.createGL(this.canvas, this.width, this.height);
-        this.supportsWebGL2 = GLUtils.supportsWebGL2(this.canvas)
+        this._gl = GLUtils.createGL(this.canvas);
 
-        const flipProg = require("./shaders/flip-image.glsl");
+        const flipProg = require("./shaders/vertex-shader.glsl");
         const grayProg = require("./shaders/grayscale-blur.glsl");
         const program = GLUtils.createProgram(this._gl, flipProg, grayProg);
         GLUtils.useProgram(this._gl, program);
 
-        this._positionLocation = this._gl.getAttribLocation(program, "position");
-        this._gl.vertexAttribPointer(this._positionLocation, 2, this._gl.FLOAT, false, 0, 0);
-        this._gl.enableVertexAttribArray(this._positionLocation);
-
-        this._textureSizeLocation = this._gl.getUniformLocation(program, "tex_size");
-        this._gl.uniform2f(this._textureSizeLocation, this.width, this.height);
+        this._texSizeLocation = this._gl.getUniformLocation(program, "a_texSize");
+        this._gl.uniform2f(this._texSizeLocation, this.width, this.height);
 
         this._kernelLocation = this._gl.getUniformLocation(program, "kernel[0]");
 
@@ -50,14 +45,7 @@ export class Preprocessor {
         if (!this._source) return null;
 
         GLUtils.bindElem(this._gl, this._source);
-        GLUtils.draw(this._gl);
-
-        if (!this.supportsWebGL2) {
-            GLUtils.readPixels(this._gl, this.width, this.height, this._pixelBuffer[0]);
-            return new Promise(resolve => {
-                resolve(this._pixelBuffer[0]);
-            });
-        }
+        GLUtils.draw(this._gl, this.width, this.height);
 
         // adopted from:
         // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
