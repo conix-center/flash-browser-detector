@@ -14,7 +14,7 @@ uniform float kernel[25];
 #define pixelAtOffset(img, offset) textureLodOffset((img), texCoord, 0.0f, (offset))
 #define S(x,y,k) result += pixelAtOffset(image, ivec2((x),(y))) * kernel[k]
 
-const vec4 g = vec4(0.299f, 0.587f, 0.114f, 0.0f); // vec4(0.333f, 0.333f, 0.333f, 0.0);
+const vec4 g = vec4(0.299f, 0.587f, 0.114f, 0.0f); // vec4(0.333f, 0.333f, 0.333f, 0.0f);
 
 void main(void) {
     vec4 result = vec4(0.0f);

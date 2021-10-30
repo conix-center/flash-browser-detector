@@ -1,4 +1,5 @@
 import {GLUtils} from './utils/gl-utils';
+import {FastPromise} from './utils/fast-promise';
 
 const DEFAULT_BUFFER_SIZE = 1;
 
@@ -65,28 +66,28 @@ export class Preprocessor {
                 .then(() => {
                     this._consumerQueue.push(nextBufferIndex);
                 });
-        });
+        }).turbocharge();
 
         if (this._consumerQueue.length > 0) {
             const readyBufferIndex = this._consumerQueue.shift();
-            return new Promise(resolve => {
+            return new FastPromise(resolve => {
                 resolve(this._pixelBuffer[readyBufferIndex]);
                 this._producerQueue.push(readyBufferIndex); // enqueue AFTER resolve()
             });
         }
-        else return new Promise(resolve => {
+        else return new FastPromise(resolve => {
             this._waitForQueueNotEmpty(this._consumerQueue).then(() => {
                 const readyBufferIndex = this._consumerQueue.shift();
                 resolve(this._pixelBuffer[readyBufferIndex]);
                 this._producerQueue.push(readyBufferIndex); // enqueue AFTER resolve()
             });
-        });
+        }).turbocharge();
     }
 
     // adopted from:
     // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     _waitForQueueNotEmpty(queue) {
-        return new Promise(resolve => {
+        return new FastPromise(resolve => {
             (function wait() {
                 if(queue.length > 0)
                     resolve();
