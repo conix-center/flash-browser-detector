@@ -115,9 +115,13 @@ window.addEventListener("onFlashInit", (e) => {
     const light = new THREE.AmbientLight(0xffffff)
     scene.add(light);
 
+    // const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    // const material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+    // const cube = new THREE.Mesh( geometry, material );
     const geometry = new THREE.BoxGeometry( 1, 1, 1 );
     const edges = new THREE.EdgesGeometry( geometry );
-    const cube = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xff0000 } ) );
+    const material = new THREE.LineBasicMaterial( { color: 0x00ff00 } );
+    const cube = new THREE.LineSegments( edges, material );
 
     camera.position.y = 5;
     camera.position.z = 5;
