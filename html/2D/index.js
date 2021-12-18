@@ -9,8 +9,10 @@ flashSource.setOptions({
     // height: 3024,
     // width: 1920,
     // height: 1080,
-    width: 1280,
-    height: 720,
+    // width: 1280,
+    // height: 720,
+    width: window.innerWidth,
+    height: window.innerHeight,
 });
 
 var overlayCanvas = document.createElement("canvas");
@@ -24,9 +26,23 @@ overlayCanvas.height = flashSource.options.height;
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
 flashDetector.setOptions({
     // printPerformance: true,
-    decimateImage: false,
 });
 flashDetector.init();
+
+function transformElem(h, elem) {
+    // column major order
+    let transform = [h[0], h[3], 0, h[6],
+                     h[1], h[4], 0, h[7],
+                      0  ,  0  , 1,  0  ,
+                     h[2], h[5], 0, h[8]];
+    transform = "matrix3d("+transform.join(",")+")";
+    elem.style["-ms-transform"] = transform;
+    elem.style["-webkit-transform"] = transform;
+    elem.style["-moz-transform"] = transform;
+    elem.style["-o-transform"] = transform;
+    elem.style.transform = transform;
+    elem.style.display = "block";
+}
 
 function drawTag(tag) {
     var overlayCtx = overlayCanvas.getContext("2d");
@@ -81,6 +97,9 @@ window.addEventListener("onFlashInit", (e) => {
 window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
     drawTags(tags);
+    if (tags.length > 0) {
+        transformElem(tag.H, document.getElementById("arElem"));
+    }
     stats.update();
 });
 

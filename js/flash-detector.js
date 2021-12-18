@@ -23,7 +23,7 @@ export class FlashDetector {
 
         this.options = {
             printPerformance: false,
-            decimateImage: true,
+            decimateImage: false,
             maxImageDecimationFactor: 3,
             imageDecimationDelta: 0.2,
             rangeThreshold: 20,

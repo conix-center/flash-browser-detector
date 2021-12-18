@@ -1,4 +1,5 @@
 import {GLUtils} from './utils/gl-utils';
+import {FastPromise} from './utils/fast-promise';
 
 const DEFAULT_BUFFER_SIZE = 1;
 
@@ -19,22 +20,17 @@ export class Preprocessor {
             0, 0, 0, 0, 0,
         ];
 
-        this._gl = GLUtils.createGL(this.canvas, this.width, this.height);
-        this.supportsWebGL2 = GLUtils.supportsWebGL2(this.canvas)
+        this._gl = GLUtils.createGL(this.canvas);
 
-        const flipProg = require("./shaders/flip-image.glsl");
+        const flipProg = require("./shaders/vertex-shader.glsl");
         const grayProg = require("./shaders/grayscale-blur.glsl");
         const program = GLUtils.createProgram(this._gl, flipProg, grayProg);
         GLUtils.useProgram(this._gl, program);
 
-        this._positionLocation = this._gl.getAttribLocation(program, "position");
-        this._gl.vertexAttribPointer(this._positionLocation, 2, this._gl.FLOAT, false, 0, 0);
-        this._gl.enableVertexAttribArray(this._positionLocation);
+        this._texSizeLocation = this._gl.getUniformLocation(program, "texSize");
+        this._gl.uniform2f(this._texSizeLocation, this.width, this.height);
 
-        this._textureSizeLocation = this._gl.getUniformLocation(program, "u_tex_size");
-        this._gl.uniform2f(this._textureSizeLocation, this.width, this.height);
-
-        this._kernelLocation = this._gl.getUniformLocation(program, "u_kernel[0]");
+        this._kernelLocation = this._gl.getUniformLocation(program, "kernel[0]");
 
         this._texture = GLUtils.createTexture(this._gl, this.width, this.height);
         GLUtils.bindTexture(this._gl, this._texture);
@@ -50,14 +46,7 @@ export class Preprocessor {
         if (!this._source) return null;
 
         GLUtils.bindElem(this._gl, this._source);
-        GLUtils.draw(this._gl);
-
-        if (!this.supportsWebGL2) {
-            GLUtils.readPixels(this._gl, this.width, this.height, this._pixelBuffer[0]);
-            return new Promise(resolve => {
-                resolve(this._pixelBuffer[0]);
-            });
-        }
+        GLUtils.draw(this._gl, this.width, this.height);
 
         // adopted from:
         // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
@@ -77,28 +66,28 @@ export class Preprocessor {
                 .then(() => {
                     this._consumerQueue.push(nextBufferIndex);
                 });
-        });
+        }).turbocharge();
 
         if (this._consumerQueue.length > 0) {
             const readyBufferIndex = this._consumerQueue.shift();
-            return new Promise(resolve => {
+            return new FastPromise(resolve => {
                 resolve(this._pixelBuffer[readyBufferIndex]);
                 this._producerQueue.push(readyBufferIndex); // enqueue AFTER resolve()
             });
         }
-        else return new Promise(resolve => {
+        else return new FastPromise(resolve => {
             this._waitForQueueNotEmpty(this._consumerQueue).then(() => {
                 const readyBufferIndex = this._consumerQueue.shift();
                 resolve(this._pixelBuffer[readyBufferIndex]);
                 this._producerQueue.push(readyBufferIndex); // enqueue AFTER resolve()
             });
-        });
+        }).turbocharge();
     }
 
     // adopted from:
     // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     _waitForQueueNotEmpty(queue) {
-        return new Promise(resolve => {
+        return new FastPromise(resolve => {
             (function wait() {
                 if(queue.length > 0)
                     resolve();

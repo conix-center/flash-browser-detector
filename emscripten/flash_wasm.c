@@ -21,7 +21,7 @@
 #include "lightanchor_detector.h"
 
 // defaults set for 2020 ipad, with 1280x720 images
-static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
+static apriltag_detection_info_t pose_info = {.cx=636.9118, .cy=360.5100, .fx=997.2827, .fy=997.2827};
 
 static apriltag_family_t *lf = NULL;
 static apriltag_detector_t *td = NULL;
@@ -115,13 +115,13 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         .buf = gray
     };
 
-    // EM_ASM({console.time("detect_quads")});
+    // EM_ASM({console.time("quad detection")});
     zarray_t *quads = detect_quads(td, &im);
-    // EM_ASM({console.timeEnd("detect_quads")});
+    // EM_ASM({console.timeEnd("quad detection")});
 
-    // EM_ASM({console.time("decode_tags")});
+    // EM_ASM({console.time("tag tracking")});
     zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
-    // EM_ASM({console.timeEnd("decode_tags")});
+    // EM_ASM({console.timeEnd("tag tracking")});
 
     int sz = zarray_size(lightanchors);
 
@@ -130,20 +130,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         lightanchor_t *la;
         zarray_get(lightanchors, i, &la);
 
-        // adjust centers of pixels so that they correspond to the
-        // original full-resolution image.
-        if (td->quad_decimate > 1)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                la->p[j][0] = (la->p[j][0] - 0.5) * td->quad_decimate + 0.5;
-                la->p[j][1] = (la->p[j][1] - 0.5) * td->quad_decimate + 0.5;
-            }
-            la->c[0] = (la->c[0] - 0.5) * td->quad_decimate + 0.5;
-            la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
-        }
-
-        EM_ASM_INT({
+        EM_ASM_({
             var $a = arguments;
             var i = 0;
 
@@ -199,7 +186,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1]
         );
 
-        EM_ASM_INT({
+        EM_ASM_({
             var $a = arguments;
             var i = 0;
 
@@ -234,16 +221,20 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         );
 
         apriltag_detection_t det;
-        det.H = matd_copy(la->H);
         memcpy(det.c, la->c, sizeof(det.c));
         memcpy(det.p, la->p, sizeof(det.p));
-        g_det_pose_info.det = &det;
+        det.H = matd_copy(la->H);
+
+        pose_info.det = &det;
+        pose_info.tagsize = 0.15;
 
         double err1, err2;
         apriltag_pose_t pose1, pose2;
-        estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
+        // EM_ASM({console.time("pose estimation")});
+        estimate_tag_pose_orthogonal_iteration(&pose_info, &err1, &pose1, &err2, &pose2, 50);
+        // EM_ASM({console.time("pose estimation")});
 
-        EM_ASM_INT({
+        EM_ASM_({
             var $a = arguments;
             var i = 0;
 
@@ -258,7 +249,12 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             rot[7] = $a[i++];
             rot[8] = $a[i++];
 
-            const tagEvent = new CustomEvent("onFlashRotFound", {detail: {R: rot}});
+            const trans = [];
+            trans[0] = $a[i++];
+            trans[1] = $a[i++];
+            trans[2] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashPoseFound", {detail: {pose: {R: rot, T: trans}}});
             var scope;
             if ('function' === typeof importScripts)
                 scope = self;
@@ -274,41 +270,10 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             MATD_EL(pose1.R,1,2),
             MATD_EL(pose1.R,2,0),
             MATD_EL(pose1.R,2,1),
-            MATD_EL(pose1.R,2,2)
-        );
-
-        EM_ASM_INT({
-            var $a = arguments;
-            var i = 0;
-
-            const trans = [];
-            trans[0] = $a[i++];
-            trans[1] = $a[i++];
-            trans[2] = $a[i++];
-            trans[3] = $a[i++];
-            trans[4] = $a[i++];
-            trans[5] = $a[i++];
-            trans[6] = $a[i++];
-            trans[7] = $a[i++];
-            trans[8] = $a[i++];
-
-            const tagEvent = new CustomEvent("onFlashTransFound", {detail: {T: trans}});
-            var scope;
-            if ('function' === typeof importScripts)
-                scope = self;
-            else
-                scope = window;
-            scope.dispatchEvent(tagEvent);
-        },
+            MATD_EL(pose1.R,2,2),
             MATD_EL(pose1.t,0,0),
             MATD_EL(pose1.t,0,1),
-            MATD_EL(pose1.t,0,2),
-            MATD_EL(pose1.t,1,0),
-            MATD_EL(pose1.t,1,1),
-            MATD_EL(pose1.t,1,2),
-            MATD_EL(pose1.t,2,0),
-            MATD_EL(pose1.t,2,1),
-            MATD_EL(pose1.t,2,2)
+            MATD_EL(pose1.t,0,2)
         );
     }
 
