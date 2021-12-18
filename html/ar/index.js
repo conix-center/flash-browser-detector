@@ -49,7 +49,7 @@ flashDetector.init();
 
 function drawTags(tags) {
     for (tag of tags) {
-        const pose = getPose(tag.R, tag.T);
+        const pose = getPose(tag.pose.R, tag.pose.T);
         camera.quaternion.setFromRotationMatrix(pose);
         camera.position.setFromMatrixPosition(pose);
     }
@@ -132,7 +132,6 @@ window.addEventListener("onFlashInit", (e) => {
     camera.quaternion.setFromRotationMatrix(rotMat);
 
     let root = new THREE.Object3D();
-    // root.matrixAutoUpdate = false;
     root.add(cube);
 
     scene.add(root);

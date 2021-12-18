@@ -53,11 +53,8 @@ export class FlashModule {
         this.scope.addEventListener("onFlashTagFound", (e) => {
             _this.tags.push(e.detail.tag);
         });
-        this.scope.addEventListener("onFlashRotFound", (e) => {
-            _this.tags[_this.tags.length-1].R = e.detail.R;
-        });
-        this.scope.addEventListener("onFlashTransFound", (e) => {
-            _this.tags[_this.tags.length-1].T = e.detail.T;
+        this.scope.addEventListener("onFlashPoseFound", (e) => {
+            _this.tags[_this.tags.length-1].pose = e.detail.pose;
         });
     }
 

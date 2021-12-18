@@ -143,7 +143,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
         }
 
-        EM_ASM_INT({
+        EM_ASM_({
             var $a = arguments;
             var i = 0;
 
@@ -209,7 +209,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         apriltag_pose_t pose1, pose2;
         estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
 
-        EM_ASM_INT({
+        EM_ASM_({
             var $a = arguments;
             var i = 0;
 
@@ -224,7 +224,12 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             rot[7] = $a[i++];
             rot[8] = $a[i++];
 
-            const tagEvent = new CustomEvent("onFlashRotFound", {detail: {R: rot}});
+            const trans = [];
+            trans[0] = $a[i++];
+            trans[1] = $a[i++];
+            trans[2] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashPoseFound", {detail: {pose: {R: rot, T: trans}}});
             var scope;
             if ('function' === typeof importScripts)
                 scope = self;
@@ -240,26 +245,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             MATD_EL(pose1.R,1,2),
             MATD_EL(pose1.R,2,0),
             MATD_EL(pose1.R,2,1),
-            MATD_EL(pose1.R,2,2)
-        );
-
-        EM_ASM_INT({
-            var $a = arguments;
-            var i = 0;
-
-            const trans = [];
-            trans[0] = $a[i++];
-            trans[1] = $a[i++];
-            trans[2] = $a[i++];
-
-            const tagEvent = new CustomEvent("onFlashTransFound", {detail: {T: trans}});
-            var scope;
-            if ('function' === typeof importScripts)
-                scope = self;
-            else
-                scope = window;
-            scope.dispatchEvent(tagEvent);
-        },
+            MATD_EL(pose1.R,2,2),
             MATD_EL(pose1.t,0,0),
             MATD_EL(pose1.t,0,1),
             MATD_EL(pose1.t,0,2)
