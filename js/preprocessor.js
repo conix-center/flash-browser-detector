@@ -1,7 +1,10 @@
 import {GLUtils} from './utils/gl-utils';
+import {FastPromise} from './utils/fast-promise';
+
+const DEFAULT_BUFFER_SIZE = 1;
 
 export class Preprocessor {
-    constructor(width, height, canvas) {
+    constructor(width, height, canvas, numberOfBuffers=DEFAULT_BUFFER_SIZE) {
         this.width = width;
         this.height = height;
 
@@ -17,38 +20,81 @@ export class Preprocessor {
             0, 0, 0, 0, 0,
         ];
 
-        this.gl = GLUtils.createGL(this.canvas, this.width, this.height);
+        this._gl = GLUtils.createGL(this.canvas);
 
-        const flipProg = require("./shaders/flip-image.glsl");
+        const flipProg = require("./shaders/vertex-shader.glsl");
         const grayProg = require("./shaders/grayscale-blur.glsl");
-        const program = GLUtils.createProgram(this.gl, flipProg, grayProg);
-        GLUtils.useProgram(this.gl, program);
+        const program = GLUtils.createProgram(this._gl, flipProg, grayProg);
+        GLUtils.useProgram(this._gl, program);
 
-        this.positionLocation = this.gl.getAttribLocation(program, "position");
-        this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-        this.gl.enableVertexAttribArray(this.positionLocation);
+        this._texSizeLocation = this._gl.getUniformLocation(program, "a_texSize");
+        this._gl.uniform2f(this._texSizeLocation, this.width, this.height);
 
-        this.textureSizeLocation = this.gl.getUniformLocation(program, "u_tex_size");
-        this.gl.uniform2f(this.textureSizeLocation, this.width, this.height);
+        this._kernelLocation = this._gl.getUniformLocation(program, "kernel[0]");
 
-        this.kernelLocation = this.gl.getUniformLocation(program, "u_kernel[0]");
+        this._texture = GLUtils.createTexture(this._gl, this.width, this.height);
+        GLUtils.bindTexture(this._gl, this._texture);
 
-        this.texture = GLUtils.createTexture(this.gl, this.width, this.height);
-        GLUtils.bindTexture(this.gl, this.texture);
+        this._pixelBuffer = (new Array(numberOfBuffers)).fill(null).map(() => new Uint8Array(this.width * this.height * 4));
+        this._consumerQueue = (new Array(numberOfBuffers)).fill(0).map((_, i) => i);
+        this._producerQueue = [];
 
-        this.imageData = new Uint8Array(this.width * this.height * 4);
+        this._pbo = null;
     }
 
-    getPixels() {
-        if (this.source) {
-            GLUtils.bindElem(this.gl, this.source);
-            GLUtils.draw(this.gl);
-            GLUtils.readPixels(this.gl, this.width, this.height, this.imageData);
-            return this.imageData;
+    async getPixels() {
+        if (!this._source) return null;
+
+        GLUtils.bindElem(this._gl, this._source);
+        GLUtils.draw(this._gl, this.width, this.height);
+
+        // adopted from:
+        // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
+        const pbo = this._gl.isBuffer(this._pbo) ?
+                    this._pbo : (this._pbo = GLUtils.createBuffer(this._gl));
+
+        if (this._producerQueue.length > 0) {
+            const nextBufferIndex = this._producerQueue.shift();
+            GLUtils.readPixelsAsync(this._gl, pbo, this.width, this.height, this._pixelBuffer[nextBufferIndex])
+                .then(() => {
+                    this._consumerQueue.push(nextBufferIndex);
+                });
         }
-        else {
-            return null;
+        else this._waitForQueueNotEmpty(this._producerQueue).then(() => {
+            const nextBufferIndex = this._producerQueue.shift();
+            GLUtils.readPixelsAsync(this._gl, pbo, this.width, this.height, this._pixelBuffer[nextBufferIndex])
+                .then(() => {
+                    this._consumerQueue.push(nextBufferIndex);
+                });
+        }).turbocharge();
+
+        if (this._consumerQueue.length > 0) {
+            const readyBufferIndex = this._consumerQueue.shift();
+            return new FastPromise(resolve => {
+                resolve(this._pixelBuffer[readyBufferIndex]);
+                this._producerQueue.push(readyBufferIndex); // enqueue AFTER resolve()
+            });
         }
+        else return new FastPromise(resolve => {
+            this._waitForQueueNotEmpty(this._consumerQueue).then(() => {
+                const readyBufferIndex = this._consumerQueue.shift();
+                resolve(this._pixelBuffer[readyBufferIndex]);
+                this._producerQueue.push(readyBufferIndex); // enqueue AFTER resolve()
+            });
+        }).turbocharge();
+    }
+
+    // adopted from:
+    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
+    _waitForQueueNotEmpty(queue) {
+        return new FastPromise(resolve => {
+            (function wait() {
+                if(queue.length > 0)
+                    resolve();
+                else
+                    setTimeout(wait, 0);
+            })();
+        });
     }
 
     setKernelSigma(sigma) {
@@ -78,7 +124,7 @@ export class Preprocessor {
             ];
         }
 
-        this.gl.uniform1fv(this.kernelLocation, this.kernel);
+        this._gl.uniform1fv(this._kernelLocation, this.kernel);
     }
 
     resize(width, height) {
@@ -87,14 +133,18 @@ export class Preprocessor {
 
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        GLUtils.resize(this.gl);
-        this.gl.uniform2f(this.textureSizeLocation, this.width, this.height);
+        GLUtils.resize(this._gl);
+        this._gl.uniform2f(this._textureSizeLocation, this.width, this.height);
 
-        this.imageData = new Uint8Array(this.width * this.height * 4);
+        for (let i = 0; i < this._pixelBuffer.length; i++) {
+            const newBuffer = new Uint8Array(this.width * this.height * 4);
+            // newBuffer.set(this._pixelBuffer[i]);
+            this._pixelBuffer[i] = newBuffer;
+        }
     }
 
     attachElem(source) {
-        this.source = source;
-        GLUtils.bindElem(this.gl, this.source);
+        this._source = source;
+        GLUtils.bindElem(this._gl, this._source);
     }
 }
