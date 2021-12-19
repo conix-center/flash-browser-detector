@@ -186,6 +186,40 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1]
         );
 
+        EM_ASM_({
+            var $a = arguments;
+            var i = 0;
+
+            const H = [];
+            H[0] = $a[i++];
+            H[1] = $a[i++];
+            H[2] = $a[i++];
+            H[3] = $a[i++];
+            H[4] = $a[i++];
+            H[5] = $a[i++];
+            H[6] = $a[i++];
+            H[7] = $a[i++];
+            H[8] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashHomoFound", {detail: {H: H}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            MATD_EL(la->H,0,0),
+            MATD_EL(la->H,0,1),
+            MATD_EL(la->H,0,2),
+            MATD_EL(la->H,1,0),
+            MATD_EL(la->H,1,1),
+            MATD_EL(la->H,1,2),
+            MATD_EL(la->H,2,0),
+            MATD_EL(la->H,2,1),
+            MATD_EL(la->H,2,2)
+        );
+
         apriltag_detection_t det;
         memcpy(det.c, la->c, sizeof(det.c));
         memcpy(det.p, la->p, sizeof(det.p));

@@ -27,7 +27,7 @@ export class Preprocessor {
         const program = GLUtils.createProgram(this._gl, flipProg, grayProg);
         GLUtils.useProgram(this._gl, program);
 
-        this._texSizeLocation = this._gl.getUniformLocation(program, "a_texSize");
+        this._texSizeLocation = this._gl.getUniformLocation(program, "texSize");
         this._gl.uniform2f(this._texSizeLocation, this.width, this.height);
 
         this._kernelLocation = this._gl.getUniformLocation(program, "kernel[0]");
