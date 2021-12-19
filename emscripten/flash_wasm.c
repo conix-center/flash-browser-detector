@@ -223,7 +223,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         apriltag_detection_t det;
         memcpy(det.c, la->c, sizeof(det.c));
         memcpy(det.p, la->p, sizeof(det.p));
-        det.H = matd_copy(la->H);
+        det.H = la->H;
 
         pose_info.det = &det;
         pose_info.tagsize = 0.15;
