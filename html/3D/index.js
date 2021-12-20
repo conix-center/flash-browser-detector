@@ -28,8 +28,8 @@ flashSource.setOptions({
     // height: 3024,
     // width: 1920,
     // height: 1080,
-    width: 1280,
-    height: 720,
+    width: window.innerWidth,
+    height: window.innerHeight,
 });
 
 var overlayCanvas = document.createElement("canvas");
@@ -37,8 +37,8 @@ overlayCanvas.id = "overlay";
 overlayCanvas.style.position = "absolute";
 overlayCanvas.style.top = "0px";
 overlayCanvas.style.left = "0px";
-overlayCanvas.width = flashSource.options.width;
-overlayCanvas.height = flashSource.options.height;
+overlayCanvas.width = window.innerWidth;
+overlayCanvas.height = window.innerHeight;
 
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
 flashDetector.setOptions({
@@ -46,20 +46,20 @@ flashDetector.setOptions({
 });
 flashDetector.init();
 
-function drawTags(tags) {
-    for (tag of tags) {
-        const pose = getPose(tag.pose.R, tag.pose.T);
-        camera.quaternion.setFromRotationMatrix(pose);
-        camera.position.setFromMatrixPosition(pose);
-    }
-}
-
 function updateInfo() {
     var info = document.getElementById("info");
     info.style.zIndex = "1";
     info.innerText = "Detecting Codes:\n";
     for (code of this.codes) {
         info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
+    }
+}
+
+function drawTags(tags) {
+    for (tag of tags) {
+        const pose = getPose(tag.pose.R, tag.pose.T);
+        camera.quaternion.setFromRotationMatrix(pose);
+        camera.position.setFromMatrixPosition(pose);
     }
 }
 
@@ -91,7 +91,7 @@ window.addEventListener("onFlashInit", (e) => {
     document.body.appendChild(overlayCanvas);
     // document.body.appendChild(flashDetector.preprocessor.canvas);
 
-    let ratio = window.innerWidth / window.innerHeight;
+    let ratio = flashSource.options.width / flashSource.options.height;
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, ratio, 0.01, 1000);

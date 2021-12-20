@@ -38,6 +38,15 @@ flashDetector.setOptions({
 });
 flashDetector.init();
 
+function updateInfo() {
+    var info = document.getElementById("info");
+    info.style.zIndex = "1";
+    info.innerText = "Detecting Codes:\n";
+    for (code of this.codes) {
+        info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
+    }
+}
+
 function transformElem(h, elem) {
     // column major order
     let transform = [h[0], h[3], 0, h[6],
@@ -64,15 +73,6 @@ function drawTag(tag) {
 function drawTags(tags) {
     for (tag of tags) {
         drawTag(tag);
-    }
-}
-
-function updateInfo() {
-    var info = document.getElementById("info");
-    info.style.zIndex = "1";
-    info.innerText = "Detecting Codes:\n";
-    for (code of this.codes) {
-        info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
     }
 }
 
