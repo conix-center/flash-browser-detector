@@ -16,11 +16,8 @@ body {
     border-radius: 5px;
 }
 
-#arElem {
-    width: 1.5px;
-    height: 1.5px;
-    background-color: yellow;
-    border: 0.5px solid black;
-    /* border-radius: 1.5px; */
+.arElem {
+    width: 2px;
+    height: 2px;
     z-index: 9999;
 }

@@ -24,9 +24,17 @@ overlayCanvas.height = flashSource.options.height;
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
 flashDetector.setOptions({
     // printPerformance: true,
-    decimateImage: false,
 });
 flashDetector.init();
+
+function updateInfo() {
+    var info = document.getElementById("info");
+    info.style.zIndex = "1";
+    info.innerText = "Detecting Codes:\n";
+    for (code of this.codes) {
+        info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
+    }
+}
 
 function drawTag(tag) {
     var overlayCtx = overlayCanvas.getContext("2d");
@@ -56,16 +64,6 @@ function drawTags(tags) {
     }
 }
 
-function updateInfo() {
-    var info = document.getElementById("info");
-    info.style.zIndex = "1";
-    info.innerText = "Detecting Codes:\n";
-    for(var i = 0; i < this.codes.length; i++) {
-        var code = this.codes[i];
-        info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
-    }
-}
-
 window.addEventListener("onFlashInit", (e) => {
     stats = new Stats();
     stats.showPanel(0);
@@ -80,7 +78,8 @@ window.addEventListener("onFlashInit", (e) => {
 });
 
 window.addEventListener("onFlashTagsFound", (e) => {
-    drawTags(e.detail.tags);
+    const tags = e.detail.tags;
+    drawTags(tags);
     stats.update();
 });
 
