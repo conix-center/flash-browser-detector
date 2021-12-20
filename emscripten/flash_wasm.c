@@ -255,11 +255,11 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             R[8] = $a[i++];
             pose["R"] = R;
 
-            const T = [];
-            T[0] = $a[i++];
-            T[1] = $a[i++];
-            T[2] = $a[i++];
-            pose["T"] = T;
+            const t = [];
+            t[0] = $a[i++];
+            t[1] = $a[i++];
+            t[2] = $a[i++];
+            pose["t"] = t;
 
             const tagEvent = new CustomEvent("onFlashPoseFound", {detail: {pose: pose}});
             var scope;
