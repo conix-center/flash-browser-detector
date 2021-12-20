@@ -5,8 +5,8 @@ var stats = null;
 
 var scene, camera, renderer;
 
-var dtagMatrix = new THREE.Matrix4();
-var FLIPMATRIX = new THREE.Matrix4();
+const dtagMatrix = new THREE.Matrix4();
+const FLIPMATRIX = new THREE.Matrix4();
 FLIPMATRIX.set(
     1, 0, 0, 0,
     0, -1, 0, 0,
@@ -14,7 +14,7 @@ FLIPMATRIX.set(
     0, 0, 0, 1,
 );
 
-let originMatrix = new THREE.Matrix4();
+const originMatrix = new THREE.Matrix4();
 originMatrix.set(
     1,  0, 0, 0,
     0,  0, 1, 0,
@@ -57,9 +57,9 @@ function updateInfo() {
 
 function drawTags(tags) {
     for (tag of tags) {
-        const pose = getPose(tag.pose.R, tag.pose.T);
-        camera.quaternion.setFromRotationMatrix(pose);
-        camera.position.setFromMatrixPosition(pose);
+        const rigPose = getPose(tag.pose.R, tag.pose.t);
+        camera.quaternion.setFromRotationMatrix(rigPose);
+        camera.position.setFromMatrixPosition(rigPose);
     }
 }
 

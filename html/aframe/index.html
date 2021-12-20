@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
+        <script type="text/javascript" src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+
+        <script type="text/javascript" src="../../dist/flash.min.js"></script>
+        <script type="text/javascript" src="index.js"></script>
+
+        <link rel="stylesheet" href="style.css">
+
+        <title>FLASH</title>
+    </head>
+    <body>
+        <a-scene background="transparent: true">
+            <a-entity id="cameraRig" position="0 0 0">
+                <a-entity id="cameraSpinner" name="PerspectiveCamera" position="0 0 0" tag="MainCamera">
+                    <a-camera id="my-camera"
+                              far="10000"
+                              look-controls="reverseMouseDrag: true"
+                              look-controls-arrow
+                              mouse-cursor near="0.1"
+                              wasd-controls="acceleration: 30">
+                    </a-camera>
+                </a-entity>
+            </a-entity>
+            <a-light type="ambient" color="#FFF"></a-light>
+
+            <a-entity geometry="primitive: box" material="color: green" wireframe></a-entity>
+            <!-- <a-box position="0 0 0" rotation="0 0 0" color="#4CC3D9"></a-box> -->
+        </a-scene>
+
+        <div id="stats"></div>
+        <p id="info"></p>
+    </body>
+</html>
