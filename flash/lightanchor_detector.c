@@ -344,6 +344,40 @@ static zarray_t *update_candidates(lightanchor_detector_t *ld,
 
                 if (lightanchor_decode(ld, candidate_curr)) {
                     lightanchor_t *det = lightanchor_copy(candidate_curr);
+
+                    // double theta = 2.0 * M_PI / 2.0;
+                    // double c = cos(theta), s = sin(theta);
+
+                    // // Fix the rotation of our homography to properly orient the tag
+                    // matd_t *R = matd_create(3,3);
+                    // MATD_EL(R, 0, 0) = c;
+                    // MATD_EL(R, 0, 1) = -s;
+                    // MATD_EL(R, 1, 0) = s;
+                    // MATD_EL(R, 1, 1) = c;
+                    // MATD_EL(R, 2, 2) = 1;
+
+                    // det->H = matd_op("M*M", det->H, R);
+
+                    // matd_destroy(R);
+
+                    homography_project(det->H, 0, 0, &det->c[0], &det->c[1]);
+
+                    // [-1, -1], [1, -1], [1, 1], [-1, 1], Desired points
+                    // [-1, 1], [1, 1], [1, -1], [-1, -1], FLIP Y
+                    // adjust the points in det->p so that they correspond to
+                    // counter-clockwise around the quad, starting at -1,-1.
+                    for (int i = 0; i < 4; i++) {
+                        int tcx = (i == 1 || i == 2) ? 1 : -1;
+                        int tcy = (i < 2) ? 1 : -1;
+
+                        double p[2];
+
+                        homography_project(det->H, tcx, tcy, &p[0], &p[1]);
+
+                        det->p[i][0] = p[0];
+                        det->p[i][1] = p[1];
+                    }
+
                     zarray_add(detections, &det);
                 }
             }
@@ -495,4 +529,10 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
 
     // return new_tags;
     return update_candidates(ld, new_tags, im);
+}
+
+zarray_t *lightanchor_detector_detect(apriltag_detector_t *td, lightanchor_detector_t *ld, image_u8_t *im)
+{
+    zarray_t *quads = detect_quads(td, im);
+    return decode_tags(td, ld, quads, im);
 }

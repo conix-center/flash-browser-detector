@@ -21,7 +21,7 @@
 #include "lightanchor_detector.h"
 
 // defaults set for 2020 ipad, with 1280x720 images
-// static apriltag_detection_info_t g_det_pose_info = {NULL, 0.15, 636.9118, 360.5100, 997.2827, 997.2827};
+static apriltag_detection_info_t pose_info = {.cx=636.9118, .cy=360.5100, .fx=997.2827, .fy=997.2827};
 
 static apriltag_family_t *lf = NULL;
 static apriltag_detector_t *td = NULL;
@@ -115,13 +115,15 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         .buf = gray
     };
 
-    // EM_ASM({console.time("detect_quads")});
-    zarray_t *quads = detect_quads(td, &im);
-    // EM_ASM({console.timeEnd("detect_quads")});
+    // // EM_ASM({console.time("quad detection")});
+    // zarray_t *quads = detect_quads(td, &im);
+    // // EM_ASM({console.timeEnd("quad detection")});
 
-    // EM_ASM({console.time("decode_tags")});
-    zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
-    // EM_ASM({console.timeEnd("decode_tags")});
+    // // EM_ASM({console.time("tag tracking")});
+    // zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
+    // // EM_ASM({console.timeEnd("tag tracking")});
+
+    zarray_t *lightanchors = lightanchor_detector_detect(td, ld, &im);
 
     int sz = zarray_size(lightanchors);
 
@@ -130,20 +132,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         lightanchor_t *la;
         zarray_get(lightanchors, i, &la);
 
-        // adjust centers of pixels so that they correspond to the
-        // original full-resolution image.
-        if (td->quad_decimate > 1)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                la->p[j][0] = (la->p[j][0] - 0.5) * td->quad_decimate + 0.5;
-                la->p[j][1] = (la->p[j][1] - 0.5) * td->quad_decimate + 0.5;
-            }
-            la->c[0] = (la->c[0] - 0.5) * td->quad_decimate + 0.5;
-            la->c[1] = (la->c[1] - 0.5) * td->quad_decimate + 0.5;
-        }
-
-        EM_ASM_INT({
+        EM_ASM_({
             var $a = arguments;
             var i = 0;
 
@@ -199,15 +188,101 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             la->c[1]
         );
 
-        // apriltag_detection_t det;
-        // det.H = matd_copy(la->H);
-        // memcpy(det.c, la->c, sizeof(det.c));
-        // memcpy(det.p, la->p, sizeof(det.p));
-        // g_det_pose_info.det = &det;
+        EM_ASM_({
+            var $a = arguments;
+            var i = 0;
 
-        // double err1, err2;
-        // apriltag_pose_t pose1, pose2;
-        // estimate_tag_pose_orthogonal_iteration(&g_det_pose_info, &err1, &pose1, &err2, &pose2, 50);
+            const H = [];
+            H[0] = $a[i++];
+            H[1] = $a[i++];
+            H[2] = $a[i++];
+            H[3] = $a[i++];
+            H[4] = $a[i++];
+            H[5] = $a[i++];
+            H[6] = $a[i++];
+            H[7] = $a[i++];
+            H[8] = $a[i++];
+
+            const tagEvent = new CustomEvent("onFlashHomoFound", {detail: {H: H}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            matd_get(la->H,0,0),
+            matd_get(la->H,0,1),
+            matd_get(la->H,0,2),
+            matd_get(la->H,1,0),
+            matd_get(la->H,1,1),
+            matd_get(la->H,1,2),
+            matd_get(la->H,2,0),
+            matd_get(la->H,2,1),
+            matd_get(la->H,2,2)
+        );
+
+        apriltag_detection_t det;
+        memcpy(det.c, la->c, sizeof(det.c));
+        memcpy(det.p, la->p, sizeof(det.p));
+        det.H = la->H;
+
+        pose_info.det = &det;
+        pose_info.tagsize = 0.15;
+
+        apriltag_pose_t pose;
+        // EM_ASM({console.time("pose estimation")});
+        double error = estimate_tag_pose(&pose_info, &pose);
+        // EM_ASM({console.time("pose estimation")});
+
+        EM_ASM_({
+            var $a = arguments;
+            var i = 0;
+
+            const pose = {};
+
+            pose["error"] = $a[i++];
+
+            const R = [];
+            R[0] = $a[i++];
+            R[1] = $a[i++];
+            R[2] = $a[i++];
+            R[3] = $a[i++];
+            R[4] = $a[i++];
+            R[5] = $a[i++];
+            R[6] = $a[i++];
+            R[7] = $a[i++];
+            R[8] = $a[i++];
+            pose["R"] = R;
+
+            const T = [];
+            T[0] = $a[i++];
+            T[1] = $a[i++];
+            T[2] = $a[i++];
+            pose["T"] = T;
+
+            const tagEvent = new CustomEvent("onFlashPoseFound", {detail: {pose: pose}});
+            var scope;
+            if ('function' === typeof importScripts)
+                scope = self;
+            else
+                scope = window;
+            scope.dispatchEvent(tagEvent);
+        },
+            error,
+            matd_get(pose.R,0,0),
+            matd_get(pose.R,1,0),
+            matd_get(pose.R,2,0),
+            matd_get(pose.R,0,1),
+            matd_get(pose.R,1,1),
+            matd_get(pose.R,2,1),
+            matd_get(pose.R,0,2),
+            matd_get(pose.R,1,2),
+            matd_get(pose.R,2,2),
+            matd_get(pose.t,0,0),
+            matd_get(pose.t,1,0),
+            matd_get(pose.t,2,0)
+        );
     }
 
     lightanchors_destroy(lightanchors);
