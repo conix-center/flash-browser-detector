@@ -42,12 +42,17 @@ struct lightanchor_detector
     zarray_t *candidates;
 };
 
+apriltag_family_t *lightanchor_family_create();
+
 lightanchor_detector_t *lightanchor_detector_create();
+
 int lightanchor_detector_add_code(lightanchor_detector_t *ld, char code);
+
 zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
+
 void lightanchor_detector_destroy(lightanchor_detector_t *ld);
 
-apriltag_family_t *lightanchor_family_create();
+zarray_t *lightanchor_detector_detect(apriltag_detector_t *td, lightanchor_detector_t *ld, image_u8_t *im);
 
 /**
  * Use apriltag library to detect quads from an image and

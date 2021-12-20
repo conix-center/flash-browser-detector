@@ -115,13 +115,15 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         .buf = gray
     };
 
-    // EM_ASM({console.time("quad detection")});
-    zarray_t *quads = detect_quads(td, &im);
-    // EM_ASM({console.timeEnd("quad detection")});
+    // // EM_ASM({console.time("quad detection")});
+    // zarray_t *quads = detect_quads(td, &im);
+    // // EM_ASM({console.timeEnd("quad detection")});
 
-    // EM_ASM({console.time("tag tracking")});
-    zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
-    // EM_ASM({console.timeEnd("tag tracking")});
+    // // EM_ASM({console.time("tag tracking")});
+    // zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
+    // // EM_ASM({console.timeEnd("tag tracking")});
+
+    zarray_t *lightanchors = lightanchor_detector_detect(td, ld, &im);
 
     int sz = zarray_size(lightanchors);
 

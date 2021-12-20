@@ -43,7 +43,6 @@ overlayCanvas.height = flashSource.options.height;
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
 flashDetector.setOptions({
     // printPerformance: true,
-    decimateImage: false,
 });
 flashDetector.init();
 

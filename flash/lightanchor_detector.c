@@ -496,3 +496,9 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
     // return new_tags;
     return update_candidates(ld, new_tags, im);
 }
+
+zarray_t *lightanchor_detector_detect(apriltag_detector_t *td, lightanchor_detector_t *ld, image_u8_t *im)
+{
+    zarray_t *quads = detect_quads(td, im);
+    return decode_tags(td, ld, quads, im);
+}
