@@ -211,15 +211,15 @@ int detect_tags(uint8_t gray[], int cols, int rows)
                 scope = window;
             scope.dispatchEvent(tagEvent);
         },
-            MATD_EL(la->H,0,0),
-            MATD_EL(la->H,0,1),
-            MATD_EL(la->H,0,2),
-            MATD_EL(la->H,1,0),
-            MATD_EL(la->H,1,1),
-            MATD_EL(la->H,1,2),
-            MATD_EL(la->H,2,0),
-            MATD_EL(la->H,2,1),
-            MATD_EL(la->H,2,2)
+            matd_get(la->H,0,0),
+            matd_get(la->H,0,1),
+            matd_get(la->H,0,2),
+            matd_get(la->H,1,0),
+            matd_get(la->H,1,1),
+            matd_get(la->H,1,2),
+            matd_get(la->H,2,0),
+            matd_get(la->H,2,1),
+            matd_get(la->H,2,2)
         );
 
         apriltag_detection_t det;
@@ -270,18 +270,18 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             scope.dispatchEvent(tagEvent);
         },
             error,
-            MATD_EL(pose.R,0,0),
-            MATD_EL(pose.R,0,1),
-            MATD_EL(pose.R,0,2),
-            MATD_EL(pose.R,1,0),
-            MATD_EL(pose.R,1,1),
-            MATD_EL(pose.R,1,2),
-            MATD_EL(pose.R,2,0),
-            MATD_EL(pose.R,2,1),
-            MATD_EL(pose.R,2,2),
-            MATD_EL(pose.t,0,0),
-            MATD_EL(pose.t,0,1),
-            MATD_EL(pose.t,0,2)
+            matd_get(pose.R,0,0),
+            matd_get(pose.R,1,0),
+            matd_get(pose.R,2,0),
+            matd_get(pose.R,0,1),
+            matd_get(pose.R,1,1),
+            matd_get(pose.R,2,1),
+            matd_get(pose.R,0,2),
+            matd_get(pose.R,1,2),
+            matd_get(pose.R,2,2),
+            matd_get(pose.t,0,0),
+            matd_get(pose.t,1,0),
+            matd_get(pose.t,2,0)
         );
     }
 
