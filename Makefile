@@ -24,9 +24,9 @@ WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
 WASM_LD_FLAGS 		+= -s ENVIRONMENT=worker
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
 WASM_LD_FLAGS 		+= -s EXPORTED_RUNTIME_METHODS='["cwrap"]'
-WASM_LD_FLAGS 		+= --memory-init-file 0
 WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
 WASM_LD_FLAGS 		+= -s WASM=1
+WASM_LD_FLAGS 		+= -s --bind
 
 OPENCV_C_FLAGS		= `pkg-config --cflags opencv`
 OPENCV_LD_FLAGS		= `pkg-config --libs opencv`
@@ -42,8 +42,8 @@ EXAMPLES_SRCS		:= $(wildcard $(EXAMPLES_DIR)/*.c $(EXAMPLES_DIR)/*.cpp)
 EXAMPLES_OBJS		:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(OBJ_DIR)/%.o) $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 EXAMPLES_TARGETS	:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(BIN_DIR)/%) $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.cpp=$(BIN_DIR)/%)
 
-WASM_SRCS			:= $(wildcard $(EMSCRIPTEN_DIR)/*.c)
-WASM_TARGET			:= $(WASM_SRCS:$(EMSCRIPTEN_DIR)/%.c=$(WASM_OUTPUT_DIR)/%.js)
+WASM_SRCS			:= $(wildcard $(EMSCRIPTEN_DIR)/*.cpp)
+WASM_TARGET			:= $(WASM_SRCS:$(EMSCRIPTEN_DIR)/%.cpp=$(WASM_OUTPUT_DIR)/%.js)
 
 .PHONY: all clean
 
@@ -101,7 +101,7 @@ $(OBJ_DIR)/%.o: $(EXAMPLES_DIR)/%.cpp | $(BIN_DIR) $(OBJ_DIR)
 	@echo "    Compiling target [$<]"
 	@$(CXX) -o $@ -c $< $(CXX_FLAGS) $(INCLUDE) $(OPENCV_C_FLAGS)
 
-$(WASM_OUTPUT_DIR)/%.js: $(EMSCRIPTEN_DIR)/%.c $(APRILTAG_SRCS) $(FLASH_SRCS) | $(WASM_OUTPUT_DIR) $(HTML_OBJ_DIR)
+$(WASM_OUTPUT_DIR)/%.js: $(EMSCRIPTEN_DIR)/%.cpp $(APRILTAG_SRCS) $(FLASH_SRCS) | $(WASM_OUTPUT_DIR) $(HTML_OBJ_DIR)
 	@echo "=================================================="
 	@echo "    Compiling WASM target [$<]"
 	@echo "    Be sure to clone emsdk and run 'source ./emsdk/emsdk_env.sh'!"
