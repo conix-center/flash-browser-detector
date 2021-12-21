@@ -1,3 +1,11 @@
+/** @file lightanchor.c
+ *  @brief Implementation of the lightanchor data structure and helper functions
+ *  @see lightanchor.h for documenation
+ *
+ * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
+ * @date July, 2020
+ */
 #include <math.h>
 #include "apriltag.h"
 #include "common/zarray.h"

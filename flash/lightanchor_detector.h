@@ -1,27 +1,20 @@
- /** @file lightanchor_detector.h
+/** @file lightanchor_detector.h
  *  @brief Definitions for the lightanchor detector library
  *
  *  Use apriltag library to implement a lightanchors detector
  *  More details: (to be available)
  *
  * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
  * @date July, 2020
  */
-
 #ifndef _LIGHTANCHORS_DETECT_H_
 #define _LIGHTANCHORS_DETECT_H_
 
 #include "apriltag.h"
 #include "common/zarray.h"
 
-/* declare functions that we need as extern */
-extern zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im);
-extern int quad_update_homographies(struct quad *quad);
-extern struct quad *quad_copy(struct quad *quad);
-extern int quads_destroy(zarray_t *quads);
-
-typedef struct lightanchor_detector lightanchor_detector_t;
-struct lightanchor_detector
+typedef struct lightanchor_detector
 {
     // min amplitude threshold for filtering out non-blinking quads
     int range_thres;
@@ -38,20 +31,53 @@ struct lightanchor_detector
     // threshold for center difference between frames
     double thres_dist_center;
 
+    // list of codes to detect
     zarray_t *codes;
-    zarray_t *candidates;
-};
 
+    // list of possible lightanchor candidates (may not all be real detections)
+    zarray_t *candidates;
+} lightanchor_detector_t;
+
+/**
+ * Create a lightanchor apriltag family.
+ *
+ * @return apriltag_family_t represeting a lightanchor
+ */
 apriltag_family_t *lightanchor_family_create();
 
+/**
+ * Create a lightanchor detector.
+ *
+ * @return lightanchor detector
+ */
 lightanchor_detector_t *lightanchor_detector_create();
 
-int lightanchor_detector_add_code(lightanchor_detector_t *ld, char code);
-
-zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
-
+/**
+ * Decodes a list of incoming quads to see if any of the quads are lightanchors.
+ *
+ * @return zarray_t of detected lightanchors.
+ */
 void lightanchor_detector_destroy(lightanchor_detector_t *ld);
 
+/**
+ * Add a code (sequence of bits) to detect.
+ *
+ * @return 0 on success, negative on failure
+ */
+int lightanchor_detector_add_code(lightanchor_detector_t *ld, char code);
+
+/**
+ * Decodes a list of incoming quads to see if any of the quads are lightanchors.
+ *
+ * @return zarray_t of detected lightanchors.
+ */
+zarray_t *decode_quads(apriltag_detector_t *td, lightanchor_detector_t *ld, zarray_t *quads, image_u8_t *im);
+
+/**
+ * Detects lightacnhors in a frame of video (im).
+ *
+ * @return zarray_t of detected lightanchors.
+ */
 zarray_t *lightanchor_detector_detect(apriltag_detector_t *td, lightanchor_detector_t *ld, image_u8_t *im);
 
 /**
@@ -69,7 +95,6 @@ zarray_t *lightanchor_detector_detect(apriltag_detector_t *td, lightanchor_detec
  * @return z_array of struct quad
  */
 zarray_t *detect_quads(apriltag_detector_t *td, image_u8_t *im_orig);
-
 
 /**
  * Free an array of quads

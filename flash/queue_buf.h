@@ -1,3 +1,14 @@
+/** @file queue_buf.h
+ *  @brief Definitions for buffered queues
+ *
+ *  Buffered queues are arrays of fixed length (of BUF_SIZE) that can be
+ *  enqueued and dequeued. When full, every enqueue will automatically dequeue
+ *  an element.
+ *
+ * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
+ * @date July, 2020
+ */
 #ifndef _QUEUE_BUF_H_
 #define _QUEUE_BUF_H_
 

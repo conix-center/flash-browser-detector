@@ -127,7 +127,7 @@ int detect_tags(uintptr_t grayptr, int cols, int rows)
     // // EM_ASM({console.timeEnd("quad detection")});
 
     // // EM_ASM({console.time("tag tracking")});
-    // zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
+    // zarray_t *lightanchors = decode_quads(td, ld, quads, &im);
     // // EM_ASM({console.timeEnd("tag tracking")});
 
     zarray_t *lightanchors = lightanchor_detector_detect(td, ld, &im);
