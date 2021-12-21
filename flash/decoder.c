@@ -1,6 +1,13 @@
+/** @file decoder.c
+ *  @brief Implementation for bit stream decoding
+ *  @see decoder.h for documentation
+ *
+ * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
+ * @date July, 2020
+ */
 #include "decoder.h"
 #include "queue_buf.h"
-#include "linked_list.h"
 #include "common/math_util.h"
 #include "lightanchor.h"
 #include "lightanchor_detector.h"

@@ -1,8 +1,11 @@
+import {Postprocessor} from "./postprocessor";
+
 export class FlashSource {
     constructor(options) {
         this.options = {
             width: 640,
             height: 480,
+            quadSigma: 1.0,
         }
         this.setOptions(options);
 
@@ -17,11 +20,16 @@ export class FlashSource {
         this.video.style.top = "0px";
         this.video.style.left = "0px";
         this.video.style.zIndex = "-1";
+
+        this.postprocessor = new Postprocessor(this.options.width, this.options.height);
+        this.postprocessor.setKernelSigma(this.options.quadSigma);
     }
 
     setOptions(options) {
         if (options) {
             this.options = Object.assign(this.options, options);
+            this.postprocessor.resize(this.options.width, this.options.height);
+            this.postprocessor.setKernelSigma(this.options.quadSigma);
         }
     }
 
@@ -76,6 +84,7 @@ export class FlashSource {
                 this.video.srcObject = stream;
                 this.video.onloadedmetadata = (e) => {
                     this.video.play();
+                    this.postprocessor.attachElem(this.video);
                     resolve(this.video);
                 };
             })
@@ -83,5 +92,9 @@ export class FlashSource {
                 reject(err);
             });
         });
+    }
+
+    getPixels() {
+        return this.postprocessor.getPixels();
     }
 }

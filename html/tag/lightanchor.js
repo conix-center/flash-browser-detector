@@ -119,6 +119,7 @@ class LightAnchor {
         let _this = this;
         setTimeout(tick, this.fpsInterval);
         function tick() {
+    stats.update();
             if (!_this.running) return;
             const dt = Date.now() - expected;
             if (dt > _this.fpsInterval)  // adjust for errors

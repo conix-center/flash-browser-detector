@@ -1,8 +1,4 @@
-#include <stdio.h>
 #include <stdint.h>
-#include <inttypes.h>
-#include <ctype.h>
-#include <unistd.h>
 #include <math.h>
 
 #include <emscripten/emscripten.h>
@@ -13,10 +9,7 @@ extern "C" {
 #include "apriltag_pose.h"
 #include "tag36h11.h"
 
-#include "common/getopt.h"
 #include "common/image_u8.h"
-#include "common/image_u8x4.h"
-#include "common/pjpeg.h"
 #include "common/zarray.h"
 
 #include "lightanchor.h"
@@ -26,7 +19,11 @@ extern "C" {
 using namespace emscripten;
 
 // defaults set for 2020 ipad, with 1280x720 images
-static apriltag_detection_info_t pose_info = {.tagsize=0.15, .fx=997.2827, .fy=997.2827, .cx=636.9118, .cy=360.5100};
+static apriltag_detection_info_t pose_info = {
+    .tagsize=0.15,
+    .fx=997.2827, .fy=997.2827,
+    .cx=636.9118, .cy=360.5100
+};
 
 static apriltag_family_t *lf = nullptr;
 static apriltag_detector_t *td = nullptr;
@@ -78,7 +75,7 @@ int add_code(char code)
 }
 
 int set_detector_options(int range_thres, int min_white_black_diff, int ttl_frames,
-                        double thres_dist_shape, double thres_dist_shape_ttl, double thres_dist_center)
+                         double thres_dist_shape, double thres_dist_shape_ttl, double thres_dist_center)
 {
     ld->range_thres = range_thres;
     td->qtp.min_white_black_diff = min_white_black_diff;
@@ -123,7 +120,7 @@ int detect_tags(uintptr_t grayptr, int cols, int rows)
     // // EM_ASM({console.timeEnd("quad detection")});
 
     // // EM_ASM({console.time("tag tracking")});
-    // zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
+    // zarray_t *lightanchors = decode_quads(td, ld, quads, &im);
     // // EM_ASM({console.timeEnd("tag tracking")});
 
     zarray_t *lightanchors = lightanchor_detector_detect(td, ld, &im);

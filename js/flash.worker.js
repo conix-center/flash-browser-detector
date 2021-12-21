@@ -61,17 +61,9 @@ function resize(width, height, decimate) {
 
 function process() {
     if (flashModule) {
-        const start = Date.now();
-
         flashModule.saveGrayscale(next);
         const tags = flashModule.detectTags();
         postMessage({type: "result", tags: tags});
-
-        const end = Date.now();
-
-        if (flashModule.options.printPerformance) {
-            console.log("[performance]", "Detect:", end-start);
-        }
 
         if (flashModule.options.decimateImage) {
             if (end-start > fpsInterval) {

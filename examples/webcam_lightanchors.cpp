@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
         zarray_t *quads = detect_quads(td, &im);
 
-        zarray_t *lightanchors = decode_tags(td, ld, quads, &im);
+        zarray_t *lightanchors = decode_quads(td, ld, quads, &im);
         // cout << zarray_size(lightanchors) << " possible lightanchors detected" << endl;
 
         // Draw quad outlines

@@ -1,3 +1,11 @@
+/** @file queue_buf.c
+ *  @brief Implementation of buffered queues
+ *  @see queue_buf.h for documentation
+ *
+ * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
+ * @date July, 2020
+ */
 #include <stdint.h>
 #include <string.h>
 

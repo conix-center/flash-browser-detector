@@ -1,3 +1,10 @@
+/** @file decoder.h
+ *  @brief Definitions for bit stream decoding
+ *
+ * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
+ * @date July, 2020
+ */
 #ifndef _DECODER_H_
 #define _DECODER_H_
 
