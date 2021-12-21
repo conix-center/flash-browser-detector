@@ -110,7 +110,6 @@ window.addEventListener("onFlashCalibrate", (e) => {
 
 function resize() {
     flashSource.resize(window.innerWidth, window.innerHeight);
-    // flashSource.copyDimensionsTo(overlayCanvas);
 }
 
 window.addEventListener("resize", (e) => {

@@ -19,10 +19,8 @@
             <a-entity id="cameraRig" position="0 0 0">
                 <a-entity id="cameraSpinner" name="PerspectiveCamera" position="0 0 0" tag="MainCamera">
                     <a-camera id="my-camera"
+                              near="0.1"
                               far="10000"
-                              look-controls="reverseMouseDrag: true"
-                              look-controls-arrow
-                              mouse-cursor near="0.1"
                               wasd-controls="acceleration: 30">
                     </a-camera>
                 </a-entity>

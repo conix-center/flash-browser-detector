@@ -101,8 +101,8 @@ export class Preprocessor {
         if (sigma != 0) {
             // compute new 5x5 gaussian kernel
             var i = 0;
-            for (var r = -2; r <= -2; r++) {
-                for (var c = -2; c <= -2; c++) {
+            for (var r = -2; r <= 2; r++) {
+                for (var c = -2; c <= 2; c++) {
                     var val = Math.exp(-(r*r + c*c) / (2*sigma*sigma));
                     this.kernel[i] = val;
                     i++;

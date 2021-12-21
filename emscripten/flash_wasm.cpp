@@ -6,7 +6,9 @@
 #include <math.h>
 
 #include <emscripten/emscripten.h>
+#include <emscripten/bind.h>
 
+extern "C" {
 #include "apriltag.h"
 #include "apriltag_pose.h"
 #include "tag36h11.h"
@@ -19,29 +21,31 @@
 
 #include "lightanchor.h"
 #include "lightanchor_detector.h"
+}
+
+using namespace emscripten;
 
 // defaults set for 2020 ipad, with 1280x720 images
-static apriltag_detection_info_t pose_info = {.cx=636.9118, .cy=360.5100, .fx=997.2827, .fy=997.2827};
+static apriltag_detection_info_t pose_info = {.tagsize=0.15, .fx=997.2827, .fy=997.2827, .cx=636.9118, .cy=360.5100};
 
-static apriltag_family_t *lf = NULL;
-static apriltag_detector_t *td = NULL;
-static lightanchor_detector_t *ld = NULL;
+static apriltag_family_t *lf = nullptr;
+static apriltag_detector_t *td = nullptr;
+static lightanchor_detector_t *ld = nullptr;
 
-EMSCRIPTEN_KEEPALIVE
 int init()
 {
     lf = lightanchor_family_create();
-    if (lf == NULL)
+    if (lf == nullptr)
         return -1;
 
     td = apriltag_detector_create();
-    if (td == NULL)
+    if (td == nullptr)
         return -1;
 
     apriltag_detector_add_family(td, lf);
 
     ld = lightanchor_detector_create();
-    if (ld == NULL)
+    if (ld == nullptr)
         return -1;
 
     td->nthreads = 1;
@@ -68,13 +72,11 @@ int init()
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE
 int add_code(char code)
 {
     return lightanchor_detector_add_code(ld, code);
 }
 
-EMSCRIPTEN_KEEPALIVE
 int set_detector_options(int range_thres, int min_white_black_diff, int ttl_frames,
                         double thres_dist_shape, double thres_dist_shape_ttl, double thres_dist_center)
 {
@@ -87,17 +89,18 @@ int set_detector_options(int range_thres, int min_white_black_diff, int ttl_fram
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE
 int set_quad_decimate(float quad_decimate)
 {
     td->quad_decimate = quad_decimate;
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE
-int save_grayscale(uint8_t pixels[], uint8_t gray[], int cols, int rows)
+int save_grayscale(uintptr_t pixelsptr, uintptr_t grayptr, int cols, int rows)
 {
-    const int len = cols * rows * 4;
+    uint8_t *pixels = reinterpret_cast<uint8_t*>(pixelsptr);
+    uint8_t *gray = reinterpret_cast<uint8_t*>(grayptr);
+
+    int len = cols * rows * 4;
     for (int i = 0, j = 0; i < len; i+=4, j++)
     {
         gray[j] = pixels[i];
@@ -105,9 +108,9 @@ int save_grayscale(uint8_t pixels[], uint8_t gray[], int cols, int rows)
     return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE
-int detect_tags(uint8_t gray[], int cols, int rows)
+int detect_tags(uintptr_t grayptr, int cols, int rows)
 {
+    uint8_t *gray = reinterpret_cast<uint8_t*>(grayptr);
     image_u8_t im = {
         .width = cols,
         .height = rows,
@@ -127,12 +130,19 @@ int detect_tags(uint8_t gray[], int cols, int rows)
 
     int sz = zarray_size(lightanchors);
 
+    EM_ASM_({
+        var scope = ('function' === typeof importScripts) ? self : window;
+        scope.tags = [];
+    });
+
     for (int i = 0; i < sz; i++)
     {
         lightanchor_t *la;
         zarray_get(lightanchors, i, &la);
 
         EM_ASM_({
+            var scope = ('function' === typeof importScripts) ? self : window;
+
             var $a = arguments;
             var i = 0;
 
@@ -167,13 +177,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             center["y"] = $a[i++];
             tag["center"] = center;
 
-            const tagEvent = new CustomEvent("onFlashTagFound", {detail: {tag: tag}});
-            var scope;
-            if ('function' === typeof importScripts)
-                scope = self;
-            else
-                scope = window;
-            scope.dispatchEvent(tagEvent);
+            scope.tags.push(tag);
         },
             la->match_code,
             la->p[0][0],
@@ -189,6 +193,8 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         );
 
         EM_ASM_({
+            var scope = ('function' === typeof importScripts) ? self : window;
+
             var $a = arguments;
             var i = 0;
 
@@ -203,13 +209,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             H[7] = $a[i++];
             H[8] = $a[i++];
 
-            const tagEvent = new CustomEvent("onFlashHomoFound", {detail: {H: H}});
-            var scope;
-            if ('function' === typeof importScripts)
-                scope = self;
-            else
-                scope = window;
-            scope.dispatchEvent(tagEvent);
+            scope.tags[scope.tags.length-1].H = H;
         },
             matd_get(la->H,0,0),
             matd_get(la->H,0,1),
@@ -228,7 +228,6 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         det.H = la->H;
 
         pose_info.det = &det;
-        pose_info.tagsize = 0.15;
 
         apriltag_pose_t pose;
         // EM_ASM({console.time("pose estimation")});
@@ -236,6 +235,8 @@ int detect_tags(uint8_t gray[], int cols, int rows)
         // EM_ASM({console.time("pose estimation")});
 
         EM_ASM_({
+            var scope = ('function' === typeof importScripts) ? self : window;
+
             var $a = arguments;
             var i = 0;
 
@@ -261,13 +262,7 @@ int detect_tags(uint8_t gray[], int cols, int rows)
             t[2] = $a[i++];
             pose["t"] = t;
 
-            const tagEvent = new CustomEvent("onFlashPoseFound", {detail: {pose: pose}});
-            var scope;
-            if ('function' === typeof importScripts)
-                scope = self;
-            else
-                scope = window;
-            scope.dispatchEvent(tagEvent);
+            scope.tags[scope.tags.length-1].pose = pose;
         },
             error,
             matd_get(pose.R,0,0),
@@ -288,4 +283,13 @@ int detect_tags(uint8_t gray[], int cols, int rows)
     lightanchors_destroy(lightanchors);
 
     return sz;
+}
+
+EMSCRIPTEN_BINDINGS(flash_bindings) {
+    function("init", &init);
+    function("add_code", &add_code);
+    function("set_detector_options", &set_detector_options);
+    function("set_quad_decimate", &set_quad_decimate);
+    function("save_grayscale", &save_grayscale, allow_raw_pointers());
+    function("detect_tags", &detect_tags, allow_raw_pointers());
 }
