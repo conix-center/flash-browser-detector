@@ -1,8 +1,4 @@
-#include <stdio.h>
 #include <stdint.h>
-#include <inttypes.h>
-#include <ctype.h>
-#include <unistd.h>
 #include <math.h>
 
 #include <emscripten/emscripten.h>
@@ -13,10 +9,7 @@ extern "C" {
 #include "apriltag_pose.h"
 #include "tag36h11.h"
 
-#include "common/getopt.h"
 #include "common/image_u8.h"
-#include "common/image_u8x4.h"
-#include "common/pjpeg.h"
 #include "common/zarray.h"
 
 #include "lightanchor.h"

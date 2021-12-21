@@ -62,6 +62,7 @@ function drawTags(tags) {
 }
 
 function tick() {
+    stats.update();
     flashSource.getPixels().then((imageData) => {
         flashDetector.detectTags(imageData);
     });
@@ -86,7 +87,6 @@ window.addEventListener("onFlashInit", (e) => {
 window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
     drawTags(tags);
-    stats.update();
 });
 
 function resize() {
