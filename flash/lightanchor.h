@@ -1,3 +1,10 @@
+/** @file lightanchor.h
+ *  @brief Definitions for the lightanchor data structure
+ *
+ * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
+ * @date July, 2020
+ */
 #ifndef _LIGHTANCHOR_H_
 #define _LIGHTANCHOR_H_
 

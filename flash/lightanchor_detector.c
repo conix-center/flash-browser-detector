@@ -3,8 +3,8 @@
  *  @see lightanchor_detector.h for documentation
  *
  * Copyright (C) Wiselab CMU.
+ * @author Edward Lu (elu2@andrew.cmu.edu)
  * @date July, 2020
- *
  */
 #include <math.h>
 
@@ -29,10 +29,15 @@ struct graymodel
     double C[3];
 };
 
+/* declare functions that we need as extern */
 extern void graymodel_init(struct graymodel *gm);
 extern void graymodel_add(struct graymodel *gm, double x, double y, double gray);
 extern void graymodel_solve(struct graymodel *gm);
 extern double graymodel_interpolate(struct graymodel *gm, double x, double y);
+extern zarray_t *apriltag_quad_thresh(apriltag_detector_t *td, image_u8_t *im);
+extern int quad_update_homographies(struct quad *quad);
+extern struct quad *quad_copy(struct quad *quad);
+extern int quads_destroy(zarray_t *quads);
 
 apriltag_family_t *lightanchor_family_create()
 {
@@ -486,7 +491,7 @@ int quad_verify(apriltag_detector_t* td, apriltag_family_t *family, image_u8_t *
     return 0;
 }
 
-zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
+zarray_t *decode_quads(apriltag_detector_t *td, lightanchor_detector_t *ld,
                       zarray_t *quads, image_u8_t *im)
 {
     zarray_t *new_tags = zarray_create(sizeof(lightanchor_t *));
@@ -534,5 +539,5 @@ zarray_t *decode_tags(apriltag_detector_t *td, lightanchor_detector_t *ld,
 zarray_t *lightanchor_detector_detect(apriltag_detector_t *td, lightanchor_detector_t *ld, image_u8_t *im)
 {
     zarray_t *quads = detect_quads(td, im);
-    return decode_tags(td, ld, quads, im);
+    return decode_quads(td, ld, quads, im);
 }
