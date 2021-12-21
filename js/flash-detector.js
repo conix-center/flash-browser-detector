@@ -1,5 +1,5 @@
 
-import {Timer} from "./timer";
+import {Timer} from "./utils/timer";
 import {Utils} from "./utils/utils";
 // import {DeviceIMU} from "./imu";
 import {Preprocessor} from "./preprocessor";
