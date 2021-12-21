@@ -41,9 +41,6 @@ overlayCanvas.width = window.innerWidth;
 overlayCanvas.height = window.innerHeight;
 
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
-flashDetector.setOptions({
-    // printPerformance: true,
-});
 flashDetector.init();
 
 function updateInfo() {
@@ -82,6 +79,12 @@ function getPose(r, t) {
     return res;
 }
 
+function tick() {
+    flashSource.getPixels().then((imageData) => {
+        flashDetector.detectTags(imageData);
+    });
+}
+
 window.addEventListener("onFlashInit", (e) => {
     stats = new Stats();
     stats.showPanel(0);
@@ -90,6 +93,9 @@ window.addEventListener("onFlashInit", (e) => {
     document.body.appendChild(e.detail.source);
     document.body.appendChild(overlayCanvas);
     // document.body.appendChild(flashDetector.preprocessor.canvas);
+
+    const timer = flashDetector.createTimer(tick);
+    timer.run();
 
     let ratio = flashSource.options.width / flashSource.options.height;
 
@@ -139,11 +145,11 @@ window.addEventListener("onFlashInit", (e) => {
 
     scene.add(root);
 
-    var tick = function () {
+    var renderLoop = function () {
         renderer.render(scene, camera);
-        requestAnimationFrame(tick);
+        requestAnimationFrame(renderLoop);
     };
-    tick();
+    renderLoop();
 
     updateInfo();
     resize();
@@ -153,11 +159,6 @@ window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
     drawTags(tags);
     stats.update();
-});
-
-window.addEventListener("onFlashCalibrate", (e) => {
-    updateInfo();
-    info.innerText += e.detail.decimationFactor;
 });
 
 function resize() {

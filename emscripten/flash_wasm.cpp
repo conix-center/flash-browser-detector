@@ -26,7 +26,11 @@ extern "C" {
 using namespace emscripten;
 
 // defaults set for 2020 ipad, with 1280x720 images
-static apriltag_detection_info_t pose_info = {.tagsize=0.15, .fx=997.2827, .fy=997.2827, .cx=636.9118, .cy=360.5100};
+static apriltag_detection_info_t pose_info = {
+    .tagsize=0.15,
+    .fx=997.2827, .fy=997.2827,
+    .cx=636.9118, .cy=360.5100
+};
 
 static apriltag_family_t *lf = nullptr;
 static apriltag_detector_t *td = nullptr;
@@ -78,7 +82,7 @@ int add_code(char code)
 }
 
 int set_detector_options(int range_thres, int min_white_black_diff, int ttl_frames,
-                        double thres_dist_shape, double thres_dist_shape_ttl, double thres_dist_center)
+                         double thres_dist_shape, double thres_dist_shape_ttl, double thres_dist_center)
 {
     ld->range_thres = range_thres;
     td->qtp.min_white_black_diff = min_white_black_diff;

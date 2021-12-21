@@ -3,7 +3,7 @@ import {FastPromise} from './utils/fast-promise';
 
 const DEFAULT_BUFFER_SIZE = 1;
 
-export class Preprocessor {
+export class Postprocessor {
     constructor(width, height, canvas, numberOfBuffers=DEFAULT_BUFFER_SIZE) {
         this.width = width;
         this.height = height;
