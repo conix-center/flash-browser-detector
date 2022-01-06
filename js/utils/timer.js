@@ -1,7 +1,7 @@
 export class Timer {
     constructor(callback, interval) {
         this.callback = callback;
-        this.interval = interval;
+        this.interval = Math.min(interval, 60);
         this.running = false;
     }
 

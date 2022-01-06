@@ -22,13 +22,45 @@ overlayCanvas.width = flashSource.options.width;
 overlayCanvas.height = flashSource.options.height;
 
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
-flashDetector.init();
+
+function initDemo() {
+    flashSource.init()
+        .then((source) => {
+            document.body.appendChild(source);
+            document.body.appendChild(overlayCanvas);
+
+            stats = new Stats();
+            stats.showPanel(0);
+            document.getElementById("stats").appendChild(stats.domElement);
+
+            resize();
+            updateInfo();
+            initFlash();
+        })
+        .catch((err) => {
+            console.error(err);
+        });
+}
+
+async function initFlash() {
+    await flashDetector.init();
+
+    const timer = flashDetector.createTimer(tick);
+    timer.run();
+}
+
+function tick() {
+    stats.update();
+    flashSource.getPixels().then((imageData) => {
+        flashDetector.detectTags(imageData);
+    });
+}
 
 function updateInfo() {
     var info = document.getElementById("info");
     info.style.zIndex = "1";
     info.innerText = "Detecting Codes:\n";
-    for (code of this.codes) {
+    for (code of codes) {
         info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
     }
 }
@@ -61,29 +93,6 @@ function drawTags(tags) {
     }
 }
 
-function tick() {
-    stats.update();
-    flashSource.getPixels().then((imageData) => {
-        flashDetector.detectTags(imageData);
-    });
-}
-
-window.addEventListener("onFlashInit", (e) => {
-    stats = new Stats();
-    stats.showPanel(0);
-    document.getElementById("stats").appendChild(stats.domElement);
-
-    document.body.appendChild(e.detail.source);
-    document.body.appendChild(overlayCanvas);
-    // document.body.appendChild(flashDetector.preprocessor.canvas);
-
-    const timer = flashDetector.createTimer(tick);
-    timer.run();
-
-    updateInfo();
-    resize();
-});
-
 window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
     drawTags(tags);
@@ -97,3 +106,5 @@ function resize() {
 window.addEventListener("resize", (e) => {
     resize();
 });
+
+initDemo();

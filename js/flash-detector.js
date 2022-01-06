@@ -32,21 +32,11 @@ export class FlashDetector {
         this.worker = new Worker();
     }
 
-    init() {
-        this.source.init()
-            .then((source) => {
-                this.onInit(source);
-            })
-            .catch((err) => {
-                console.warn("ERROR: " + err);
-            });
-    }
-
     createTimer(callback) {
         return new Timer(callback, this.fpsInterval);
     }
 
-    onInit(source) {
+    init() {
         this.worker.postMessage({
             type: "init",
             codes: this.codes,
@@ -56,17 +46,14 @@ export class FlashDetector {
             options: this.options
         });
 
+        let onSuccess = null;
         this.worker.onmessage = (e) => {
             const msg = e.data
             switch (msg.type) {
                 case "loaded": {
                     // this.imu.init();
-                    const initEvent = new CustomEvent(
-                        "onFlashInit",
-                        {detail: {source: source}}
-                    );
-                    window.dispatchEvent(initEvent);
-                    break;
+                    if (onSuccess) onSuccess();
+                    return;
                 }
                 case "result": {
                     const tagEvent = new CustomEvent(
@@ -74,14 +61,18 @@ export class FlashDetector {
                         {detail: {tags: msg.tags}}
                     );
                     window.dispatchEvent(tagEvent);
-                    break;
+                    return;
                 }
                 case "resize": {
                     this.decimate();
-                    break;
+                    return;
                 }
             }
         }
+
+        return new Promise(function(resolve) {
+            onSuccess = resolve;
+        });
     }
 
     decimate() {
@@ -90,7 +81,7 @@ export class FlashDetector {
         var width = this.sourceWidth / this.imageDecimate;
         var height = this.sourceHeight / this.imageDecimate;
 
-        this.source.preprocessor.resize(width, height);
+        this.source.postprocessor.resize(width, height);
         this.worker.postMessage({
             type: "resize",
             width: width,
