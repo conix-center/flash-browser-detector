@@ -28,6 +28,7 @@ function initDemo() {
         .then((source) => {
             document.body.appendChild(source);
             document.body.appendChild(overlayCanvas);
+            // document.body.appendChild(flashSource.postprocessor.canvas);
 
             stats = new Stats();
             stats.showPanel(0);

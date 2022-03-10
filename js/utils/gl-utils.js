@@ -1,3 +1,9 @@
+import { FastPromise } from "./fast-promise";
+
+const runOnNextFrame = navigator.userAgent.includes('Firefox') ?
+    ((fn, ...args) => setTimeout(fn, 10, ...args)) : // RAF produces a warning on Firefox
+    ((fn, ...args) => requestAnimationFrame(() => fn.apply(window, args))); // reduce battery usage
+
 export class GLUtils {
     static createGL(canvas) {
         if (!GLUtils.supportsWebGL2(canvas)) {
@@ -174,41 +180,28 @@ export class GLUtils {
     // adopted from:
     // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
     static readPixelsAsync(gl, pbo, width, height, buffer) {
-        // bind the PBO
-        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo);
-        gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.STREAM_READ);
-
         // read pixels into the PBO
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo);
+        gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.DYNAMIC_READ);
         gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, 0);
-
-        // unbind the PBO
         gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
 
-        // wait for DMA transfer
-        return GLUtils.getBufferSubDataAsync(
-            gl, pbo,
-            gl.PIXEL_PACK_BUFFER, 0, buffer, 0, 0
-        ).catch(err => {
-            throw new Error("Can't read pixels", err);
-        });
-    }
-
-    // adopted from:
-    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
-    static getBufferSubDataAsync(gl, glBuffer, target, srcByteOffset, destBuffer, destOffset = 0, length = 0) {
+        // create a fence
         const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-        // empty internal command queues and send them to the GPU asap
         gl.flush(); // make sure the sync command is read
 
-        // wait for the commands to be processed by the GPU
-        return GLUtils.clientWaitAsync(gl, sync).then(() => {
-            gl.bindBuffer(target, glBuffer);
-            gl.getBufferSubData(target, srcByteOffset, destBuffer, destOffset, length);
-            gl.bindBuffer(target, null);
-            return 0; // disable timers
-        }).catch(err => {
-            throw new Error(`Can't getBufferSubDataAsync(): error in clientWaitAsync()`, err);
+        return new FastPromise((resolve, reject) => {
+            // according to the WebGL2 spec sec 3.7.14 Sync objects,
+            // "sync objects may only transition to the signaled state
+            // when the user agent's event loop is not executing a task"
+            // in other words, it won't be signaled in the same frame
+            runOnNextFrame(GLUtils.clientWaitAsync, gl, sync, 0, resolve, reject);
+        }).then(() => {
+            gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo);
+            gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buffer);
+            gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+        }).catch((err) => {
+            throw new Error("error in clientWaitAsync()", err);
         }).finally(() => {
             gl.deleteSync(sync);
         });
@@ -216,29 +209,22 @@ export class GLUtils {
 
     // adopted from:
     // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
-    static clientWaitAsync(gl, sync, flags = 0) {
-        return new Promise((resolve, reject) => {
-            GLUtils._checkStatus(gl, sync, flags, resolve, reject);
-        });
-    }
+    static clientWaitAsync(gl, sync, flags, resolve, reject, pollInterval = 10, remainingAttempts = 1000)
+    {
+        (function poll() {
+            const status = gl.clientWaitSync(sync, flags, 0);
 
-    // adopted from:
-    // https://github.com/alemart/speedy-vision-js/blob/master/src/gpu/speedy-texture-reader.js
-    static _checkStatus(gl, sync, flags, resolve, reject) {
-        const status = gl.clientWaitSync(sync, flags, 0);
-        if(status == gl.TIMEOUT_EXPIRED) {
-            setTimeout(GLUtils._checkStatus, 0, gl, sync, flags, resolve, reject); // easier on the CPU
-        }
-        else if(status == gl.WAIT_FAILED) {
-            if(gl.getError() == gl.NO_ERROR) {
-                setTimeout(GLUtils._checkStatus, 0, gl, sync, flags, resolve, reject);
+            if (remainingAttempts-- <= 0) {
+                reject(new Error(`_checkStatus() is taking too long.`, gl.getError()));
+            }
+            else if (status === gl.CONDITION_SATISFIED || status === gl.ALREADY_SIGNALED) {
+                resolve();
             }
             else {
-                reject(GLUtils.getError(gl));
+                //Utils.setZeroTimeout(poll); // no ~4ms delay, resource-hungry
+                //setTimeout(poll, pollInterval); // easier on the CPU
+                requestAnimationFrame(poll); // RAF is a rather unusual way to do polling at ~60 fps. Does it reduce CPU usage?
             }
-        }
-        else {
-            resolve();
-        }
+        })();
     }
 }
