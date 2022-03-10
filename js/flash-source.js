@@ -19,7 +19,7 @@ export class FlashSource {
         this.video.style.position = "absolute";
         this.video.style.top = "0px";
         this.video.style.left = "0px";
-        this.video.style.zIndex = "-1";
+        this.video.style.zIndex = "0";
 
         this.postprocessor = new Postprocessor(this.options.width, this.options.height);
         this.postprocessor.setKernelSigma(this.options.quadSigma);
