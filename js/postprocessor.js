@@ -1,10 +1,10 @@
 import {GLUtils} from './utils/gl-utils';
 import {FastPromise} from './utils/fast-promise';
 
-const DEFAULT_BUFFER_SIZE = 1;
+const DEFAULT_NUMBER_OF_BUFFERS = 2;
 
 export class Postprocessor {
-    constructor(width, height, canvas, numberOfBuffers=DEFAULT_BUFFER_SIZE) {
+    constructor(width, height, canvas, numberOfBuffers=DEFAULT_NUMBER_OF_BUFFERS) {
         this.width = width;
         this.height = height;
 
