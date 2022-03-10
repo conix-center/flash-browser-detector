@@ -41,59 +41,28 @@ overlayCanvas.width = window.innerWidth;
 overlayCanvas.height = window.innerHeight;
 
 var flashDetector = new Flash.FlashDetector(codes, targetFps, flashSource);
-flashDetector.init();
 
-function updateInfo() {
-    var info = document.getElementById("info");
-    info.style.zIndex = "1";
-    info.innerText = "Detecting Codes:\n";
-    for (code of this.codes) {
-        info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
-    }
+function initDemo() {
+    flashSource.init()
+        .then((source) => {
+            document.body.appendChild(source);
+            document.body.appendChild(overlayCanvas);
+
+            stats = new Stats();
+            stats.showPanel(0);
+            document.getElementById("stats").appendChild(stats.domElement);
+
+            resize();
+            updateInfo();
+            initFlash();
+        })
+        .catch((err) => {
+            console.error(err);
+        });
 }
 
-function drawTags(tags) {
-    for (tag of tags) {
-        const rigPose = getPose(tag.pose.R, tag.pose.t);
-        camera.quaternion.setFromRotationMatrix(rigPose);
-        camera.position.setFromMatrixPosition(rigPose);
-    }
-}
-
-function getPose(r, t) {
-    dtagMatrix.set(
-        r[0], r[3], r[6], t[0],
-        r[1], r[4], r[7], t[1],
-        r[2], r[5], r[8], t[2],
-        0   , 0   , 0   , 1
-    );
-
-    dtagMatrix.premultiply(FLIPMATRIX);
-    dtagMatrix.multiply(FLIPMATRIX);
-
-    var res = new THREE.Matrix4();
-    dtagMatrix.copy(dtagMatrix).invert();
-    res.identity();
-    res.multiplyMatrices(originMatrix, dtagMatrix);
-
-    return res;
-}
-
-function tick() {
-    stats.update();
-    flashSource.getPixels().then((imageData) => {
-        flashDetector.detectTags(imageData);
-    });
-}
-
-window.addEventListener("onFlashInit", (e) => {
-    stats = new Stats();
-    stats.showPanel(0);
-    document.getElementById("stats").appendChild(stats.domElement);
-
-    document.body.appendChild(e.detail.source);
-    document.body.appendChild(overlayCanvas);
-    // document.body.appendChild(flashDetector.preprocessor.canvas);
+async function initFlash() {
+    await flashDetector.init();
 
     const timer = flashDetector.createTimer(tick);
     timer.run();
@@ -151,10 +120,51 @@ window.addEventListener("onFlashInit", (e) => {
         requestAnimationFrame(renderLoop);
     };
     renderLoop();
+}
 
-    updateInfo();
-    resize();
-});
+
+function tick() {
+    stats.update();
+    flashSource.getPixels().then((imageData) => {
+        flashDetector.detectTags(imageData);
+    });
+}
+
+function updateInfo() {
+    var info = document.getElementById("info");
+    info.style.zIndex = "1";
+    info.innerText = "Detecting Codes:\n";
+    for (code of codes) {
+        info.innerText += `${Flash.Utils.dec2bin(code)} (${code})\n`;
+    }
+}
+
+function drawTags(tags) {
+    for (tag of tags) {
+        const rigPose = getPose(tag.pose.R, tag.pose.t);
+        camera.quaternion.setFromRotationMatrix(rigPose);
+        camera.position.setFromMatrixPosition(rigPose);
+    }
+}
+
+function getPose(r, t) {
+    dtagMatrix.set(
+        r[0], r[3], r[6], t[0],
+        r[1], r[4], r[7], t[1],
+        r[2], r[5], r[8], t[2],
+        0   , 0   , 0   , 1
+    );
+
+    dtagMatrix.premultiply(FLIPMATRIX);
+    dtagMatrix.multiply(FLIPMATRIX);
+
+    var res = new THREE.Matrix4();
+    dtagMatrix.copy(dtagMatrix).invert();
+    res.identity();
+    res.multiplyMatrices(originMatrix, dtagMatrix);
+
+    return res;
+}
 
 window.addEventListener("onFlashTagsFound", (e) => {
     const tags = e.detail.tags;
@@ -169,3 +179,5 @@ function resize() {
 window.addEventListener("resize", (e) => {
     resize();
 });
+
+initDemo();

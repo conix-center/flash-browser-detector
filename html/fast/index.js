@@ -1,5 +1,5 @@
 var codes = [0b10101010, 0b10011010, 0b10100011];
-var targetFps = 30;
+var targetFps = 60;
 
 var stats = null;
 
@@ -9,8 +9,8 @@ flashSource.setOptions({
     // height: 3024,
     // width: 1920,
     // height: 1080,
-    // width: 1280,
-    // height: 720,
+    width: 1280,
+    height: 720,
 });
 
 var overlayCanvas = document.createElement("canvas");

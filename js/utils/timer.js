@@ -17,6 +17,12 @@ export class Timer {
         }
 
         function scheduleFrame(time) {
+            if (Math.abs(1000 / _this.interval - 60) <= 1e-5) { // ~60 FPS ==> throttle
+                requestAnimationFrame(frame);
+                console.log("here");
+                return;
+            }
+
             const elapsed = time - start;
             const roundedElapsed = Math.round(elapsed / _this.interval) * _this.interval;
             const targetNext = start + roundedElapsed + _this.interval;
