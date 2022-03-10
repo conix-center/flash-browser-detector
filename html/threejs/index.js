@@ -73,10 +73,9 @@ async function initFlash() {
     camera = new THREE.PerspectiveCamera(75, ratio, 0.01, 1000);
 
     renderer = new THREE.WebGLRenderer({
-        canvas: document.getElementById("overlay"),
+        canvas: overlayCanvas,
         alpha: true,
         antialias: true,
-        context: null,
         precision: "mediump",
         premultipliedAlpha: true,
         stencil: true,

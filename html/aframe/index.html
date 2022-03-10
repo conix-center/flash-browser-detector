@@ -10,12 +10,13 @@
         <script type="text/javascript" src="../../dist/flash.min.js"></script>
         <script type="text/javascript" src="index.js"></script>
 
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="../style.css">
 
+        <link rel="icon" type="image/x-icon" href="../icon.png">
         <title>FLASH</title>
     </head>
     <body>
-        <a-scene background="transparent: true">
+        <a-scene background="transparent: true" style="z-index: 9999;">
             <a-entity id="cameraRig" position="0 0 0">
                 <a-entity id="cameraSpinner" name="PerspectiveCamera" position="0 0 0" tag="MainCamera">
                     <a-camera id="my-camera"
