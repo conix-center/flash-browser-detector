@@ -1,5 +1,5 @@
 {
-  "name": "Flash",
+  "name": "flash-browser-detector",
   "version": "1.0.0",
   "main": "./js/index.js",
   "scripts": {
