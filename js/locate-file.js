@@ -1,12 +1,13 @@
 Module['locateFile'] = function(path, prefix) {
     if (path.endsWith(".wasm")) {
-        let scope;
-        if ('function' === typeof importScripts)
-            scope = self;
-        else
-            scope = window;
+        var pathArray = self.location.href.split('/');
 
-        return scope.location.origin + "/dist/" + path;
+        var newPrefix = "";
+        for (i = 0; i < pathArray.length - 1; i++) {
+            newPrefix += pathArray[i];
+            newPrefix += "/";
+        }
+        return newPrefix + path;
     }
 
     return prefix + path;

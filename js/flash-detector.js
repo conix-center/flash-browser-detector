@@ -1,6 +1,5 @@
 import {Utils} from "./utils/utils";
 import {Timer} from "./utils/timer";
-import Worker from "./flash.worker";
 // import {DeviceIMU} from "./imu";
 
 export class FlashDetector {
@@ -29,7 +28,7 @@ export class FlashDetector {
         this.setOptions(options);
 
         // this.imu = new DeviceIMU();
-        this.worker = new Worker();
+        this.worker = new Worker(new URL("./flash.worker.js", import.meta.url));
     }
 
     createTimer(callback) {
