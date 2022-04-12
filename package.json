@@ -4,7 +4,8 @@
   "main": "./js/index.js",
   "scripts": {
     "dev": "webpack --mode development --progress --watch",
-    "build": "make wasm && webpack --mode production; echo Built at `date`",
+    "build": "rm -rf build/ && make wasm && webpack --mode production; echo Built at `date`",
+    "clean": "rm -rf build/",
     "serve": "python3 -m http.server"
   },
   "author": "Edward Lu (edwardlu2018)",

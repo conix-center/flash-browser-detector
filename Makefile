@@ -6,7 +6,7 @@ BIN_DIR 			= bin
 OBJ_DIR 			= obj
 WASM_OUTPUT_DIR 	= build
 
-FLASH_DIR 		= flash
+FLASH_DIR 			= flash
 APRILTAG_DIR 		= apriltag
 EXAMPLES_DIR		= examples
 EMSCRIPTEN_DIR 		= emscripten
@@ -24,7 +24,8 @@ WASM_LD_FLAGS 		+= -s ALLOW_MEMORY_GROWTH=1
 WASM_LD_FLAGS 		+= -s ENVIRONMENT=worker
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
 WASM_LD_FLAGS 		+= -s EXPORTED_RUNTIME_METHODS='["cwrap"]'
-WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
+# WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
+WASM_LD_FLAGS 		+= --pre-js js/locate-file.js
 WASM_LD_FLAGS 		+= -s WASM=1
 WASM_LD_FLAGS 		+= -s --bind
 
@@ -35,8 +36,8 @@ OPENCV_LD_FLAGS		= `pkg-config --libs opencv`
 APRILTAG_SRCS 		:= $(shell ls $(APRILTAG_DIR)/*.c $(APRILTAG_DIR)/common/*.c | grep -v -e apriltag_pywrap.c -e tagCircle49h12.c -e tagCustom48h12.c -e tagStandard52h13.c)
 APRILTAG_OBJS 		:= $(APRILTAG_SRCS:%.c=%.o)
 
-FLASH_SRCS 		:= $(wildcard $(FLASH_DIR)/*.c)
-FLASH_OBJS 		:= $(FLASH_SRCS:$(FLASH_DIR)/%.c=$(OBJ_DIR)/%.o)
+FLASH_SRCS 			:= $(wildcard $(FLASH_DIR)/*.c)
+FLASH_OBJS 			:= $(FLASH_SRCS:$(FLASH_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 EXAMPLES_SRCS		:= $(wildcard $(EXAMPLES_DIR)/*.c $(EXAMPLES_DIR)/*.cpp)
 EXAMPLES_OBJS		:= $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.c=$(OBJ_DIR)/%.o) $(EXAMPLES_SRCS:$(EXAMPLES_DIR)/%.cpp=$(OBJ_DIR)/%.o)
@@ -106,6 +107,7 @@ $(WASM_OUTPUT_DIR)/%.js: $(EMSCRIPTEN_DIR)/%.cpp $(APRILTAG_SRCS) $(FLASH_SRCS) 
 	@echo "    Compiling WASM target [$<]"
 	@echo "    Be sure to clone emsdk and run 'source ./emsdk/emsdk_env.sh'!"
 	@$(EMCC) -o $@ $^ $(INCLUDE) $(WASM_FLAGS) $(WASM_LD_FLAGS)
+	@mv $(WASM_OUTPUT_DIR)/*.wasm dist/
 
 $(BIN_DIR) $(OBJ_DIR) $(WASM_OUTPUT_DIR):
 	@mkdir $@
