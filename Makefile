@@ -25,7 +25,6 @@ WASM_LD_FLAGS 		+= -s ENVIRONMENT=worker
 WASM_LD_FLAGS 		+= -s EXPORTED_FUNCTIONS='["_malloc", "_free"]'
 WASM_LD_FLAGS 		+= -s EXPORTED_RUNTIME_METHODS='["cwrap"]'
 # WASM_LD_FLAGS 		+= -s SINGLE_FILE=1
-WASM_LD_FLAGS 		+= --pre-js js/locate-file.js
 WASM_LD_FLAGS 		+= -s WASM=1
 WASM_LD_FLAGS 		+= -s --bind
 
