@@ -29,13 +29,6 @@ module.exports = (env, argv) => ({
         }]
       },
       {
-        test: /\worker\.js$/,
-        use: {
-          loader: 'worker-loader',
-          options: { inline: 'no-fallback' }
-        }
-      },
-      {
         test: /\.glsl$/i,
         use: [
           {
@@ -66,8 +59,5 @@ module.exports = (env, argv) => ({
   },
   resolve: {
     extensions: ['.js']
-  },
-  node: {
-    'fs': 'empty'
   }
 });
